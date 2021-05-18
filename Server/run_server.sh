@@ -39,7 +39,7 @@ ssh -A -i ${KEY} ubuntu@${1} << EOF
   echo "$SEP"
   echo "Installing packages"
   sudo apt update
-  sudo apt -y install g++
+  sudo apt -y install nodejs
   echo "Packages installed successfully"
   echo "$SEP"
   echo "Building project"
@@ -53,9 +53,7 @@ ssh -A -i ${KEY} ubuntu@${1} << EOF
   echo "Most recent version obtained"
   echo "$SEP"
   echo "Launching node.js server"
-  cd Server
-  node index.js
+  screen -d -m -S node bash -c 'cd ~/Y2_Project/Server && node index.js'
   echo "$SEP"
-  echo "Cleaning"
-  rm server
+  echo "Server running, Done"
 EOF
