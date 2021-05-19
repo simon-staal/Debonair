@@ -55,8 +55,8 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_PIXEL_BURST           0x40
 #define ADNS3080_MOTION_BURST          0x50
 #define ADNS3080_SROM_LOAD             0x60
-
 #define ADNS3080_PRODUCT_ID_VAL        0x17
+
 
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,vref,iL,dutyref,current_mA; // Measurement Variables
@@ -145,8 +145,7 @@ int mousecam_init(){
   return 0;
 }
 
-void mousecam_write_reg(int reg, int val)
-{
+void mousecam_write_reg(int reg, int val){
   digitalWrite(PIN_MOUSECAM_CS, LOW);
   SPI.transfer(reg | 0x80);
   SPI.transfer(val);
@@ -154,8 +153,7 @@ void mousecam_write_reg(int reg, int val)
   delayMicroseconds(50);
 }
 
-int mousecam_read_reg(int reg)
-{
+int mousecam_read_reg(int reg){
   digitalWrite(PIN_MOUSECAM_CS, LOW);
   SPI.transfer(reg);
   delayMicroseconds(75);
@@ -174,8 +172,7 @@ struct MD
  byte max_pix;
 };
 
-void mousecam_read_motion(struct MD *p)
-{
+void mousecam_read_motion(struct MD *p){
   digitalWrite(PIN_MOUSECAM_CS, LOW);
   SPI.transfer(ADNS3080_MOTION_BURST);
   delayMicroseconds(75);
@@ -192,8 +189,7 @@ void mousecam_read_motion(struct MD *p)
 
 // pdata must point to an array of size ADNS3080_PIXELS_X x ADNS3080_PIXELS_Y
 // you must call mousecam_reset() after this if you want to go back to normal operation
-int mousecam_frame_capture(byte *pdata)
-{
+int mousecam_frame_capture(byte *pdata){
   mousecam_write_reg(ADNS3080_FRAME_CAPTURE,0x83);
   
   digitalWrite(PIN_MOUSECAM_CS, LOW);
@@ -206,33 +202,26 @@ int mousecam_frame_capture(byte *pdata)
   int count;
   int timeout = 0;
   int ret = 0;
-  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; )
-  {
+  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; ){
     pix = SPI.transfer(0xff);
     delayMicroseconds(10);
-    if(started==0)
-    {
+    if(started==0){
       if(pix&0x40)
         started = 1;
-      else
-      {
+      else{
         timeout++;
-        if(timeout==100)
-        {
+        if(timeout==100){
           ret = -1;
           break;
         }
       }
     }
-    if(started==1)
-    {
+    if(started==1){
       pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
     }
   }
-
   digitalWrite(PIN_MOUSECAM_CS,HIGH); 
   delayMicroseconds(14);
-  
   return ret;
 }
 
@@ -262,8 +251,9 @@ void setup() {
   //************************** Motor Pins Defining **************************//
   pinMode(DIRR, OUTPUT);
   pinMode(DIRL, OUTPUT);
-  pinMode(pwmr, OUTPUT);
-  pinMode(pwml, OUTPUT);
+  pinMode(pwmr, OUTPUT);          //pin to control right wheel speed using pwm - pwmr is pin 5
+  pinMode(pwml, OUTPUT);          //pin to control left wheel speed using pwm - pwml is pin 9
+  
   digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
   digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
   //*************************************************************************//
@@ -286,7 +276,7 @@ void setup() {
   //********************** TimerB0 initialization for PWM output ****************//
   
   pinMode(6, OUTPUT);
-  TCB0.CTRLA=TCB_CLKSEL_CLKDIV1_gc | TCB_ENABLE_bm; //62.5kHz
+  TCB0.CTRLA =TCB_CLKSEL_CLKDIV1_gc | TCB_ENABLE_bm; //62.5kHz
   analogWrite(6,120); 
 
   interrupts();  //enable interrupts.
@@ -361,6 +351,8 @@ total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts p
 
  Serial.print('\n');
 
+Serial.println("dx (mm) = "+String(distance_x));
+Serial.println("dy (mm) = "+String(distance_y));
 
 Serial.println("Distance_x = " + String(total_x));
 
@@ -425,7 +417,7 @@ unsigned long currentMillis = millis();
   
   //************************** Motor Testing **************************//
   //this part of the code decides the direction of motor rotations depending on the time lapsed. currentMillis records the time lapsed once it is called.
-  
+  /*
   //moving forwards
   if (currentMillis < f_i) {
     DIRRstate = HIGH;
@@ -448,17 +440,20 @@ unsigned long currentMillis = millis();
     DIRRstate = LOW;
     DIRLstate = LOW; 
   }
-
+  */
   //set your states
-  if (currentMillis > l_i) {
-    DIRRstate = LOW;
-    DIRLstate = LOW; 
-  }
+  if (total_y >= 0 && total_y <100) {
+    DIRRstate = HIGH;   //goes forwards
+    DIRLstate = LOW;}
+  if(total_y == 100){
+    DIRRstate = LOW;    // goes backwards
+    DIRLstate = HIGH;}
+  if(total_y > 100){
+    DIRRstate = LOW;    // 
+    DIRLstate = HIGH;}
 
     digitalWrite(DIRR, DIRRstate);
     digitalWrite(DIRL, DIRLstate); 
-
-
 }
 
 // Timer A CMP1 interrupt. Every 800us the program enters this interrupt. 
