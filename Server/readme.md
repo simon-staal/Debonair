@@ -9,3 +9,6 @@ Going to try to run server in AWS instance and see if I can connect from local P
 
 *Update* THIS WORKS!!!!!!
 Downloaded repo onto AWS instance, used screen to run `node index.js` in a seperate whatever the fuck, did `curl <server_ip>:8080` on local PC and received a response
+
+For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
+Will probs need to install MQTT globally: `npm install mqtt -g`

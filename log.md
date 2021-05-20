@@ -4,9 +4,11 @@ This section will track the goals / progress done by me (Simon) for the control 
 
 Goals
 -----
-- Investigate how to use the ESP32-DevkitC as an HTTP client
+- <del>Investigate how to use the ESP32-DevkitC as an HTTP client</del> (Reworked 20/05/21)
 - Think about how we'll actually do the client/server (currently assuming it'll be an HTTP server)
 - Bro idk i wanna kms
+- Test MQTT broker using node.js server
+- Program an MQTT client onto ESP32 using arduino IDE and test connection with broker
 
 Changelog
 ---------
@@ -19,3 +21,6 @@ Will most likely use an MQTT server / client to communicate with the ESP32 board
 *Update_1:* Added a bunch of stuff to the repo, working mostly on server backend at the moment using node.js, and ensuring that it works on our AWS instance and that I can communicate with it locally. The `screen` command should let us run mulitple processes on our server at the same time, which will be good as we will probably have an HTTP server for the webpage which will be communicating with an MQTT server that will interface with the MQTT client on our ESP32 to send and receive instructions to our rover.
 
 Started integrating `screen` functionality into server startup script, so everything should be able to run in parallel. Not added yet, but found command to stop a screen in a script as follows:`screen -X -S "sessionname" quit`
+
+**20/05/21**
+Been focusing on working on the the full-stack web dev course to learn more about node.js and React. Made some progress today with MQTT, was able to set up a broker on the AWS server, which seems to work, and found js libraries to use so that our web-app can interact with our broker. Added some new goals to work on for the ESP32 side of things, want to try get communication between the ESP32 and the server by this weekend.
