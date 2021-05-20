@@ -354,6 +354,7 @@ total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts p
 Serial.println("dx (mm) = "+String(distance_x));
 Serial.println("dy (mm) = "+String(distance_y));
 
+
 Serial.println("Distance_x = " + String(total_x));
 
 Serial.println("Distance_y = " + String(total_y));
@@ -397,6 +398,7 @@ unsigned long currentMillis = millis();
           closed_loop=pidi(ei);  //current pid
           closed_loop=saturation(closed_loop,0.99,0.01);  //duty_cycle saturation
           pwm_modulate(closed_loop); //pwm modulation - closed_loop is a duty
+          
       }else{ // Open Loop Buck
           current_limit = 3; // Buck has a higher current limit
           oc = iL-current_limit; // Calculate the difference between current measurement and current limit
@@ -442,16 +444,25 @@ unsigned long currentMillis = millis();
   }
   */
   //set your states
+
+//non funziona per adesso come vorrei
+int diff_x = total_x - distance_x;
+int diff_y = total_y - distance_y;
+/*
+  if (abs(diff_y) < 100) {
+    DIRRstate = HIGH;   //goes forwards
+    DIRLstate = LOW;}
+*/ 
+  
   if (total_y >= 0 && total_y <100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
-  if(total_y == 100){
-    DIRRstate = LOW;    // goes backwards
-    DIRLstate = HIGH;}
-  if(total_y > 100){
-    DIRRstate = LOW;    // 
-    DIRLstate = HIGH;}
-
+  if(total_y >= 100){
+    DIRRstate = LOW;    // rotates anticlockwise
+    DIRLstate = LOW;}
+   else{ DIRRstate = LOW;
+    DIRRstate = HIGH;}
+ 
     digitalWrite(DIRR, DIRRstate);
     digitalWrite(DIRL, DIRLstate); 
 }
