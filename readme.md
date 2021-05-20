@@ -20,3 +20,7 @@ Server
 ------
 Contains [index.js](Server/index.js), which is an example HTTP server that I was able to successfully host on a remote AWS instance and connect to from my local PC. It also contains the .pem file required to SSH into my AWS instance, as well as [**run_server.sh**](Server/run_server.sh), a script I will be using to run everything on our AWS instance required for the project (will be updating this as we go, currently untested)
 
+Rover_combined and Rover_functions
+------
+Both contain Arduino code related to the Drive subsystem. 
+Rover_combined is the fusion of: SMPS code, Optical sensor code and Motor control code, while Rover_functions is a work in progress with all the functions that map the inputs from the Command subsystem to actual Rover movements.
