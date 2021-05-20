@@ -57,9 +57,9 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-
+float vref = 2.5; // value chosen by me
 float open_loop, closed_loop; // Duty Cycles
-float vpd,vb,vref,iL,dutyref,current_mA; // Measurement Variables
+float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
 unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
 float ev=0,cv=0,ei=0,oc=0; //internal signals
 float Ts=0.0008; //1.25 kHz control frequency. It's better to design the control period as integral multiple of switching period.
@@ -374,7 +374,7 @@ unsigned long currentMillis = millis();
     digitalWrite(13, HIGH);   // set pin 13. Pin13 shows the time consumed by each control cycle. It's used for debugging.
     
     // Sample all of the measurements and check which control mode we are in
-    sampling();
+    sampling(vref);
     CL_mode = digitalRead(3); // input from the OL_CL switch
     Boost_mode = digitalRead(2); // input from the Buck_Boost switch
 
@@ -453,18 +453,18 @@ int diff_y = total_y - distance_y;
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
 */ 
-  
+
   if (total_y >= 0 && total_y <100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
-  if(total_y >= 100){
-    DIRRstate = LOW;    // rotates anticlockwise
-    DIRLstate = LOW;}
-   else{ DIRRstate = LOW;
-    DIRRstate = HIGH;}
- 
-    digitalWrite(DIRR, DIRRstate);
-    digitalWrite(DIRL, DIRLstate); 
+  if(total_y == 100){
+    DIRRstate = LOW;    // goes backwards
+    DIRLstate = HIGH;}
+  if(total_y > 100){
+    DIRRstate = LOW;     
+    DIRLstate = HIGH;}     
+ digitalWrite(DIRR, DIRRstate);
+ digitalWrite(DIRL, DIRLstate);
 }
 
 // Timer A CMP1 interrupt. Every 800us the program enters this interrupt. 
@@ -477,29 +477,34 @@ ISR(TCA0_CMP1_vect){
 
 // This subroutine processes all of the analogue samples, creating the required values for the main loop
 
-void sampling(){
+void sampling(float vref){
 
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  sensorValue2 = analogRead(A2); //sample Vref
+  //sensorValue2 = analogRead(A2); //sample Vref - initially
+  sensorValue2 = vref *(1023.0/ 4.096); 
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
 
-  // Process the values so they are a bit more usable/readable
-  // The analogRead process gives a value between 0 and 1023 
-  // representing a voltage between 0 and the analogue reference which is 4.096V
+  /* Process the values so they are a bit more usable/readable
+     The analogRead process gives a value between 0 and 1023 
+     representing a voltage between 0 and the analogue reference which is 4.096V
+  */
   
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
-  vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
+  //vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
+  // now vref is set at the top of the code
   vpd = sensorValue3 * (4.096 / 1023.0); // Convert the Vpd sensor reading to volts
 
-  // The inductor current is in mA from the sensor so we need to convert to amps.
-  // We want to treat it as an input current in the Boost, so its also inverted
-  // For open loop control the duty cycle reference is calculated from the sensor
-  // differently from the Vref, this time scaled between zero and 1.
-  // The boost duty cycle needs to be saturated with a 0.33 minimum to prevent high output voltages
-  
+ /* The inductor current is in mA from the sensor so we need to convert to amps.
+    We want to treat it as an input current in the Boost, so its also inverted
+    For open loop control the duty cycle reference is calculated from the sensor
+    differently from the Vref, this time scaled between zero and 1.
+    The boost duty cycle needs to be saturated with a 0.33 minimum to prevent high output voltages
+ */ 
+
+ // LATER REMOVE CODE PART RELATED TO BOOST
   if (Boost_mode == 1){
     iL = -current_mA/1000.0;
     dutyref = saturation(sensorValue2 * (1.0 / 1023.0),0.99,0.33);
