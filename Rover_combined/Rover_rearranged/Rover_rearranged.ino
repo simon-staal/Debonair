@@ -1,8 +1,5 @@
-/*
- * pin6 is PWM output at 62.5kHz.
- * duty-cycle saturation is set as 2% - 98%
- * Control frequency is set as 1.25kHz. 
-*/
+
+
 
 #include <Wire.h>
 #include <INA219_WE.h>
@@ -57,7 +54,8 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-float vref = 2.5; // value chosen by me
+float vref = 5; // value chosen by me
+
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
 unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
@@ -78,14 +76,8 @@ boolean CL_mode = 0;
 unsigned int loopTrigger;
 unsigned int com_count=0;   // a variables to count the interrupts. Used for program debugging.
 
-
 //************************** Motor Constants **************************//
-unsigned long previousMillis = 0; //initializing time counter
-const long f_i = 10000;           //time to move in forward direction, please calculate the precision and conversion factor
-const long r_i = 20000;           //time to rotate clockwise
-const long b_i = 30000;           //time to move backwards
-const long l_i = 40000;           //time to move anticlockwise
-const long s_i = 50000;    
+   
 int DIRRstate = LOW;              //initializing direction states
 int DIRLstate = HIGH;
 
@@ -94,7 +86,6 @@ int DIRR = 21;                    //defining right direction pin
 
 int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
-//*******************************************************************//
 
 //********************** Camera sensor variables ********************//
 
@@ -110,58 +101,14 @@ int distance_x=0;
 int distance_y=0;
 volatile byte movementflag=0;
 volatile int xydat[2];
-
-int convTwosComp(int b){
-  //Convert from 2's complement
-  if(b & 0x80){
-    b = -1 * ((b ^ 0xff) + 1);
-    }
-  return b;
-  }
 int tdistance = 0;
 
-void mousecam_reset(){
-  digitalWrite(PIN_MOUSECAM_RESET,HIGH);
-  delay(1); // reset pulse >10us
-  digitalWrite(PIN_MOUSECAM_RESET,LOW);
-  delay(35); // 35ms from reset to functional
-}
-
-int mousecam_init(){
-  pinMode(PIN_MOUSECAM_RESET,OUTPUT);
-  pinMode(PIN_MOUSECAM_CS,OUTPUT);
-  
-  digitalWrite(PIN_MOUSECAM_CS,HIGH);
-  
-  mousecam_reset();
-  
-  int pid = mousecam_read_reg(ADNS3080_PRODUCT_ID);
-  if(pid != ADNS3080_PRODUCT_ID_VAL)
-    return -1;
-
-  // turn on sensitive mode
-  mousecam_write_reg(ADNS3080_CONFIGURATION_BITS, 0x19);
-
-  return 0;
-}
-
-void mousecam_write_reg(int reg, int val){
-  digitalWrite(PIN_MOUSECAM_CS, LOW);
-  SPI.transfer(reg | 0x80);
-  SPI.transfer(val);
-  digitalWrite(PIN_MOUSECAM_CS,HIGH);
-  delayMicroseconds(50);
-}
-
-int mousecam_read_reg(int reg){
-  digitalWrite(PIN_MOUSECAM_CS, LOW);
-  SPI.transfer(reg);
-  delayMicroseconds(75);
-  int ret = SPI.transfer(0xff);
-  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
-  delayMicroseconds(1);
-  return ret;
-}
+//************************ Function declarations *********************//
+int convTwosComp(int b);
+void mousecam_reset();
+int mousecam_init();
+void mousecam_write_reg(int reg, int val);
+int mousecam_read_reg(int reg);
 
 struct MD
 {
@@ -172,64 +119,20 @@ struct MD
  byte max_pix;
 };
 
-void mousecam_read_motion(struct MD *p){
-  digitalWrite(PIN_MOUSECAM_CS, LOW);
-  SPI.transfer(ADNS3080_MOTION_BURST);
-  delayMicroseconds(75);
-  p->motion =  SPI.transfer(0xff);
-  p->dx =  SPI.transfer(0xff);
-  p->dy =  SPI.transfer(0xff);
-  p->squal =  SPI.transfer(0xff);
-  p->shutter =  SPI.transfer(0xff)<<8;
-  p->shutter |=  SPI.transfer(0xff);
-  p->max_pix =  SPI.transfer(0xff);
-  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
-  delayMicroseconds(5);
-}
-
-// pdata must point to an array of size ADNS3080_PIXELS_X x ADNS3080_PIXELS_Y
-// you must call mousecam_reset() after this if you want to go back to normal operation
-int mousecam_frame_capture(byte *pdata){
-  mousecam_write_reg(ADNS3080_FRAME_CAPTURE,0x83);
-  
-  digitalWrite(PIN_MOUSECAM_CS, LOW);
-  
-  SPI.transfer(ADNS3080_PIXEL_BURST);
-  delayMicroseconds(50);
-  
-  int pix;
-  byte started = 0;
-  int count;
-  int timeout = 0;
-  int ret = 0;
-  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; ){
-    pix = SPI.transfer(0xff);
-    delayMicroseconds(10);
-    if(started==0){
-      if(pix&0x40)
-        started = 1;
-      else{
-        timeout++;
-        if(timeout==100){
-          ret = -1;
-          break;
-        }
-      }
-    }
-    if(started==1){
-      pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
-    }
-  }
-  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
-  delayMicroseconds(14);
-  return ret;
-}
+void mousecam_read_motion(struct MD *p);
+int mousecam_frame_capture(byte *pdata);
+void sampling(float vref);
+float saturation( float sat_input, float uplim, float lowlim);
+void pwm_modulate(float pwm_input);
+float pidv( float pid_input);
+float pidi(float pid_input);
 
 
+//*************************** Setup ****************************//
 
 void setup() {
   
-  //*********************** Camera Pins Defining **************************//
+  // Camera Pins Defining: 
   pinMode(PIN_SS,OUTPUT);
   pinMode(PIN_MISO,INPUT);
   pinMode(PIN_MOSI,OUTPUT);
@@ -248,7 +151,7 @@ void setup() {
     while(1);
   }
 
-  //************************** Motor Pins Defining **************************//
+  // Motor Pins Defining: 
   pinMode(DIRR, OUTPUT);
   pinMode(DIRL, OUTPUT);
   pinMode(pwmr, OUTPUT);          //pin to control right wheel speed using pwm - pwmr is pin 5
@@ -256,10 +159,8 @@ void setup() {
   
   digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
   digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
-  //*************************************************************************//
 
-  //*************************** Basic pin setups ******************************//
-  
+  // Basic pin setups:
   noInterrupts(); //disable all interrupts
   pinMode(13, OUTPUT);  //Pin13 is used to time the loops of the controller
   pinMode(3, INPUT_PULLUP); //Pin3 is the input from the Buck/Boost switch
@@ -283,8 +184,9 @@ void setup() {
   Wire.begin(); // We need this for the i2c comms for the current sensor
   ina219.init(); // this initiates the current sensor
   Wire.setClock(700000); // set the comms speed for i2c
-  
 }
+
+//***************************** Loop **************************//
 
 void loop() {
   
@@ -411,7 +313,6 @@ unsigned long currentMillis = millis();
           pwm_modulate(open_loop); // and send it out
       }
     }
-    // closed loop control path
 
     digitalWrite(13, LOW);   // reset pin13.
     loopTrigger = 0;
@@ -445,27 +346,18 @@ unsigned long currentMillis = millis();
   */
   //set your states
 
-//non funziona per adesso come vorrei
-int diff_x = total_x - distance_x;
-int diff_y = total_y - distance_y;
-/*
-  if (abs(diff_y) < 100) {
-    DIRRstate = HIGH;   //goes forwards
-    DIRLstate = LOW;}
-*/ 
-
   if (total_y >= 0 && total_y <100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
-  if(total_y == 100){
+  if(total_y >= 100){
     DIRRstate = LOW;    // goes backwards
     DIRLstate = HIGH;}
-  if(total_y > 100){
-    DIRRstate = LOW;     
-    DIRLstate = HIGH;}     
+    
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate);
 }
+
+//*************************** Loop end ***********************
 
 // Timer A CMP1 interrupt. Every 800us the program enters this interrupt. 
 // This, clears the incoming interrupt flag and triggers the main loop.
@@ -475,7 +367,108 @@ ISR(TCA0_CMP1_vect){
   loopTrigger = 1;
 }
 
-// This subroutine processes all of the analogue samples, creating the required values for the main loop
+//************************** Functions ***************************************//
+
+int convTwosComp(int b){
+  //Convert from 2's complement
+  if(b & 0x80){
+    b = -1 * ((b ^ 0xff) + 1);
+    }
+  return b;
+  }
+
+void mousecam_reset(){
+  digitalWrite(PIN_MOUSECAM_RESET,HIGH);
+  delay(1); // reset pulse >10us
+  digitalWrite(PIN_MOUSECAM_RESET,LOW);
+  delay(35); // 35ms from reset to functional
+}
+
+int mousecam_init(){
+  pinMode(PIN_MOUSECAM_RESET,OUTPUT);
+  pinMode(PIN_MOUSECAM_CS,OUTPUT);
+  
+  digitalWrite(PIN_MOUSECAM_CS,HIGH);
+  
+  mousecam_reset();
+  
+  int pid = mousecam_read_reg(ADNS3080_PRODUCT_ID);
+  if(pid != ADNS3080_PRODUCT_ID_VAL)
+    return -1;
+
+  // turn on sensitive mode
+  mousecam_write_reg(ADNS3080_CONFIGURATION_BITS, 0x19);
+
+  return 0;
+}
+
+void mousecam_write_reg(int reg, int val){
+  digitalWrite(PIN_MOUSECAM_CS, LOW);
+  SPI.transfer(reg | 0x80);
+  SPI.transfer(val);
+  digitalWrite(PIN_MOUSECAM_CS,HIGH);
+  delayMicroseconds(50);
+}
+
+int mousecam_read_reg(int reg){
+  digitalWrite(PIN_MOUSECAM_CS, LOW);
+  SPI.transfer(reg);
+  delayMicroseconds(75);
+  int ret = SPI.transfer(0xff);
+  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
+  delayMicroseconds(1);
+  return ret;
+}
+
+void mousecam_read_motion(struct MD *p){
+  digitalWrite(PIN_MOUSECAM_CS, LOW);
+  SPI.transfer(ADNS3080_MOTION_BURST);
+  delayMicroseconds(75);
+  p->motion =  SPI.transfer(0xff);
+  p->dx =  SPI.transfer(0xff);
+  p->dy =  SPI.transfer(0xff);
+  p->squal =  SPI.transfer(0xff);
+  p->shutter =  SPI.transfer(0xff)<<8;
+  p->shutter |=  SPI.transfer(0xff);
+  p->max_pix =  SPI.transfer(0xff);
+  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
+  delayMicroseconds(5);
+}
+
+int mousecam_frame_capture(byte *pdata){            // pdata must point to an array of size ADNS3080_PIXELS_X x ADNS3080_PIXELS_Y
+  mousecam_write_reg(ADNS3080_FRAME_CAPTURE,0x83);  // you must call mousecam_reset() after this if you want to go back to normal operation
+  
+  digitalWrite(PIN_MOUSECAM_CS, LOW);
+  SPI.transfer(ADNS3080_PIXEL_BURST);
+  delayMicroseconds(50);
+  
+  int pix;
+  byte started = 0;
+  int count;
+  int timeout = 0;
+  int ret = 0;
+  for(count = 0; count < ADNS3080_PIXELS_X * ADNS3080_PIXELS_Y; ){
+    pix = SPI.transfer(0xff);
+    delayMicroseconds(10);
+    if(started==0){
+      if(pix&0x40)
+        started = 1;
+      else{
+        timeout++;
+        if(timeout==100){
+          ret = -1;
+          break;
+        }
+      }
+    }
+    if(started==1){
+      pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
+    }
+  }
+  digitalWrite(PIN_MOUSECAM_CS,HIGH); 
+  delayMicroseconds(14);
+  return ret;
+}
 
 void sampling(float vref){
 
@@ -486,12 +479,11 @@ void sampling(float vref){
   sensorValue2 = vref *(1023.0/ 4.096); 
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
-
+  
   /* Process the values so they are a bit more usable/readable
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
-  
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   //vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
@@ -503,7 +495,6 @@ void sampling(float vref){
     differently from the Vref, this time scaled between zero and 1.
     The boost duty cycle needs to be saturated with a 0.33 minimum to prevent high output voltages
  */ 
-
  // LATER REMOVE CODE PART RELATED TO BOOST
   if (Boost_mode == 1){
     iL = -current_mA/1000.0;
@@ -511,8 +502,7 @@ void sampling(float vref){
   }else{
     iL = current_mA/1000.0;
     dutyref = sensorValue2 * (1.0 / 1023.0);
-  }
-  
+  } 
 }
 
 float saturation( float sat_input, float uplim, float lowlim){ // Saturation function
@@ -527,7 +517,6 @@ void pwm_modulate(float pwm_input){ // PWM function
 }
 
 // This is a PID controller for the voltage
-
 float pidv( float pid_input){
   float e_integration;
   e0v = pid_input;
@@ -553,7 +542,6 @@ float pidv( float pid_input){
 }
 
 // This is a PID controller for the current
-
 float pidi(float pid_input){
   float e_integration;
   e0i = pid_input;
@@ -577,6 +565,5 @@ float pidi(float pid_input){
   e1i = e0i; // update last time's error
   return u0i;
 }
-
 
 /*end of the program.*/
