@@ -14,19 +14,43 @@ Followed the following [guide](https://obrienlabs.net/how-to-setup-your-own-mqtt
 
 Tested the MQTT server on AWS server using multiple SSH connections, seems to be working. Next step is to try accessing it using node.js server / ESP32 client.
 
-**Stuff Petra is doing: (idk if it's relevant)**
+**TOPICS**
+Initialisation:
+- Web-app says to start mapping
+- Control sends back when we're done mapping
+- We will need to send location of ping pong balls
+*Possible implementation*
+- We have a specific order in which we loop through the ping pong balls to find
+- The target ball is sent by our server to the esp, which is forwarded to vision
+- Vision sends angle to drive to tell it where to turn / drive
 
-```
-npm install mqtt --save
-npm install mqtt -g
+General:
+- Drive receives coordinates
+- Drive receives actual directions
+- Drive sends coordinates
+- Energy sends battery level
+- We can calculate range server side (hopefully)
 
-sudo apt update
-sudo apt-get install mosquitto mosquitto-clients
+Therefore suggests the following topics:
+**toESP32**
+Published to by web-app, subscribed to by ESP32
+- `toESP32/x_pos`contains desired x-coordinate
+- `toESP32/y_pos` contains desired y-coordinate
+- `toESP32/target` contains the colour being targeted
 
-sudo service mosquitto start
+**fromESP32**
+Published to by ESP32, subscribed to by web-app
+- `fromESP32/x_pos` contains current x_pos
+- `fromESP32/y_pos` contains current y_pos
+- `fromESP32/target` indicated if we have reached the target
+- `fromESP32/power` contains power information (battery level)
 
-npm init
+We can therefore update the publishing rights to the toESP32 and fromESP32 topics to only allow the web-app / rover to respectively publish to those topics.
 
-sudo npm i -g npx
-npx create-react-app client
-```
+Users
+-----
+I am making the following 2 users to limit access to the topics above (storing the users and passwords here cause plain text password storage is the one)
+- esp32:#8HAGxb3*V%+CD8^
+- webapp:=ZCJ=4uzfZZZ#36f
+
+The rights of these users allows them to use **toESP32** and **fromESP32** as described above.

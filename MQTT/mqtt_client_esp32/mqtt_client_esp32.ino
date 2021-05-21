@@ -2,12 +2,14 @@
 #include <PubSubClient.h>
 #include <Wire.h>
 
-// Replace the next variables with your SSID/Password combination
+// Parameters for the wifi connection (will need to change depending on location)
 const char* ssid = "VM6446132";
 const char* password = "ty5VxqxnW3yr";
 
-// Add your MQTT Broker IP address, example:
+// Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
+const char* mqtt_user = "esp32";
+const char* mqtt_pwd = "#8HAGxb3*V%+CD8^";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -65,7 +67,7 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "esp32/output") {
+  if (String(topic) == "toESP32/output") {
     Serial.print("Changing output to ");
     if(messageTemp == "on"){
       Serial.println("on");
@@ -83,10 +85,10 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("ESP8266Client")) {
+    if (client.connect("ESP32Client", mqtt_user, mqtt_pwd)) {
       Serial.println("connected");
       // Subscribe
-      client.subscribe("esp32/output");
+      client.subscribe("toESP32/#");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -110,6 +112,6 @@ void loop() {
     char *testString = "test";
     Serial.print("Test string: ");
     Serial.println(testString);
-    client.publish("test/test", testString);
+    client.publish("fromESP32/test", testString);
   }
 }
