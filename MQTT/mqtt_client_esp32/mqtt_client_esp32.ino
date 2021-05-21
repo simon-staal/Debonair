@@ -1,6 +1,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <Wire.h>
+#include <Wire.h> // Not 100% sure if this included is needed, test without
 
 // Parameters for the wifi connection (will need to change depending on location)
 const char* ssid = "VM6446132";
@@ -42,15 +42,15 @@ void setup_wifi() {
 
 void setup() {
   Serial.begin(115200);
-  // default settings
-  // (you can also pass in a Wire library object like &Wire2)
+  // Will probably also need to setup wiring / pins to communicate? (not sure)
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  client.setServer(mqtt_server, 1883); // Change if we ever use a different port
+  client.setCallback(callback); // Sets callback function
 
   pinMode(ledPin, OUTPUT);
 }
 
+// This function is called whenever we receive a message to a topic we are subscribed to
 void callback(char* topic, byte* message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
@@ -63,7 +63,7 @@ void callback(char* topic, byte* message, unsigned int length) {
   }
   Serial.println();
 
-  // Feel free to add more if statements to control more GPIOs with MQTT
+  // Add more if statements to control more GPIOs with MQTT (figure out communication with pins)
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
@@ -105,6 +105,7 @@ void loop() {
   }
   client.loop();
 
+  // Sends test message every 5 seconds
   long now = millis();
   if (now - lastMsg > 5000) {
     lastMsg = now;

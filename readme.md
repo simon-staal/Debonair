@@ -14,7 +14,7 @@ A folder containing all the HTML stuff for the front-end of our webapp. Also con
 
 MQTT
 ----
-A folder containing details about how the MQTT protocol will be used to communicate between our server and ESP32 control chip on the actual rover, and will later contain the arduino files for the ESP32 chip.
+A folder containing details about how the MQTT protocol will be used to communicate between our server and ESP32 control chip on the actual rover, as well as the arduino files for the ESP32 chip.
 
 Server
 ------
