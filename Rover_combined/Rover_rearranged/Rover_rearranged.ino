@@ -526,7 +526,6 @@ void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance
     if(abs(distance_error) < 5 ){
      // stop rover
      pwm_modulate(0);
-     vref=0;
      }    
     if(distance_error >= 15){
      // go forwards
