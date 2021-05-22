@@ -297,13 +297,15 @@ unsigned long currentMillis = millis();
 
   //set your states
 
-//go_forwards(100,total_y);
+go_forwards(200,total_y);
 
+/*
  if (total_y >= 0 && total_y <100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
   if(total_y >= 100){
     pwm_modulate(0);}
+ */
   
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate);
@@ -520,21 +522,29 @@ float pidi(float pid_input){
 
 void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance){
    float sensor_distance= sensor_forwards_distance;
-   float distance_error = command_forwards_des_dist - sensor_distance;
-    while(distance_error > 0){
+   float distance_error = command_forwards_des_dist + sensor_forwards_distance;
+    if(abs(distance_error) < 5 ){
+     // stop rover
+     pwm_modulate(0);
+     vref=0;
+     }    
+    if(distance_error >= 15){
      // go forwards
     DIRRstate = HIGH;
     DIRLstate = LOW;
-      }
-    while(distance_error < 0){
+      }else if(distance_error >0 && distance_error <15){
+   pwm_modulate(0.25);
+    DIRRstate = HIGH;
+    DIRLstate = LOW;
+        }
+    if(distance_error <= -15){
      // go backwards
     DIRRstate = LOW;
     DIRLstate = HIGH;
-      }
-    if(distance_error == 0){
-     // stop rover
-     pwm_modulate(0);
-     }
+      }else if(distance_error < 0 && distance_error > -15){
+   pwm_modulate(0.25);
+    DIRRstate = LOW;
+    DIRLstate = HIGH; }
     
   }
 
