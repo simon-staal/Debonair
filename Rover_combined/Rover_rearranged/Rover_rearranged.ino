@@ -1,6 +1,4 @@
 
-
-
 #include <Wire.h>
 #include <INA219_WE.h>
 #include "SPI.h"
@@ -54,7 +52,7 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-float vref = 5; // value chosen by me
+float vref = 2.5; // value chosen by me
 
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
@@ -127,7 +125,8 @@ void pwm_modulate(float pwm_input);
 float pidv( float pid_input);
 float pidi(float pid_input);
 
-
+void stop_Rover();
+void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance);
 //*************************** Setup ****************************//
 
 void setup() {
@@ -190,7 +189,7 @@ void setup() {
 
 void loop() {
   
-  // main code here, to run repeatedly:
+  // main code here runs repeatedly:
 
 //******************* Camera loop part: ********************//
 
@@ -251,24 +250,19 @@ total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts p
 total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
     
 
- Serial.print('\n');
-
+Serial.print('\n');
 Serial.println("dx (mm) = "+String(distance_x));
 Serial.println("dy (mm) = "+String(distance_y));
 
-
 Serial.println("Distance_x = " + String(total_x));
-
 Serial.println("Distance_y = " + String(total_y));
- Serial.print('\n');
+Serial.print('\n');
 
   delay(100);
 
   #endif
 
-
 //************************** Motor Loop part: ****************************//
-
 
 unsigned long currentMillis = millis();
   if(loopTrigger) { // This loop is triggered, it wont run unless there is an interrupt
@@ -279,15 +273,8 @@ unsigned long currentMillis = millis();
     sampling(vref);
     CL_mode = digitalRead(3); // input from the OL_CL switch
     Boost_mode = digitalRead(2); // input from the Buck_Boost switch
-
-    if (Boost_mode){
-      if (CL_mode) { //Closed Loop Boost
-          pwm_modulate(1); // This disables the Boost as we are not using this mode
-      }else{ // Open Loop Boost
-          pwm_modulate(1); // This disables the Boost as we are not using this mode
-      }
-    }else{      
-      if (CL_mode) { // Closed Loop Buck
+     
+      if (!Boost_mode && CL_mode) { // Closed Loop Buck
           // The closed loop path has a voltage controller cascaded with a current controller. The voltage controller
           // creates a current demand based upon the voltage error. This demand is saturated to give current limiting.
           // The current loop then gives a duty cycle demand based upon the error between demanded current and measured
@@ -299,62 +286,28 @@ unsigned long currentMillis = millis();
           ei=cv-iL; //current error
           closed_loop=pidi(ei);  //current pid
           closed_loop=saturation(closed_loop,0.99,0.01);  //duty_cycle saturation
-          pwm_modulate(closed_loop); //pwm modulation - closed_loop is a duty
-          
-      }else{ // Open Loop Buck
-          current_limit = 3; // Buck has a higher current limit
-          oc = iL-current_limit; // Calculate the difference between current measurement and current limit
-          if ( oc > 0) {
-            open_loop=open_loop-0.001; // We are above the current limit so less duty cycle
-          } else {
-            open_loop=open_loop+0.001; // We are below the current limit so more duty cycle
-          }
-          open_loop=saturation(open_loop,dutyref,0.02); // saturate the duty cycle at the reference or a min of 0.01
-          pwm_modulate(open_loop); // and send it out
+          pwm_modulate(closed_loop); //pwm modulation - closed_loop is a duty      
       }
-    }
-
     digitalWrite(13, LOW);   // reset pin13.
     loopTrigger = 0;
   }
   
   //************************** Motor Testing **************************//
   //this part of the code decides the direction of motor rotations depending on the time lapsed. currentMillis records the time lapsed once it is called.
-  /*
-  //moving forwards
-  if (currentMillis < f_i) {
-    DIRRstate = HIGH;
-    DIRLstate = LOW; 
-  }
-  //rotating clockwise
-  if (currentMillis > f_i && currentMillis <r_i) {
-    DIRRstate = HIGH;
-    DIRLstate = HIGH;
-  }
 
-  //moving backwards
-  if (currentMillis > r_i && currentMillis <b_i) {
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-    
-  }
-  //rotating anticlockwise
-  if (currentMillis > b_i && currentMillis <l_i) {
-    DIRRstate = LOW;
-    DIRLstate = LOW; 
-  }
-  */
   //set your states
 
-  if (total_y >= 0 && total_y <100) {
+//go_forwards(100,total_y);
+
+ if (total_y >= 0 && total_y <100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
   if(total_y >= 100){
-    DIRRstate = LOW;    // goes backwards
-    DIRLstate = HIGH;}
-    
+    pwm_modulate(0);}
+  
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate);
+ 
 }
 
 //*************************** Loop end ***********************
@@ -475,7 +428,6 @@ void sampling(float vref){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  //sensorValue2 = analogRead(A2); //sample Vref - initially
   sensorValue2 = vref *(1023.0/ 4.096); 
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -495,7 +447,6 @@ void sampling(float vref){
     differently from the Vref, this time scaled between zero and 1.
     The boost duty cycle needs to be saturated with a 0.33 minimum to prevent high output voltages
  */ 
- // LATER REMOVE CODE PART RELATED TO BOOST
   if (Boost_mode == 1){
     iL = -current_mA/1000.0;
     dutyref = saturation(sensorValue2 * (1.0 / 1023.0),0.99,0.33);
@@ -565,5 +516,29 @@ float pidi(float pid_input){
   e1i = e0i; // update last time's error
   return u0i;
 }
+
+
+void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance){
+   float sensor_distance= sensor_forwards_distance;
+   float distance_error = command_forwards_des_dist - sensor_distance;
+    while(distance_error > 0){
+     // go forwards
+    DIRRstate = HIGH;
+    DIRLstate = LOW;
+      }
+    while(distance_error < 0){
+     // go backwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+      }
+    if(distance_error == 0){
+     // stop rover
+     pwm_modulate(0);
+     }
+    
+  }
+
+void stop_Rover(){
+  pwm_modulate(0);}
 
 /*end of the program.*/
