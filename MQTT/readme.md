@@ -13,10 +13,10 @@ I've set up an MQTT broker on my AWS instance using [mosquitto](http://mosquitto
 Followed the following [guide](https://obrienlabs.net/how-to-setup-your-own-mqtt-broker/) to get a mosquitto set up on my AWS instance. Have authentication (for more details, see [**users**](#users)), clients must know password in order to publish or read from particular topics, as well as websockets (not sure if this will be needed). The following commands are useful:
 - `sudo service mosquitto start` to start up the MQTT broker
 - `sudo mosquitto -c /etc/mosquitto/mosquitto.conf` to ensure authentication permissions are being used (I think this needs to be running to use sub / pub)
-- `mosquitto_sub -h localhost -t weather/#` to subscribe to the "weather" topic (example, change names and add topics as needed). The `#` means that it will listen to all subtopics under weather (only use for debugging)
-- `mosquitto_pub -h localhost -t "weather/test" -m "<message>"` to publish to a topic (this wont work with authentication)
-- `mosquitto_pub -h localhost -t "weather/test" -m "<message>" -u "<username>" -P "<password>"` to publish to a topic using authentication
-- `sudo sudo cat /var/log/mosquitto/mosquitto.log` to view logs
+- `mosquitto_sub -h localhost -t test/#` to subscribe to the "weather" topic (example, change names and add topics as needed). The `#` means that it will listen to all subtopics under weather (only use for debugging)
+- `mosquitto_pub -h localhost -t "test/test" -m "<message>"` to publish to a topic (this wont work with authentication)
+- `mosquitto_pub -h localhost -t "test/test" -m "<message>" -u "<username>" -P "<password>"` to publish to a topic using authentication
+- `sudo cat /var/log/mosquitto/mosquitto.log` to view logs
 
 **TOPICS**
 Initialisation:
