@@ -3,7 +3,7 @@
 set -euo pipefail
 
 if [[ $# -eq 0 ]] ; then
-    >&2 echo "Usage: ./run_server.sh <IP>"
+    >&2 echo "Usage: ./halt_server.sh <IP>"
     >&2 echo "<IP> is the IP of the instance being connected to"
     exit 1
 fi
@@ -37,30 +37,15 @@ ssh -A -i ${KEY} ubuntu@${1} << EOF
   set -euo pipefail
   echo "Connection successful"
   echo "$SEP"
-  echo "Installing packages"
-  sudo apt update
-  sudo apt -y install nodejs
-  echo "Packages installed successfully"
-  echo "$SEP"
-  echo "Building project"
-  if [[ -d "Y2_Project" ]]; then
-    cd Y2_Project
-    git pull origin master
-    cd
-  else
-    git clone git@github.com:sts219/Y2_Project.git
-  fi
-  echo "Most recent version obtained"
 
-  echo "$SEP"
-  echo "Launching MQTT broker"
-  screen -d -m -S mqtt bash -c 'sudo mosquitto -c /etc/mosquitto/mosquitto.conf'
+  echo "Halting MQTT broker"
+  screen -X -S "mqtt" quit
   echo "$SEP"
 
   echo "$SEP"
-  echo "Launching REST web service"
-  screen -d -m -S rest bash -c 'cd ~/Y2_Project/Server && node index.js'
+  echo "Halting REST web service"
+  screen -X -S "rest" quit
   echo "$SEP"
   
-  echo "Server running, Done"
+  echo "Server processes halted, Done"
 EOF
