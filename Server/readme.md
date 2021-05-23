@@ -5,7 +5,9 @@ Will need to wipe all these example garbage files when making the actual REST AP
 npm init
 npm install --save-dev nodemon **This is to relaunch the server whenever changes are made**
 npm install --save express **We are using express for routing**
-npm install --save body-parser (Don't think I need this)
+```
+<del>`npm install --save body-parser`</del> (Don't think I need this)
+```
 npm install --save mqtt **To hand mqtt client stuff**
 npm install --save cors **This might be needed to allow use of browsers**
 ```
@@ -21,6 +23,12 @@ app.use(cors());
 ```
 This should hopefully get everything working.
 The app.use stuff with express is for handling parsing of JSON objects that could be received in POST requests from React.
+
+IF PULLING FROM GITHUB FOR THE FIRST TIME, RUN THE FOLLOWING TO LAUNCH THE SERVER:
+```
+npm install
+npm start
+```
 
 Notes
 =====
