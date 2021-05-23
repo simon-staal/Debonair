@@ -17,6 +17,7 @@ Followed the following [guide](https://obrienlabs.net/how-to-setup-your-own-mqtt
 - `mosquitto_pub -h localhost -t "test/test" -m "<message>"` to publish to a topic (this wont work with authentication)
 - `mosquitto_pub -h localhost -t "test/test" -m "<message>" -u "<username>" -P "<password>"` to publish to a topic using authentication
 - `sudo cat /var/log/mosquitto/mosquitto.log` to view logs
+- `sudo nano /etc/mosquitto/acl` to edit permissions
 
 **TOPICS**
 Initialisation:

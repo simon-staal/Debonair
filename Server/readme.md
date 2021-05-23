@@ -34,6 +34,9 @@ Going to try to run server in AWS instance and see if I can connect from local P
 *Update* THIS WORKS!!!!!!
 Downloaded repo onto AWS instance, used screen to run `node index.js` in a seperate whatever the fuck, did `curl <server_ip>:8080` on local PC and received a response
 
+**23/05/21**
+Trying to test the mqtt_server.js file, I am able to successfully connect to the broker and subscribe to the topic, but the client seems to be unable to detect messages. Further testing is requires, will work on that tomorrow.
+
 General
 =======
 For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
