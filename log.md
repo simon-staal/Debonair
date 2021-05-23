@@ -28,3 +28,6 @@ Been focusing on working on the the full-stack web dev course to learn more abou
 
 **21/05/21**
 Huge progress on the MQTT client. Have a working MQTT client on the ESP32, and buffed up the security of our MQTT broker on the aws side of things. Tested both reading data from a topic on the ESP32 and publishing to a topic, meaning our rover should now be able to communicate wirelessly via the ESP32 chip. Ruwan is working on the communication between the ESP32 and the arduino / FPGA.
+
+**23/05/21**
+Been working on developing the backend of our webapp. Essentially we will have a REST API coded in node.js (using express.js and mqtt.js), which our React frontend app will make requests to for information (probably using axios). Added new examples of how the 2 can be linked, will have to work closely with Yuna in further developing the backend.

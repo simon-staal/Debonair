@@ -51,9 +51,16 @@ ssh -A -i ${KEY} ubuntu@${1} << EOF
     git clone git@github.com:sts219/Y2_Project.git
   fi
   echo "Most recent version obtained"
+
   echo "$SEP"
-  echo "Launching node.js server"
+  echo "Launching MQTT broker"
+  screen -d -m -S node bash -c 'sudo mosquitto -c /etc/mosquitto/mosquitto.conf'
+  echo "$SEP"
+
+  echo "$SEP"
+  echo "Launching REST web service"
   screen -d -m -S node bash -c 'cd ~/Y2_Project/Server && node index.js'
   echo "$SEP"
+  
   echo "Server running, Done"
 EOF

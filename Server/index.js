@@ -1,5 +1,5 @@
 const http = require('http');
-const today = require('./today');
+const today = require('./today'); // Example of including another local node.js file
 
 const requestListener = function (req, res) {
   res.writeHead(200);
