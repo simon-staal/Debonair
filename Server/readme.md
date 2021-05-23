@@ -37,6 +37,9 @@ Downloaded repo onto AWS instance, used screen to run `node index.js` in a seper
 **23/05/21**
 Trying to test the mqtt_server.js file, I am able to successfully connect to the broker and subscribe to the topic, but the client seems to be unable to detect messages. Further testing is requires, will work on that tomorrow.
 
+*Update:*
+Tested mqtt_server.js again, is successfully authenticating and can receive messages, but doesn't subscribe to all subtopics. Fixed this issue in mqtt_server code and now can receive messages from all subtopics. Also tested publishing capabilities, which work.
+
 General
 =======
 For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
