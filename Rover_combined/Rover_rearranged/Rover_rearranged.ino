@@ -88,7 +88,7 @@ int pwmr = 5;                     //pin to control right wheel speed using pwm
 int pwml = 9;                     //pin to control left wheel speed using pwm
 
 //********************** Camera sensor variables ********************//
-
+// NOTE: int is 2 bytes on this thing
 int total_x = 0;
 int total_y = 0;
 int total_x1 = 0;
@@ -128,10 +128,15 @@ float pidv( float pid_input);
 float pidi(float pid_input);
 
 void stop_Rover();
-int go_forwards(float command_forwards_des_dist, float sensor_forwards_distance);
-int go_backwards(float command_backwards_des_dist, float sensor_backwards_distance);
-void turn_90left(int command_turn_left);
-void turn_90right(int command_turn_right);
+void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance); // -ve values to go back
+//void go_backwards(int command_backwards_des_dist, int sensor_backwards_distance);
+void turn_90left(unsigned long haltTime);
+void turn_90right(); // Update if needed later
+
+//***************************Globals*******************************
+bool halted = 0;
+bool done = 0;
+unsigned long haltTime;
 
 //*************************** Setup ****************************//
 
@@ -251,8 +256,8 @@ void loop() {
 total_x1 = (total_x1 + distance_x);
 total_y1 = (total_y1 + distance_y);
 
-total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
-total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
+total_x = (float)(total_x1/157.0) * 10; //Conversion from counts per inch to mm (400 counts per inch)
+total_y = (float)(total_y1/157.0) * 10; //Conversion from counts per inch to mm (400 counts per inch)
     
 
 Serial.print('\n');
@@ -298,7 +303,7 @@ Serial.print('\n');
   
   //************************** Rover Actions **************************//
   
-unsigned long currentMillis = millis();
+  unsigned long now = millis();
   
   //setting motor movements:
 /*
@@ -326,74 +331,61 @@ if (Serial.available() > 0){
   }
 */
 
-// MODE: 
-if(currentMillis < 20000){
-   float distance_error = 100 + total_y;
-   Serial.println("in go_Forwardssssssssssssssssssssssssssssssssssss");
-      if(distance_error >= 15){
-     // go forwards
-    DIRRstate = HIGH;
-    DIRLstate = LOW;
-      }else if(distance_error >0 && distance_error <15){
-   pwm_modulate(0.25);
-    DIRRstate = HIGH;
-    DIRLstate = LOW;}
-    if(distance_error <= -15){
-     // go backwards
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-      }else if(distance_error < 0 && distance_error > -15){
-   pwm_modulate(0.25);
-    DIRRstate = LOW;
-    DIRLstate = HIGH; }
-   if(abs(distance_error) < 5 ){
-     // stop rover
-     pwm_modulate(0);}
-     }
-if(currentMillis > 20000 && currentMillis < 40000){
-   float distance_error = 100 - total_y;
-      if(abs(distance_error) < 5 ){
-     // stop rover
-     pwm_modulate(0);
-     }
-    if(distance_error >= 15){
-     // go backwards
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-      }else if(distance_error >0 && distance_error <15){
-   pwm_modulate(0.25);
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-        }
-    if(distance_error <= -15){
-     // go forwards
-    DIRRstate = HIGH;
-    DIRLstate = LOW;
-      }else if(distance_error < 0 && distance_error > -15){
-   pwm_modulate(0.25);
-    DIRRstate = HIGH;
-    DIRLstate = LOW; }
+  // MODE: 
+  //Serial.print("Start of movement section, time diff ");
+  //Serial.println(now-lastMsg);
+  int target_y = 300;
+  int target_x = 100;
+  if(!halted){
+    if(abs(target_y-total_y) > 5){
+      Serial.println("going to target y");
+      go_forwards(target_y, total_y);
     }
-if(currentMillis > 40000 && currentMillis < 45000){
-  turn_90left();}
-if(currentMillis > 45000 && currentMillis < 50000){
-  turn_90right();}
-if(currentMillis > 50000){
-  stop_Rover();}
+    else if(abs(target_x-total_x) > 5){
+      Serial.println("going to target x");
+      go_forwards(target_x, total_x);  
+    }
+    
+  }
 
-//go_forwards(100,total_y);
-//go_backwards(100,total_y);
-
-/*
- if (total_y >= 0 && total_y <100) {
-    DIRRstate = HIGH;   //goes forwards
-    DIRLstate = LOW;}
-  if(total_y >= 100){
-    pwm_modulate(0);}
- */
- digitalWrite(DIRR, DIRRstate);
- digitalWrite(DIRL, DIRLstate);
-}
+// Catch finished condition (hopefully we enter this)
+  if((abs(target_y-total_y) < 5) && (abs(target_x-total_x) < 5)){
+    done = 1;
+    stop_Rover();  
+  }
+  
+  if(halted && !done)
+  {
+    Serial.println("rotating");
+    // turn 90 to work on other direction
+    turn_90left(haltTime);
+  }
+    
+    //Serial.println("going forward");
+       //}
+  /*
+  if(now > 20000 && now < 40000){
+    go_forwards(-300,total_y);
+      }
+  if(now > 40000 && now < 45000){
+    turn_90left();}
+  if(now > 45000 && now < 50000){
+    turn_90right();}
+  if(now > 50000){
+    stop_Rover();}
+  //Serial.print("End of movement section, time taken = ");
+  //Serial.println(millis()-lastMsg);
+  */
+  /*
+   if (total_y >= 0 && total_y <100) {
+      DIRRstate = HIGH;   //goes forwards
+      DIRLstate = LOW;}
+    if(total_y >= 100){
+      pwm_modulate(0);}
+   */
+   digitalWrite(DIRR, DIRRstate);
+   digitalWrite(DIRL, DIRLstate);
+ }
 
 //*************************** Loop end ***********************
 
@@ -438,7 +430,7 @@ int mousecam_init(){
   mousecam_write_reg(ADNS3080_CONFIGURATION_BITS, 0x19);
 
   return 0;
-}
+ }
 
 void mousecam_write_reg(int reg, int val){
   digitalWrite(PIN_MOUSECAM_CS, LOW);
@@ -603,74 +595,60 @@ float pidi(float pid_input){
 }
 
 
-int go_forwards(float command_forwards_des_dist, float sensor_forwards_distance){
-   float distance_error = command_forwards_des_dist + sensor_forwards_distance; 
-   int done = 0; 
-    while(done==0){
-      if(distance_error >= 15){
-     // go forwards
-    DIRRstate = HIGH;
-    DIRLstate = LOW;
-      }else if(distance_error >0 && distance_error <15){
-   pwm_modulate(0.25);
-    DIRRstate = HIGH;
-    DIRLstate = LOW;
-        }
-    if(distance_error <= -15){
-     // go backwards
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-      }else if(distance_error < 0 && distance_error > -15){
-   pwm_modulate(0.25);
-    DIRRstate = LOW;
-    DIRLstate = HIGH; }
-   if(abs(distance_error) < 5 ){
+void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
+  int distance_error = command_forwards_des_dist + sensor_forwards_distance;
+  halted = 0;
+  if(abs(distance_error) < 5 ){
      // stop rover
      pwm_modulate(0);
-     done=1;}
-     break;}
-  }
-
-int go_backwards(float command_backwards_des_dist, float sensor_backwards_distance){
-   int done = 0;
-   float distance_error = command_backwards_des_dist - sensor_backwards_distance;
-    
-      if(abs(distance_error) < 5 ){
-     // stop rover
-     pwm_modulate(0);
-    
-     return 0;
+     halted = 1;
+     haltTime = millis();
+     return;
      }
-    if(distance_error >= 15){
-     // go backwards
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-      }else if(distance_error >0 && distance_error <15){
-   pwm_modulate(0.25);
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-        }
-    if(distance_error <= -15){
-     // go forwards
+  if(distance_error >= 15){
+    // go forwards
     DIRRstate = HIGH;
     DIRLstate = LOW;
-      }else if(distance_error < 0 && distance_error > -15){
-   pwm_modulate(0.25);
+    return;
+  }else if(distance_error >0 && distance_error <15){
+    pwm_modulate(0.25);
     DIRRstate = HIGH;
-    DIRLstate = LOW; }
-    
-  }
-
-void turn_90left(){
+    DIRLstate = LOW;
+    return;
+  }else if(distance_error <= -15){
+    // go backwards
     DIRRstate = LOW;
-    DIRLstate = LOW; 
-  }
+    DIRLstate = HIGH;
+    return;
+  }else if(distance_error < 0 && distance_error > -15){
+    pwm_modulate(0.25);
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+    return;
+   }  
+ }
+
+void turn_90left(unsigned long haltTime){
+    unsigned long now = millis();
+    if(now-haltTime < 2000){
+      DIRRstate = LOW;
+      DIRLstate = LOW;
+    }
+    else{
+      stop_Rover();
+      halted = 0;
+    }
+    return; 
+}
 void turn_90right(){
     DIRRstate = HIGH;
     DIRLstate = HIGH;
-    }
+    return;
+}
 
 void stop_Rover(){
-  pwm_modulate(0);}
+  pwm_modulate(0);
+  return;
+}
 
 /*end of the program.*/
