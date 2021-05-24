@@ -123,3 +123,9 @@ if(diff_x < 0){
   }
 }
 }
+
+// Simon stuff
+void goForward(int desired, int current)
+{
+  int diff = desired + current;
+}
