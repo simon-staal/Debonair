@@ -48,15 +48,20 @@ Trying to test the mqtt_server.js file, I am able to successfully connect to the
 *Update:*
 Tested mqtt_server.js again, is successfully authenticating and can receive messages, but doesn't subscribe to all subtopics. Fixed this issue in mqtt_server code and now can receive messages from all subtopics. Also tested publishing capabilities, which work.
 
+**24/05/21**
+Trying to set up SSL certificate for the MQTT broker. To do this I'm setting up a dynamic DNS hostname for the AWS instance which is hosting the broker. Currently hostname is **http://debonair-phil.duckdns.org** and is manually linked to our instance IP.
+
 General
 =======
-For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
+- For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
 Will probs need to install MQTT globally: `npm install mqtt -g`
 
-For routing, refer to the following: https://expressjs.com/en/guide/routing.html
+- For routing, refer to the following: https://expressjs.com/en/guide/routing.html
 
-Handling post requests (from frontend)
+- Handling post requests (from frontend)
 https://codeforgeek.com/handle-get-post-request-express-4/
 
-How to send post requests (in frontend) - **USE AXIOS**
+- How to send post requests (in frontend) - **USE AXIOS**
 https://jasonwatmore.com/post/2020/07/17/react-axios-http-post-request-examples
+
+- Managing dynamic DNS hostname for server using [Duck DNS](https://www.duckdns.org/)
