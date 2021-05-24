@@ -351,7 +351,6 @@ if(currentMillis < 20000){
      pwm_modulate(0);}
      }
 if(currentMillis > 20000 && currentMillis < 40000){
-  Serial.println("in go_Backwardssssssssssssssssssssssssssssssssssss");
    float distance_error = 100 - total_y;
       if(abs(distance_error) < 5 ){
      // stop rover
@@ -375,8 +374,12 @@ if(currentMillis > 20000 && currentMillis < 40000){
     DIRRstate = HIGH;
     DIRLstate = LOW; }
     }
-if(currentMillis > 40000 && currentMillis < 60000){
+if(currentMillis > 40000 && currentMillis < 45000){
   turn_90left();}
+if(currentMillis > 45000 && currentMillis < 50000){
+  turn_90right();}
+if(currentMillis > 50000){
+  stop_Rover();}
 
 //go_forwards(100,total_y);
 //go_backwards(100,total_y);
@@ -662,7 +665,10 @@ void turn_90left(){
     DIRRstate = LOW;
     DIRLstate = LOW; 
   }
-void turn_90right(int command_turn_right);
+void turn_90right(){
+    DIRRstate = HIGH;
+    DIRLstate = HIGH;
+    }
 
 void stop_Rover(){
   pwm_modulate(0);}
