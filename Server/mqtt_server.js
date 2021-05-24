@@ -7,20 +7,23 @@ const clientOptions = {
 	username:"webapp",
 	password:"=ZCJ=4uzfZZZ#36f"
 }
-const client  = mqtt.connect("mqtt://localhost", clientOptions);
+const client  = mqtt.connect("mqtt://3.8.182.14", clientOptions);
 
 // Runs on connection to the broker
 client.on("connect", () => {
 	console.log("connected " + client.connected);
-	let topic = 'fromESP32';
+	// Subscribes to topics on startup
+	let topic = 'fromESP32/#';
 	client.subscribe(topic, (err, granted) => {
 		if (err) {
 		 console.log(err);
 		 return;
 		}
 		console.log('Subscribed to topic: ' + topic);
-	   });
-	})
+	});
+	// Testing publishing ability
+	publish('toESP32/test','hello',options);
+})
 
 // Runs if unable to connect to broker
 client.on("error", error => {

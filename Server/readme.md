@@ -5,7 +5,9 @@ Will need to wipe all these example garbage files when making the actual REST AP
 npm init
 npm install --save-dev nodemon **This is to relaunch the server whenever changes are made**
 npm install --save express **We are using express for routing**
-npm install --save body-parser (Don't think I need this)
+```
+<del>`npm install --save body-parser`</del> (Don't think I need this)
+```
 npm install --save mqtt **To hand mqtt client stuff**
 npm install --save cors **This might be needed to allow use of browsers**
 ```
@@ -22,6 +24,12 @@ app.use(cors());
 This should hopefully get everything working.
 The app.use stuff with express is for handling parsing of JSON objects that could be received in POST requests from React.
 
+IF PULLING FROM GITHUB FOR THE FIRST TIME, RUN THE FOLLOWING TO LAUNCH THE SERVER:
+```
+npm install
+npm start
+```
+
 Notes
 =====
 **18/05/21**
@@ -36,6 +44,9 @@ Downloaded repo onto AWS instance, used screen to run `node index.js` in a seper
 
 **23/05/21**
 Trying to test the mqtt_server.js file, I am able to successfully connect to the broker and subscribe to the topic, but the client seems to be unable to detect messages. Further testing is requires, will work on that tomorrow.
+
+*Update:*
+Tested mqtt_server.js again, is successfully authenticating and can receive messages, but doesn't subscribe to all subtopics. Fixed this issue in mqtt_server code and now can receive messages from all subtopics. Also tested publishing capabilities, which work.
 
 General
 =======

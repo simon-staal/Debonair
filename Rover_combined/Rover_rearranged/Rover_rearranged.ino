@@ -52,6 +52,8 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
+const int TURN_90_TIME = 2000;
+
 float vref = 2.5; // value chosen by me
 
 float open_loop, closed_loop; // Duty Cycles
@@ -126,7 +128,11 @@ float pidv( float pid_input);
 float pidi(float pid_input);
 
 void stop_Rover();
-void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance);
+int go_forwards(float command_forwards_des_dist, float sensor_forwards_distance);
+int go_backwards(float command_backwards_des_dist, float sensor_backwards_distance);
+void turn_90left(int command_turn_left);
+void turn_90right(int command_turn_right);
+
 //*************************** Setup ****************************//
 
 void setup() {
@@ -202,8 +208,7 @@ void loop() {
     delay(3);
     }
   */
-  // if enabled this section grabs frames and outputs them as ascii art
-  
+// if enabled this section grabs frames and outputs them as ascii art  
   if(mousecam_frame_capture(frame)==0)
   {
     int i,j,k;
@@ -264,7 +269,6 @@ Serial.print('\n');
 
 //************************** Motor Loop part: ****************************//
 
-unsigned long currentMillis = millis();
   if(loopTrigger) { // This loop is triggered, it wont run unless there is an interrupt
     
     digitalWrite(13, HIGH);   // set pin 13. Pin13 shows the time consumed by each control cycle. It's used for debugging.
@@ -292,12 +296,93 @@ unsigned long currentMillis = millis();
     loopTrigger = 0;
   }
   
-  //************************** Motor Testing **************************//
-  //this part of the code decides the direction of motor rotations depending on the time lapsed. currentMillis records the time lapsed once it is called.
+  //************************** Rover Actions **************************//
+  
+unsigned long currentMillis = millis();
+  
+  //setting motor movements:
+/*
+// MODE: DIRECT INPUT FROM USER
+if (Serial.available() > 0){
+  char_received = Serial.read();
+  if(char_received == 'F'){
+    DIRRstate = HIGH;   //goes forwards
+    DIRLstate = LOW;}
+  else if(char_received == 'B'){
+    DIRRstate = LOW;   //goes backwards
+    DIRLstate = HIGH;} 
+  else if(char_received == 'L'){
+    DIRRstate = LOW;   // turns left - rotates anticlockwise
+    DIRLstate = LOW;} 
+  else if(char_received == 'R'){
+    DIRRstate = HIGH;   // turns right - rotates clockwise
+    DIRLstate = HIGH;}
+  else if(char_received == 'S'){
+    pwm_modulate(0);} // stops
+  else{
+    pwm_modulate(0);} // by default stop 
+ digitalWrite(DIRR, DIRRstate);
+ digitalWrite(DIRL, DIRLstate);  
+  }
+*/
 
-  //set your states
+// MODE: 
+if(currentMillis < 20000){
+   float distance_error = 100 + total_y;
+   Serial.println("in go_Forwardssssssssssssssssssssssssssssssssssss");
+      if(distance_error >= 15){
+     // go forwards
+    DIRRstate = HIGH;
+    DIRLstate = LOW;
+      }else if(distance_error >0 && distance_error <15){
+   pwm_modulate(0.25);
+    DIRRstate = HIGH;
+    DIRLstate = LOW;}
+    if(distance_error <= -15){
+     // go backwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+      }else if(distance_error < 0 && distance_error > -15){
+   pwm_modulate(0.25);
+    DIRRstate = LOW;
+    DIRLstate = HIGH; }
+   if(abs(distance_error) < 5 ){
+     // stop rover
+     pwm_modulate(0);}
+     }
+if(currentMillis > 20000 && currentMillis < 40000){
+   float distance_error = 100 - total_y;
+      if(abs(distance_error) < 5 ){
+     // stop rover
+     pwm_modulate(0);
+     }
+    if(distance_error >= 15){
+     // go backwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+      }else if(distance_error >0 && distance_error <15){
+   pwm_modulate(0.25);
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+        }
+    if(distance_error <= -15){
+     // go forwards
+    DIRRstate = HIGH;
+    DIRLstate = LOW;
+      }else if(distance_error < 0 && distance_error > -15){
+   pwm_modulate(0.25);
+    DIRRstate = HIGH;
+    DIRLstate = LOW; }
+    }
+if(currentMillis > 40000 && currentMillis < 45000){
+  turn_90left();}
+if(currentMillis > 45000 && currentMillis < 50000){
+  turn_90right();}
+if(currentMillis > 50000){
+  stop_Rover();}
 
-go_forwards(200,total_y);
+//go_forwards(100,total_y);
+//go_backwards(100,total_y);
 
 /*
  if (total_y >= 0 && total_y <100) {
@@ -306,10 +391,8 @@ go_forwards(200,total_y);
   if(total_y >= 100){
     pwm_modulate(0);}
  */
-  
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate);
- 
 }
 
 //*************************** Loop end ***********************
@@ -520,14 +603,11 @@ float pidi(float pid_input){
 }
 
 
-void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance){
-   float sensor_distance= sensor_forwards_distance;
-   float distance_error = command_forwards_des_dist + sensor_forwards_distance;
-    if(abs(distance_error) < 5 ){
-     // stop rover
-     pwm_modulate(0);
-     }    
-    if(distance_error >= 15){
+int go_forwards(float command_forwards_des_dist, float sensor_forwards_distance){
+   float distance_error = command_forwards_des_dist + sensor_forwards_distance; 
+   int done = 0; 
+    while(done==0){
+      if(distance_error >= 15){
      // go forwards
     DIRRstate = HIGH;
     DIRLstate = LOW;
@@ -544,8 +624,51 @@ void go_forwards(float command_forwards_des_dist, float sensor_forwards_distance
    pwm_modulate(0.25);
     DIRRstate = LOW;
     DIRLstate = HIGH; }
+   if(abs(distance_error) < 5 ){
+     // stop rover
+     pwm_modulate(0);
+     done=1;}
+     break;}
+  }
+
+int go_backwards(float command_backwards_des_dist, float sensor_backwards_distance){
+   int done = 0;
+   float distance_error = command_backwards_des_dist - sensor_backwards_distance;
+    
+      if(abs(distance_error) < 5 ){
+     // stop rover
+     pwm_modulate(0);
+    
+     return 0;
+     }
+    if(distance_error >= 15){
+     // go backwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+      }else if(distance_error >0 && distance_error <15){
+   pwm_modulate(0.25);
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+        }
+    if(distance_error <= -15){
+     // go forwards
+    DIRRstate = HIGH;
+    DIRLstate = LOW;
+      }else if(distance_error < 0 && distance_error > -15){
+   pwm_modulate(0.25);
+    DIRRstate = HIGH;
+    DIRLstate = LOW; }
     
   }
+
+void turn_90left(){
+    DIRRstate = LOW;
+    DIRLstate = LOW; 
+  }
+void turn_90right(){
+    DIRRstate = HIGH;
+    DIRLstate = HIGH;
+    }
 
 void stop_Rover(){
   pwm_modulate(0);}

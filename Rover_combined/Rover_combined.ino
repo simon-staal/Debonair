@@ -57,7 +57,8 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-float vref = 2.5; // value chosen by me
+float vref = 0; // value chosen by me
+
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
 unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
@@ -225,7 +226,11 @@ int mousecam_frame_capture(byte *pdata){
   return ret;
 }
 
-
+void pwm_modulate(float pwm_input);
+void sampling(float vref);
+float saturation( float sat_input, float uplim, float lowlim);
+float pidv( float pid_input);
+float pidi(float pid_input);
 
 void setup() {
   
@@ -286,6 +291,33 @@ void setup() {
   
 }
 
+//***************PROVA*************
+
+void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
+   float distance_error = command_forwards_des_dist + sensor_forwards_distance;
+    while(distance_error > 0){
+     // go forwards
+    DIRRstate = HIGH;
+    DIRLstate = LOW;
+      }
+    while(distance_error < 0){
+     // go backwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+      }
+    if(distance_error == 0){
+     // stop rover
+     pwm_modulate(0);
+     }
+     
+    digitalWrite(DIRR, DIRRstate);
+    digitalWrite(DIRL, DIRLstate);
+  }
+
+void stop_Rover(){
+  pwm_modulate(0);}
+//******************************************
+
 void loop() {
   
   // main code here, to run repeatedly:
@@ -328,7 +360,7 @@ void loop() {
   MD md;
   mousecam_read_motion(&md);
   for(int i=0; i<md.squal/4; i++)
-    Serial.print('*');
+  Serial.print('*');
   Serial.print(' ');
   Serial.print((val*100)/351);
   Serial.print(' ');
@@ -348,8 +380,7 @@ total_y1 = (total_y1 + distance_y);
 total_x = 10*total_x1/157; //Conversion from counts per inch to mm (400 counts per inch)
 total_y = 10*total_y1/157; //Conversion from counts per inch to mm (400 counts per inch)
     
-
- Serial.print('\n');
+Serial.print('\n');
 
 Serial.println("dx (mm) = "+String(distance_x));
 Serial.println("dy (mm) = "+String(distance_y));
@@ -411,7 +442,6 @@ unsigned long currentMillis = millis();
           pwm_modulate(open_loop); // and send it out
       }
     }
-    // closed loop control path
 
     digitalWrite(13, LOW);   // reset pin13.
     loopTrigger = 0;
@@ -419,7 +449,7 @@ unsigned long currentMillis = millis();
   
   //************************** Motor Testing **************************//
   //this part of the code decides the direction of motor rotations depending on the time lapsed. currentMillis records the time lapsed once it is called.
-  /*
+  
   //moving forwards
   if (currentMillis < f_i) {
     DIRRstate = HIGH;
@@ -442,22 +472,21 @@ unsigned long currentMillis = millis();
     DIRRstate = LOW;
     DIRLstate = LOW; 
   }
-  */
+ digitalWrite(DIRR, DIRRstate);
+ digitalWrite(DIRL, DIRLstate);
+  
   //set your states
 
-//non funziona per adesso come vorrei
-int diff_x = total_x - distance_x;
-int diff_y = total_y - distance_y;
 /*
   if (abs(diff_y) < 100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
 */ 
 
-  if (total_y >= 0 && total_y <100) {
+ /* if (total_y >= 0 && total_y <100) {
     DIRRstate = HIGH;   //goes forwards
     DIRLstate = LOW;}
-  if(total_y == 100){
+  if(total_y >= 100){
     DIRRstate = LOW;    // goes backwards
     DIRLstate = HIGH;}
   if(total_y > 100){
@@ -466,7 +495,8 @@ int diff_y = total_y - distance_y;
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate);
 }
-
+*/
+}
 // Timer A CMP1 interrupt. Every 800us the program enters this interrupt. 
 // This, clears the incoming interrupt flag and triggers the main loop.
 
@@ -504,7 +534,6 @@ void sampling(float vref){
     The boost duty cycle needs to be saturated with a 0.33 minimum to prevent high output voltages
  */ 
 
- // LATER REMOVE CODE PART RELATED TO BOOST
   if (Boost_mode == 1){
     iL = -current_mA/1000.0;
     dutyref = saturation(sensorValue2 * (1.0 / 1023.0),0.99,0.33);
