@@ -7,7 +7,13 @@ const port = 8080;
 // Admin shit
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors()); // Enables CORS for all origins
+
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200
+}
+
+app.use(cors(corsOptions)); // Enables CORS for all origins
 
 app.get("/",(req,res)=>{
     res.render('index.html');
