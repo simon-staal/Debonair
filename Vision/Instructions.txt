@@ -2,7 +2,7 @@
 	2) Compile the code
 	3) Run the Qsys on programmer
 	4) Open Eclipse
-	5) Build the BSP (could be optional)
+	5) Build the BSP and Build Project
 	6) Right click D8M_Camera_Test -> NiosII -> NiosII Command Shell
 	7) Type "nios2-download D8M_Camera_Test.elf -c 1 -g"
 	8) Type nios2-terminal.exe

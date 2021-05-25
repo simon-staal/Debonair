@@ -99,9 +99,9 @@ assign hue = (red == green && red == blue) ? 0 :((value != red)? (value != green
 ///Detect Ping Pong balls
 reg prev_detect_high, prev_high;
 wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;
-assign pink_ball_detect = (((hue >= 0 && hue <= 15)||(hue >= 165 && hue <= 180)) && value > 120 && saturation > 110);
-//assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 100 && saturation > 110);
-assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 120 && saturation > 110);
+assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102);
+assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 90 && saturation > 116);
+assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && saturation > 112);
 //assign blue_ball_detect = (hue >= 85 && hue <= 140 && value > 140 && saturation > 100);		
 //assign grey_ball_detect = (value < 80 && saturation < 70);			 
 initial begin
@@ -117,7 +117,7 @@ end
 // Highlight detected areas
 wire [23:0] color_high;
 assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
-assign color_high  =  (pink_ball_detect && prev_detect_high && prev_high) ? {8'hff,8'h10,8'h0} 
+assign color_high  =  (pink_ball_detect && prev_detect_high) ? {8'hff,8'h10,8'h0} 
 	: ((green_ball_detect && prev_detect_high && prev_high)? {8'h04,8'hbd,8'h42} 
 	: ((orange_ball_detect && prev_detect_high && prev_high)? {8'hea,8'h9e,8'h1b} 
 	: ((blue_ball_detect && prev_detect_high && prev_high) ? {8'h0,8'h0,8'hff}
@@ -157,6 +157,15 @@ end
 
 //Find first and last red pixels
 reg [10:0] x_min, y_min, x_max, y_max;
+wire [10:0] x_dist;
+
+assign x_dist = (x_min > x_max) ? 0 : (x_max-x_min);
+
+initial begin
+	x_min <= 0;
+	x_max <= 0;
+end
+
 always@(posedge clk) begin
 	if (((green_ball_detect || orange_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect) && prev_detect_high && prev_high) & in_valid) begin	//Update bounds when the pixel is red
 		if (x < x_min) x_min <= x;
@@ -207,13 +216,27 @@ reg msg_buf_wr;
 wire msg_buf_rd, msg_buf_flush;
 wire [7:0] msg_buf_size;
 wire msg_buf_empty;
-
+wire [31:0] distance;
 `define RED_BOX_MSG_ID "RBB"
+
+wire[6:0] ratio1,ratio2;
+assign ratio1 = 16'd79;
+assign ratio2 = 16'd20;
+
+wire [10:0] constan;
+assign constan = 16'd734;
+
+assign distance = (x_dist > 145) ? ((constan * ratio1)/ratio2/x_dist) : (((constan * ratio1)/ratio2)/x_dist + ((((constan * ratio1)/ratio2)/x_dist) * (((145-x_dist) * 3) * (x_dist * 3)))/1000000);
+
+//((732 * (79/20))/147) =19.66 ish 19
+ // -> 14.9
+
+//79/20 = 3.95 -> 3
 
 always@(*) begin	//Write words to FIFO as state machine advances
 	case(msg_state)
 		2'b00: begin
-			msg_buf_in = 32'b0;
+			msg_buf_in = 32'd0; //Bottom right coordinate
 			msg_buf_wr = 1'b0;
 		end
 		2'b01: begin
@@ -221,12 +244,14 @@ always@(*) begin	//Write words to FIFO as state machine advances
 			msg_buf_wr = 1'b1;
 		end
 		2'b10: begin
-			msg_buf_in = {5'b0, x_min, 5'b0, y_min};	//Top left coordinate
-			msg_buf_wr = 1'b1;
+			//msg_buf_in = {5'b0, x_min, 5'b0, y_min};	//Top left coordinate
+			msg_buf_in = x_dist; //Bottom right coordinate
+			msg_buf_wr = 1'b0; //changed!!!!!!!!!!
 		end
 		2'b11: begin
-			msg_buf_in = {5'b0, x_max, 5'b0, y_max}; //Bottom right coordinate
-			msg_buf_wr = 1'b1;
+			//msg_buf_in = {5'b0, x_max, 5'b0, y_max};	//Top left coordinate
+			msg_buf_in = distance; //Bottom right coordinate
+			msg_buf_wr = 1'b1;  //REPLACED WITH DISTANCE
 		end
 	endcase
 end
