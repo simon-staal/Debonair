@@ -13,7 +13,7 @@ const corsOptions = {
     optionsSuccessStatus: 200
 }
 
-app.use(cors(corsOptions)); // Enables CORS for all origins
+app.use(cors(corsOptions)); // Enables CORS for just out REACT APP (both must be running on same server)
 
 app.get("/",(req,res)=>{
     res.render('index.html');
@@ -21,8 +21,13 @@ app.get("/",(req,res)=>{
 
 app.post("/coords", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
-    res.set('Content-Type', 'text/plain');
-    res.send("You sent a request to backend!");
+
+    let receivedCoord = {
+        coordinateX: req.body.coordinateX,
+        coordinateY: req.body.coordinateY
+    }
+    // res.set('Content-Type', 'text/plain');
+    res.send(receivedCoord);
 });
 
 // Incorrect route

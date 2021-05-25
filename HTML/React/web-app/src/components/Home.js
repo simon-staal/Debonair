@@ -41,7 +41,7 @@ function Home(){
         axios.post('http://localhost:8080/coords', coordinates)
             .then(response=>{
                 //setInputFields(response.coordinates)
-                console.log(response);
+                console.log(JSON.stringify(response.data));
             })
             .catch(err => {
                 console.log("Received error: " + err);
