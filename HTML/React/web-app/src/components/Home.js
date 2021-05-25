@@ -37,11 +37,16 @@ function Home(){
             coordinateX: inputFields.coordinateX,
             coordinateY: inputFields.coordinateY
         }
-        axios.post('localhost:8080', coordinates)
+        console.log("Message sent: " + JSON.stringify(coordinates));
+        axios.post('http://localhost:8080/coords', coordinates)
             .then(response=>{
                 //setInputFields(response.coordinates)
-                console.log(response.coordinates)
-        })
+                console.log(JSON.stringify(response.data));
+            })
+            .catch(err => {
+                console.log("Received error: " + err);
+            })
+
     }
 
     return(
