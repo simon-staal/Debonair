@@ -38,7 +38,7 @@ function Home(){
             coordinateY: inputFields.coordinateY
         }
         console.log("Message sent: " + JSON.stringify(coordinates));
-        axios.post('localhost:8080', coordinates)
+        axios.post('localhost:8080/coords', coordinates)
             .then(response=>{
                 //setInputFields(response.coordinates)
                 console.log(response.coordinates)

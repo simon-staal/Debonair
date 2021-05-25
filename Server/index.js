@@ -5,10 +5,9 @@ const app = new express();
 const port = 8080;
 
 // Admin shit
-//app.use(express.static(path.resolve(__dirname, '../client/build')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors()); // Enables CORS for all origins
 
 app.get("/",(req,res)=>{
     res.render('index.html');
@@ -19,6 +18,11 @@ app.post("/coords", (req,res) => {
     res.set('Content-Type', 'text/plain');
     res.send("You sent a request to backend!");
 });
+
+// Incorrect route
+app.use((req, res, next) => {
+    res.status(404).send("404: This route doesn't exist");
+})
 
 // Server
 app.listen(port, function(){
