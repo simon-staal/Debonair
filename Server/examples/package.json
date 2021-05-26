@@ -5,6 +5,7 @@
     "main": "index.js",
     "dependencies": {
         "express": "4.x",
+        "fs": "^0.0.1-security",
         "mqtt": "^4.2.6"
     }
 }

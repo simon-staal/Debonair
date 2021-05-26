@@ -33,9 +33,10 @@ Your key file has been saved at:
 ```
 Additionally, set up the certificate to auto-renew every week as certificates are only valid for 3 months.
 
-Updated broker to use encrypted communication on port 8883 with the outside world, only using port 1883 locally.
+Updated broker to use encrypted communication on port 8883 with the outside world, only using port 1883 locally. MQTT client works with this.
 
 Updated esp32 mqtt client to use encrypted port, untested (will test again at home)
+Potentially refer to this: http://www.iotsharing.com/2017/08/how-to-use-esp32-mqtts-with-mqtts-mosquitto-broker-tls-ssl.html
 
 Control
 -------

@@ -2,11 +2,15 @@
 // For more details check http://www.steves-internet-guide.com/using-node-mqtt-client/
 
 const mqtt = require('mqtt');
+//const fs = require('fs');
+//const caFile = fs.readFileSync("ca.crt"); Works without this
+
 const clientOptions = {
 	clientId:"mqttjs01",
 	username:"webapp",
 	password:"=ZCJ=4uzfZZZ#36f",
 	rejectUnauthorized : false // I need to do this for it to work
+	//ca:caFile
 }
 const client  = mqtt.connect("mqtts://debonair.duckdns.org", clientOptions);
 
