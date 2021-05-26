@@ -1,8 +1,23 @@
 import React from 'react';
 
+
 function Map(){
     return(
-        <p> Map page </p>
+        <nav>
+            <h1> Map Page </h1>
+           <button className>
+           <i class="fas fa-angle-right"></i>
+            </button> 
+            <button>
+           <i class="fas fa-angle-left"></i>
+            </button> 
+            <button>
+           <i class="fas fa-angle-up"></i>
+            </button> 
+            <button>
+           <i class="fas fa-angle-down"></i>
+            </button> 
+        </nav>
     );
 }
 
