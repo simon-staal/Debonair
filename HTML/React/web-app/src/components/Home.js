@@ -24,21 +24,17 @@ function Home(){
     ])
 
     //Allows the user to input text, needs modification to only accept numbers
-    const handleChangeInput=(event)=>{
+    const handleChangeInput=(index, event)=>{
         const values=[...inputFields];
-        values[event.target.name]=event.target.value;
+        values[index][event.target.name]=event.target.value;
         setInputFields(values);
         console.log(values);
     }
 
     const handleSubmit=(event)=>{
         event.preventDefault();
-        const coordinates={
-            coordinateX: inputFields.coordinateX,
-            coordinateY: inputFields.coordinateY
-        }
-        console.log("Message sent: " + JSON.stringify(coordinates));
-        axios.post('http://localhost:8080/coords', coordinates)
+        console.log("Message sent: " + JSON.stringify(inputFields));
+        axios.post('http://localhost:8080/coords', inputFields)
             .then(response=>{
                 //setInputFields(response.coordinates)
                 console.log(JSON.stringify(response.data));
@@ -54,24 +50,27 @@ function Home(){
             <h1> Home Page </h1>
             <h2>Coordinates</h2>
             <form className={classes.root} onSubmit={event=> handleSubmit(event)}>
-                    <div>
+                {inputFields.map((inputField,index)=>(
+                    <div key={index}>
                     <TextField
                         name="coordinateX"
                         label="Coordinate X"
-                        value={inputFields.coordinateX}
-                        onChange={event=> handleChangeInput(event)}
+                        value={inputField.coordinateX}
+                        onChange={event=> handleChangeInput(index,event)}
                         />
                      <TextField
                         name="coordinateY"
                         label="Coordinate Y"
-                        value={inputFields.coordinateY}
-                        onChange={event=> handleChangeInput(event)}
+                        value={inputField.coordinateY}
+                        onChange={event=> handleChangeInput(index,event)}
                         />
                     </div>
+                ))}
                 <Button className={classes.button}
                  variant="contained" 
                  color="primary" 
-                 type="submit">
+                 type="submit"
+                 onClick={handleSubmit}>
                 Submit
                 </Button>
             </form>

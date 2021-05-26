@@ -5,7 +5,7 @@ function Map(){
     return(
         <nav>
             <h1> Map Page </h1>
-           <button>
+           <button className>
            <i class="fas fa-angle-right"></i>
             </button> 
             <button>
