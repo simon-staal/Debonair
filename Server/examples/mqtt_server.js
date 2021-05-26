@@ -1,13 +1,14 @@
-// THIS IS AN EXAMPLE JS FILE SHOWING HOW TO USE MQTT (untested)
+// THIS IS AN EXAMPLE JS FILE SHOWING HOW TO USE MQTT
 // For more details check http://www.steves-internet-guide.com/using-node-mqtt-client/
 
 const mqtt = require('mqtt');
 const clientOptions = {
 	clientId:"mqttjs01",
 	username:"webapp",
-	password:"=ZCJ=4uzfZZZ#36f"
+	password:"=ZCJ=4uzfZZZ#36f",
+	rejectUnauthorized : false // I need to do this for it to work
 }
-const client  = mqtt.connect("mqtt://3.8.182.14", clientOptions);
+const client  = mqtt.connect("mqtts://debonair.duckdns.org", clientOptions);
 
 // Runs on connection to the broker
 client.on("connect", () => {

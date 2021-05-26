@@ -8,6 +8,8 @@ An example MQTT client for the webapp has been developed and tested, and can be 
 
 Other than setting up encryption using SSL (I'll try this tomorrow), not too sure what I can add to this until we have a better idea of the things we are sending / receiving, need the other modules to progress more.
 
+Bound the server IP to debonair.duckdns.org, using mqtts://debonair.duckdns.org allows us to connect to the broker from a node.js server.
+
 Mosquitto broker
 ----------------
 I've set up an MQTT broker on my AWS instance using [mosquitto](http://mosquitto.org/download/).
