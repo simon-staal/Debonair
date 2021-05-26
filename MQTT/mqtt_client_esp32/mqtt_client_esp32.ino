@@ -8,6 +8,7 @@ const char* password = "ty5VxqxnW3yr";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
+const int mqtt_port = 8883; // Switching to encrypted communication (Change if we ever use a different port)
 const char* mqtt_user = "esp32";
 const char* mqtt_pwd = "#8HAGxb3*V%+CD8^";
 
@@ -44,7 +45,7 @@ void setup() {
   Serial.begin(115200);
   // Will probably also need to setup wiring / pins to communicate? (not sure)
   setup_wifi();
-  client.setServer(mqtt_server, 1883); // Change if we ever use a different port
+  client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback); // Sets callback function
 
   pinMode(ledPin, OUTPUT);

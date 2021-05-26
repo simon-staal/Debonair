@@ -21,6 +21,22 @@ Followed the following [guide](https://obrienlabs.net/how-to-setup-your-own-mqtt
 - `sudo cat /var/log/mosquitto/mosquitto.log` to view logs
 - `sudo nano /etc/mosquitto/acl` to edit permissions
 
+**SSL**
+Added an SSL certificate to the AWS instance:
+```
+Your certificate and chain have been saved at:
+   /etc/letsencrypt/live/debonair.duckdns.org/fullchain.pem
+Your key file has been saved at:
+   /etc/letsencrypt/live/debonair.duckdns.org/privkey.pem
+```
+Additionally, set up the certificate to auto-renew every week as certificates are only valid for 3 months.
+
+Updated broker to use encrypted communication on port 8883 with the outside world, only using port 1883 locally.
+
+Updated esp32 mqtt client to use encrypted port, untested (will test again at home)
+
+Control
+-------
 **TOPICS**
 Initialisation:
 - Web-app says to start mapping
