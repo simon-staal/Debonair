@@ -3,7 +3,7 @@
 
 const mqtt = require('mqtt');
 //const fs = require('fs');
-//const caFile = fs.readFileSync("ca.crt"); Works without this
+//const caFile = fs.readFileSync("ca.crt"); //Works without this
 
 const clientOptions = {
 	clientId:"mqttjs01",

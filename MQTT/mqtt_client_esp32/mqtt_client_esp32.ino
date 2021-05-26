@@ -4,48 +4,51 @@
 #include <Wire.h> // Not 100% sure if this included is needed, test without
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "Kai";
-const char* password = "kai12456";
+const char* ssid = "The Circus";
+const char* password = "Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
-const int mqtt_port = 8883; // Switching to encrypted communication (Change if we ever use a different port)
+const int mqtt_port = 1883; // Currently using unencrypted version
 const char* mqtt_user = "esp32";
 const char* mqtt_pwd = "#8HAGxb3*V%+CD8^";
 
 const char* ca_cert = \
 "-----BEGIN CERTIFICATE-----\n" \
-"MIIFFjCCAv6gAwIBAgIRAJErCErPDBinU/bWLiWnX1owDQYJKoZIhvcNAQELBQAw\n" \
-"TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh\n" \
-"cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMjAwOTA0MDAwMDAw\n" \
-"WhcNMjUwOTE1MTYwMDAwWjAyMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNTGV0J3Mg\n" \
-"RW5jcnlwdDELMAkGA1UEAxMCUjMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK\n" \
-"AoIBAQC7AhUozPaglNMPEuyNVZLD+ILxmaZ6QoinXSaqtSu5xUyxr45r+XXIo9cP\n" \
-"R5QUVTVXjJ6oojkZ9YI8QqlObvU7wy7bjcCwXPNZOOftz2nwWgsbvsCUJCWH+jdx\n" \
-"sxPnHKzhm+/b5DtFUkWWqcFTzjTIUu61ru2P3mBw4qVUq7ZtDpelQDRrK9O8Zutm\n" \
-"NHz6a4uPVymZ+DAXXbpyb/uBxa3Shlg9F8fnCbvxK/eG3MHacV3URuPMrSXBiLxg\n" \
-"Z3Vms/EY96Jc5lP/Ooi2R6X/ExjqmAl3P51T+c8B5fWmcBcUr2Ok/5mzk53cU6cG\n" \
-"/kiFHaFpriV1uxPMUgP17VGhi9sVAgMBAAGjggEIMIIBBDAOBgNVHQ8BAf8EBAMC\n" \
-"AYYwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMBMBIGA1UdEwEB/wQIMAYB\n" \
-"Af8CAQAwHQYDVR0OBBYEFBQusxe3WFbLrlAJQOYfr52LFMLGMB8GA1UdIwQYMBaA\n" \
-"FHm0WeZ7tuXkAXOACIjIGlj26ZtuMDIGCCsGAQUFBwEBBCYwJDAiBggrBgEFBQcw\n" \
-"AoYWaHR0cDovL3gxLmkubGVuY3Iub3JnLzAnBgNVHR8EIDAeMBygGqAYhhZodHRw\n" \
-"Oi8veDEuYy5sZW5jci5vcmcvMCIGA1UdIAQbMBkwCAYGZ4EMAQIBMA0GCysGAQQB\n" \
-"gt8TAQEBMA0GCSqGSIb3DQEBCwUAA4ICAQCFyk5HPqP3hUSFvNVneLKYY611TR6W\n" \
-"PTNlclQtgaDqw+34IL9fzLdwALduO/ZelN7kIJ+m74uyA+eitRY8kc607TkC53wl\n" \
-"ikfmZW4/RvTZ8M6UK+5UzhK8jCdLuMGYL6KvzXGRSgi3yLgjewQtCPkIVz6D2QQz\n" \
-"CkcheAmCJ8MqyJu5zlzyZMjAvnnAT45tRAxekrsu94sQ4egdRCnbWSDtY7kh+BIm\n" \
-"lJNXoB1lBMEKIq4QDUOXoRgffuDghje1WrG9ML+Hbisq/yFOGwXD9RiX8F6sw6W4\n" \
-"avAuvDszue5L3sz85K+EC4Y/wFVDNvZo4TYXao6Z0f+lQKc0t8DQYzk1OXVu8rp2\n" \
-"yJMC6alLbBfODALZvYH7n7do1AZls4I9d1P4jnkDrQoxB3UqQ9hVl3LEKQ73xF1O\n" \
-"yK5GhDDX8oVfGKF5u+decIsH4YaTw7mP3GFxJSqv3+0lUFJoi5Lc5da149p90Ids\n" \
-"hCExroL1+7mryIkXPeFM5TgO9r0rvZaBFOvV2z0gp35Z0+L4WPlbuEjN/lxPFin+\n" \
-"HlUjr8gRsI3qfJOQFy/9rKIJR0Y/8Omwt/8oTWgy1mdeHmmjk7j1nYsvC9JSQ6Zv\n" \
-"MldlTTKB3zhThV1+XWYp6rjd5JW1zbVWEkLNxE7GJThEUG3szgBVGP7pSWTUTsqX\n" \
-"nLRbwHOoq7hHwg==\n" \
+"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\n" \
+"48pa58/edqexF7wUSpjIB45TCvwrbQv+OQ==\n" \
 "-----END CERTIFICATE-----\n";
 
-WiFiClientSecure espClient;
+WiFiClient espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
@@ -78,7 +81,7 @@ void setup() {
   Serial.begin(115200);
   // Will probably also need to setup wiring / pins to communicate? (not sure)
   setup_wifi();
-  espClient.setCACert(ca_cert); // Set SSL/TLS certificate
+  //espClient.setCACert(ca_cert); // Set SSL/TLS certificate
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback); // Sets callback function
 
