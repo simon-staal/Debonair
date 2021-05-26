@@ -1,0 +1,104 @@
+.leftarrow {
+  font-size: 28px;
+  margin-top: 50px;
+  margin-left: 25px;
+  background-color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  padding-left: 5px;
+  position: fixed;
+}
+.leftarrow:hover {
+  background-color: grey;
+  border-radius: 50%;
+}
+.leftarrow:active {
+  background-color: rgb(61, 135, 245);
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+  position: fixed;
+}
+
+.uparrow {
+  font-size: 45px;
+  margin-top: 7px;
+  margin-left: 65px;
+  background-color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  position: fixed;
+  padding-left: 10px;
+}
+.uparrow:hover {
+  background-color: grey;
+  border-radius: 50%;
+}
+
+.uparrow:active {
+  background-color: rgb(61, 135, 245);
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+  position: fixed;
+}
+
+.downarrow {
+  font-size: 45px;
+  position: fixed;
+  margin-top: 90px;
+  margin-left: 65px;
+  background-color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  position: fixed;
+  padding-left: 10px;
+}
+.downarrow:hover {
+  background-color: grey;
+  border-radius: 50%;
+}
+
+.downarrow:active {
+  background-color: rgb(61, 135, 245);
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+  position: fixed;
+}
+
+.rightarrow {
+  font-size: 45px;
+  position: fixed;
+  margin-top: 50px;
+  margin-left: 105px;
+  background-color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  position: fixed;
+  padding-left: 15px;
+}
+.rightarrow:hover {
+  background-color: grey;
+  border-radius: 50%;
+}
+
+.rightarrow:active {
+  background-color: rgb(61, 135, 245);
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+  position: fixed;
+}
