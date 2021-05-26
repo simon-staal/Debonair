@@ -98,10 +98,14 @@ assign hue = (red == green && red == blue) ? 0 :((value != red)? (value != green
 					 
 ///Detect Ping Pong balls
 reg prev_detect_high, prev_high;
-wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;
-assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102);
-assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 90 && saturation > 116);
-assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && saturation > 112);
+wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;	
+assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 10 && hue >= 0)) && (saturation > 30 && value > 249))||(hue <= 16 && hue >= 0 && ((value > 230 && saturation > 17)||(value > 210 && saturation > 130)))||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 9)) && ((value > 76 && saturation > 96) || (saturation > 78 && value > 168)))); //sat > 102
+assign orange_ball_detect = (((hue >= 28 && hue <= 30) && (saturation > 76 && value > 253)) || ((hue >= 16 && hue <=25) && (saturation > 134 && value > 80)) || ((hue >= 23 && hue <= 26) && (value > 155 && saturation > 127)));
+
+
+//assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102); //sat > 102
+//assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 90 && saturation > 116);
+//assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && saturation > 112);
 //assign blue_ball_detect = (hue >= 85 && hue <= 140 && value > 140 && saturation > 100);		
 //assign grey_ball_detect = (value < 80 && saturation < 70);			 
 initial begin
@@ -117,7 +121,7 @@ end
 // Highlight detected areas
 wire [23:0] color_high;
 assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
-assign color_high  =  (pink_ball_detect && prev_detect_high) ? {8'hff,8'h10,8'h0} 
+assign color_high  =  (pink_ball_detect && prev_detect_high && prev_high) ? {8'hff,8'h10,8'h0} 
 	: ((green_ball_detect && prev_detect_high && prev_high)? {8'h04,8'hbd,8'h42} 
 	: ((orange_ball_detect && prev_detect_high && prev_high)? {8'hea,8'h9e,8'h1b} 
 	: ((blue_ball_detect && prev_detect_high && prev_high) ? {8'h0,8'h0,8'hff}
