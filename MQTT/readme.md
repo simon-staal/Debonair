@@ -60,14 +60,15 @@ General:
 Therefore suggests the following topics:
 **toESP32**
 Published to by web-app, subscribed to by ESP32
-- `toESP32/x_pos`contains desired x-coordinate
-- `toESP32/y_pos` contains desired y-coordinate
+- `toESP32/x_coord`contains desired x-coordinate
+- `toESP32/y_coord` contains desired y-coordinate
+- `toESP32/direction` contains direction being steered
 - `toESP32/target` contains the colour being targeted
 
 **fromESP32**
 Published to by ESP32, subscribed to by web-app
-- `fromESP32/x_pos` contains current x_pos
-- `fromESP32/y_pos` contains current y_pos
+- `fromESP32/x_coord` contains current x_pos
+- `fromESP32/y_coord` contains current y_pos
 - `fromESP32/target` indicated if we have reached the target
 - `fromESP32/power` contains power information (battery level)
 
