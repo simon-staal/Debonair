@@ -136,6 +136,7 @@ void turn_90right(); // Update if needed later
 //***************************Globals*******************************
 bool halted = 0;
 bool done = 0;
+bool finished_turning=false;
 unsigned long haltTime;
 
 //*************************** Setup ****************************//
@@ -334,24 +335,24 @@ if (Serial.available() > 0){
   // MODE: 
   //Serial.print("Start of movement section, time diff ");
   //Serial.println(now-lastMsg);
-  int target_y = 300;
+  int target_y = 200;
   int target_x = 100;
   if(!halted){
-    if(abs(target_y-total_y) > 5){
+    // Catch finished condition (hopefully we enter this)
+    if((abs(target_y-total_y) < 5) && (abs(target_x-total_x) < 5)){
+      done = 1;
+      stop_Rover();  
+      Serial.println("ROVER STOPPED");
+    }
+    
+    if((abs(target_y + total_y) > 5) && finished_turning==false){
       Serial.println("going to target y");
       go_forwards(target_y, total_y);
     }
-    else if(abs(target_x-total_x) > 5){
+    if((abs(target_x + total_x) > 5) && finished_turning==true){
       Serial.println("going to target x");
       go_forwards(target_x, total_x);  
-    }
-    
-  }
-
-// Catch finished condition (hopefully we enter this)
-  if((abs(target_y-total_y) < 5) && (abs(target_x-total_x) < 5)){
-    done = 1;
-    stop_Rover();  
+    } 
   }
   
   if(halted && !done)
@@ -359,10 +360,10 @@ if (Serial.available() > 0){
     Serial.println("rotating");
     // turn 90 to work on other direction
     turn_90left(haltTime);
+    Serial.println("Finished rotating");
   }
     
-    //Serial.println("going forward");
-       //}
+  
   /*
   if(now > 20000 && now < 40000){
     go_forwards(-300,total_y);
@@ -492,8 +493,8 @@ int mousecam_frame_capture(byte *pdata){            // pdata must point to an ar
       }
     }
     if(started==1){
-      pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
-    }
+     pdata[count++] = (pix & 0x3f)<<2; // scale to normal grayscale byte range
+     }
   }
   digitalWrite(PIN_MOUSECAM_CS,HIGH); 
   delayMicroseconds(14);
@@ -596,13 +597,17 @@ float pidi(float pid_input){
 
 
 void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
-  int distance_error = command_forwards_des_dist + sensor_forwards_distance;
+  int distance_error = -command_forwards_des_dist + sensor_forwards_distance;
   halted = 0;
   if(abs(distance_error) < 5 ){
      // stop rover
      pwm_modulate(0);
      halted = 1;
      haltTime = millis();
+     Serial.print("\n");
+     Serial.print("\n");
+     Serial.print("Halting at ");
+     Serial.println(haltTime);
      return;
      }
   if(distance_error >= 15){
@@ -630,13 +635,17 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
 
 void turn_90left(unsigned long haltTime){
     unsigned long now = millis();
-    if(now-haltTime < 2000){
+    if(now-haltTime < 5000){
       DIRRstate = LOW;
       DIRLstate = LOW;
     }
     else{
+      Serial.print("We have stopped rotating ");
+      Serial.println(now);
+      Serial.println(haltTime);
       stop_Rover();
       halted = 0;
+      finished_turning=true;
     }
     return; 
 }
