@@ -8,6 +8,8 @@ An example MQTT client for the webapp has been developed and tested, and can be 
 
 Other than setting up encryption using SSL (I'll try this tomorrow), not too sure what I can add to this until we have a better idea of the things we are sending / receiving, need the other modules to progress more.
 
+Bound the server IP to debonair.duckdns.org, using mqtts://debonair.duckdns.org allows us to connect to the broker from a node.js server.
+
 Mosquitto broker
 ----------------
 I've set up an MQTT broker on my AWS instance using [mosquitto](http://mosquitto.org/download/).
@@ -21,6 +23,23 @@ Followed the following [guide](https://obrienlabs.net/how-to-setup-your-own-mqtt
 - `sudo cat /var/log/mosquitto/mosquitto.log` to view logs
 - `sudo nano /etc/mosquitto/acl` to edit permissions
 
+**SSL**
+Added an SSL certificate to the AWS instance:
+```
+Your certificate and chain have been saved at:
+   /etc/letsencrypt/live/debonair.duckdns.org/fullchain.pem
+Your key file has been saved at:
+   /etc/letsencrypt/live/debonair.duckdns.org/privkey.pem
+```
+Additionally, set up the certificate to auto-renew every week as certificates are only valid for 3 months.
+
+Updated broker to use encrypted communication on port 8883 with the outside world, only using port 1883 locally. MQTT client works with this.
+
+Updated esp32 mqtt client to use encrypted port, untested (will test again at home)
+Potentially refer to this: http://www.iotsharing.com/2017/08/how-to-use-esp32-mqtts-with-mqtts-mosquitto-broker-tls-ssl.html
+
+Control
+-------
 **TOPICS**
 Initialisation:
 - Web-app says to start mapping
