@@ -30,10 +30,15 @@ app.post("/coords", (req,res) => {
     res.send(receivedCoord);
 });
 
+app.post("/move", (req,res) => {
+    console.log("Request received: " + JSON.stringify(req.body));
+    res.send("Received direction " + req.body.direction);
+});
+
 // Incorrect route
 app.use((req, res, next) => {
     res.status(404).send("404: This route doesn't exist");
-})
+});
 
 // Server
 app.listen(port, function(){

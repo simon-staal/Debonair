@@ -3,8 +3,8 @@
 #include <Wire.h> // Not 100% sure if this included is needed, test without
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "SimonStaal";
-const char* password = "yesyesyes";
+const char* ssid = "iPhonedeYuna";
+const char* password = "yuna1612";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "debonair.duckdns.org";
