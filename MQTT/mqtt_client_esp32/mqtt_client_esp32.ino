@@ -3,6 +3,9 @@
 #include <PubSubClient.h>
 #include <Wire.h> // Not 100% sure if this included is needed, test without
 
+#define RXD2 16
+#define TXD2 17
+
 // Parameters for the wifi connection (will need to change depending on location)
 const char* ssid = "The Circus";
 const char* password = "Hail_Pietr0";
@@ -80,6 +83,8 @@ void setup_wifi() {
 void setup() {
   Serial.begin(115200);
   // Will probably also need to setup wiring / pins to communicate? (not sure)
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); // Communicate with drive
+
   setup_wifi();
   //espClient.setCACert(ca_cert); // Set SSL/TLS certificate
   client.setServer(mqtt_server, mqtt_port);
@@ -116,6 +121,7 @@ void callback(char* topic, byte* message, unsigned int length) {
       digitalWrite(ledPin, LOW);
     }
   }
+  else if (String(topic) == "toESP32/x_coord")
 }
 
 void reconnect() {
