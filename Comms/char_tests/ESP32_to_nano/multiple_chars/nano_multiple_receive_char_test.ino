@@ -5,8 +5,8 @@ boolean new_data = false;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial1.begin(9600);
+  Serial.begin(115200); // Connected to USB
+  Serial1.begin(9600); // Connected to ESP32
   
 }
 
@@ -24,10 +24,10 @@ void rec_with_markers() {
   char end_marker = '>';
   char rc;
 
-  while (Serial1.available() && new_data == false){
+  while (Serial1.available() && !new_data){
     rc = Serial1.read();
 
-    if(rec_in_progress == true){
+    if(rec_in_progress){
       if(rc != end_marker){
         received_chars[bx] = rc;
         bx++;

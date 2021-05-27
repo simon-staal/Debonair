@@ -1,6 +1,7 @@
 #define RXD2 16
 #define TXD2 17
 
+// Define good start and end markers
 int endmarker = 99;
 void setup() {
   // put your setup code here, to run once:

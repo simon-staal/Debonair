@@ -51,6 +51,13 @@ Tested mqtt_server.js again, is successfully authenticating and can receive mess
 **24/05/21**
 Trying to set up SSL certificate for the MQTT broker. To do this I'm setting up a dynamic DNS hostname for the AWS instance which is hosting the broker. Currently hostname is **http://debonair.duckdns.org** and is manually linked to our instance IP.
 
+**27/05/2021**
+Trying to get SSL encryption working, got error for current certificate being used for mqtt.js:
+```
+cannot connect Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match certificate's altnames: Host: debonair.duckdns.org. is not in the cert's altnames: IP Address:172.31.46.12, IP Address:FE80:0:0:0:8E1:59FF:FE12:3116, IP Address:127.0.0.1, IP Address:0:0:0:0:0:0:0:1, DNS:ip-172-31-46-12.eu-west-2.compute.internal, DNS:localhost
+```
+Basically suggests to me that the certificate I generated used the internal private IP address instead of the external one. Need to have a play around and try to figure out how to solve this. For now, cavemanned changes in such a way that everything still works like before (hopefully).
+
 General
 =======
 - For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
