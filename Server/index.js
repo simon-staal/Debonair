@@ -22,7 +22,7 @@ const clientOptions = {
 	clientId:"mqttjs01",
 	username:"webapp",
 	password:"=ZCJ=4uzfZZZ#36f",
-	rejectUnauthorized : false // I need to do this for it to work
+	rejectUnauthorized : false // I need to do this for it to work (bad but idgaf)
 }
 const client  = mqtt.connect("mqtts://debonair.duckdns.org", clientOptions);
 
