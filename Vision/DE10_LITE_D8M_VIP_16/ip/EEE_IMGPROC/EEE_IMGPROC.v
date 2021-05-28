@@ -97,43 +97,68 @@ assign hue = (red == green && red == blue) ? 0 :((value != red)? (value != green
                 (blue < green) ? ((60*(green - blue)/(value - min))>>1): (((360*(value-min) +(60*(green - blue)))/(value - min))>>1));
 					 
 ///Detect Ping Pong balls
-reg prev_detect_high, prev_high;
-wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;
-assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102);
-assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 90 && saturation > 116);
-assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && saturation > 112);
+reg prev_detect_high_r, prev_high_r;
+reg prev_detect_high_y, prev_high_y;
+reg prev_detect_high_g, prev_high_g;
+reg prev_detect_high_b, prev_high_b;
+wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;	
+assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 10 && hue >= 0)) && (saturation > 30 && value > 249))||(hue <= 11 && hue >= 0 && ((value > 230 && saturation > 17 && saturation < 155)||(value > 210 && saturation > 130)))||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 9)) && ((value > 64 && saturation > 96) || (saturation > 78 && value > 168)))); //sat > 102
+assign orange_ball_detect = (((hue >= 28 && hue <= 30) && (saturation > 76 && value > 253)) || ((hue >= 15 && hue <=25) && (saturation > 134 && value > 80)) || ((hue >= 23 && hue <= 26) && ((value > 155 && saturation > 127)||(value > 39 && saturation > 247))));
+
+
+//assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102); //sat > 102
+//assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 90 && saturation > 116);
+//assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && saturation > 112);
 //assign blue_ball_detect = (hue >= 85 && hue <= 140 && value > 140 && saturation > 100);		
 //assign grey_ball_detect = (value < 80 && saturation < 70);			 
 initial begin
-	prev_detect_high <= 0;
-	prev_high <= 0;
+	prev_detect_high_r <= 0;
+	prev_high_r <= 0;
+	prev_detect_high_y <= 0;
+	prev_high_y <= 0;
+	prev_detect_high_g <= 0;
+	prev_high_g <= 0;
+	prev_detect_high_b <= 0;
+	prev_high_b <= 0;
 end
 
 always@(negedge clk) begin
-	prev_high <= prev_detect_high;
-	prev_detect_high <= ((green_ball_detect || orange_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect));
+	prev_high_r <= prev_detect_high_r;
+	//prev_detect_high_r <= ((green_ball_detect || orange_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect));
+	prev_detect_high_r <= (pink_ball_detect);
+	prev_high_y <= prev_detect_high_y;
+	prev_detect_high_y <= (orange_ball_detect);
+	prev_high_g <= prev_detect_high_g;
+	prev_detect_high_g <= (green_ball_detect);
+	prev_high_b <= prev_detect_high_b;
+	prev_detect_high_b <= (blue_ball_detect);
 end
 
 // Highlight detected areas
 wire [23:0] color_high;
 assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
-assign color_high  =  (pink_ball_detect && prev_detect_high) ? {8'hff,8'h10,8'h0} 
-	: ((green_ball_detect && prev_detect_high && prev_high)? {8'h04,8'hbd,8'h42} 
-	: ((orange_ball_detect && prev_detect_high && prev_high)? {8'hea,8'h9e,8'h1b} 
-	: ((blue_ball_detect && prev_detect_high && prev_high) ? {8'h0,8'h0,8'hff}
-	: ((grey_ball_detect && prev_detect_high && prev_high) ? {8'h0,8'h0,8'h0}
+assign color_high  =  (pink_ball_detect && prev_detect_high_r && prev_high_r) ? {8'hff,8'h10,8'h0} 
+	: ((green_ball_detect && prev_detect_high_g && prev_high_g)? {8'h04,8'hbd,8'h42} 
+	: ((orange_ball_detect && prev_detect_high_y && prev_high_y)? {8'hea,8'h9e,8'h1b} 
+	: ((blue_ball_detect && prev_detect_high_b && prev_high_b) ? {8'h0,8'h0,8'hff}
+	: ((grey_ball_detect) ? {8'h0,8'h0,8'h0}
 	: {grey,grey,grey})) )) ;
 
 // Show bounding box
-wire [23:0] new_image;
-wire bb_active;
-assign bb_active = (x == left) | (x == right) | (y == top) | (y == bottom);
-assign new_image = bb_active ? bb_col : color_high;
+wire [23:0] new_image_r;
+wire bb_active_r;
+assign bb_active_r = (x == left_r) | (x == right_r);
+assign new_image_r = bb_active_r ? {24'hff0000} : color_high;
+
+wire [23:0] new_image_y;
+wire bb_active_y;
+assign bb_active_y = (x == left_y) | (x == right_y);
+assign new_image_y = bb_active_y ? {24'hffff00} : new_image_r;
 
 // Switch output pixels depending on mode switch
 // Don't modify the start-of-packet word - it's a packet discriptor
 // Don't modify data in non-video packets
-assign {red_out, green_out, blue_out} = (mode & ~sop & packet_video) ? new_image : {red,green,blue};
+assign {red_out, green_out, blue_out} = (mode & ~sop & packet_video) ? new_image_y : {red,green,blue};
 
 //Count valid pixels to tget the image coordinates. Reset and detect packet type on Start of Packet.
 reg [10:0] x, y;
@@ -156,44 +181,49 @@ always@(posedge clk) begin
 end
 
 //Find first and last red pixels
-reg [10:0] x_min, y_min, x_max, y_max;
-wire [10:0] x_dist;
+reg [10:0] x_min_r, x_max_r, x_min_y, x_max_y;
+wire [10:0] x_dist_r, x_dist_y;
 
-assign x_dist = (x_min > x_max) ? 0 : (x_max-x_min);
+assign x_dist_r = (x_min_r > x_max_r) ? 0 : (x_max_r-x_min_r);
+assign x_dist_y = (x_min_y > x_max_y) ? 0 : (x_max_y-x_min_y);
 
 initial begin
-	x_min <= 0;
-	x_max <= 0;
+	x_min_r <= 0;
+	x_max_r <= 0;
+	x_min_y <= 0;
+	x_max_y <= 0;
 end
 
 always@(posedge clk) begin
-	if (((green_ball_detect || orange_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect) && prev_detect_high && prev_high) & in_valid) begin	//Update bounds when the pixel is red
-		if (x < x_min) x_min <= x;
-		if (x > x_max) x_max <= x;
-		if (y < y_min) y_min <= y;
-		y_max <= y;
+	//if (((green_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect) && prev_detect_high && prev_high) & in_valid) begin	//Update bounds when the pixel is red
+	if ((pink_ball_detect && prev_detect_high_r && prev_high_r) & in_valid) begin
+		if (x < x_min_r) x_min_r <= x;
+		if (x > x_max_r) x_max_r <= x;
+	end
+	if ((orange_ball_detect && prev_detect_high_y && prev_high_y) & in_valid) begin
+		if (x < x_min_y) x_min_y <= x;
+		if (x > x_max_y) x_max_y <= x;
 	end
 	if (sop & in_valid) begin	//Reset bounds on start of packet
-		x_min <= IMAGE_W-11'h1;
-		x_max <= 0;
-		y_min <= IMAGE_H-11'h1;
-		y_max <= 0;
+		x_min_r <= IMAGE_W-11'h1;
+		x_max_r <= 0;
+		x_min_y <= IMAGE_W-11'h1;
+		x_max_y <= 0;
 	end
 end
 
 //Process bounding box at the end of the frame.
 reg [1:0] msg_state;
-reg [10:0] left, right, top, bottom;
+reg [10:0] left_r, right_r, left_y, right_y;
 reg [7:0] frame_count;
 always@(posedge clk) begin
 	if (eop & in_valid & packet_video) begin  //Ignore non-video packets
 		
 		//Latch edges for display overlay on next frame
-		left <= x_min;
-		right <= x_max;
-		top <= y_min;
-		bottom <= y_max;
-		
+		left_r <= x_min_r;
+		right_r <= x_max_r;
+		left_y <= x_min_y;
+		right_y <= x_max_y;
 		
 		//Start message writer FSM once every MSG_INTERVAL frames, if there is room in the FIFO
 		frame_count <= frame_count - 1;
@@ -216,7 +246,7 @@ reg msg_buf_wr;
 wire msg_buf_rd, msg_buf_flush;
 wire [7:0] msg_buf_size;
 wire msg_buf_empty;
-wire [31:0] distance;
+wire [31:0] distance_r, distance_y;
 `define RED_BOX_MSG_ID "RBB"
 
 wire[6:0] ratio1,ratio2;
@@ -226,8 +256,8 @@ assign ratio2 = 16'd20;
 wire [10:0] constan;
 assign constan = 16'd734;
 
-assign distance = (x_dist > 145) ? ((constan * ratio1)/ratio2/x_dist) : (((constan * ratio1)/ratio2)/x_dist + ((((constan * ratio1)/ratio2)/x_dist) * (((145-x_dist) * 3) * (x_dist * 3)))/1000000);
-
+assign distance_r = (x_dist_r > 145) ? ((constan * ratio1)/ratio2/x_dist_r) : (((constan * ratio1)/ratio2)/x_dist_r + ((((constan * ratio1)/ratio2)/x_dist_r) * (((145-x_dist_r) * 3) * (x_dist_r * 3)))/1000000);
+assign distance_y =  (x_dist_y > 145) ? ((constan * ratio1)/ratio2/x_dist_y) : (((constan * ratio1)/ratio2)/x_dist_y + ((((constan * ratio1)/ratio2)/x_dist_y) * (((145-x_dist_y) * 3) * (x_dist_y * 3)))/1000000);
 //((732 * (79/20))/147) =19.66 ish 19
  // -> 14.9
 
@@ -245,12 +275,12 @@ always@(*) begin	//Write words to FIFO as state machine advances
 		end
 		2'b10: begin
 			//msg_buf_in = {5'b0, x_min, 5'b0, y_min};	//Top left coordinate
-			msg_buf_in = x_dist; //Bottom right coordinate
-			msg_buf_wr = 1'b0; //changed!!!!!!!!!!
+			msg_buf_in = distance_y; //Bottom right coordinate
+			msg_buf_wr = 1'b1; //changed!!!!!!!!!!
 		end
 		2'b11: begin
 			//msg_buf_in = {5'b0, x_max, 5'b0, y_max};	//Top left coordinate
-			msg_buf_in = distance; //Bottom right coordinate
+			msg_buf_in = distance_r; //Bottom right coordinate
 			msg_buf_wr = 1'b1;  //REPLACED WITH DISTANCE
 		end
 	endcase
