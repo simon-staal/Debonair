@@ -52,8 +52,6 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-const int TURN_90_TIME = 2000;
-
 float vref = 2.5; // value chosen by me
 
 float open_loop, closed_loop; // Duty Cycles
@@ -139,6 +137,8 @@ bool done = 0;
 bool finished_turning=false;
 unsigned long haltTime;
 
+  bool ydone=0;
+  bool xdone=0;
 //*************************** Setup ****************************//
 
 void setup() {
@@ -335,11 +335,12 @@ if (Serial.available() > 0){
   // MODE: 
   //Serial.print("Start of movement section, time diff ");
   //Serial.println(now-lastMsg);
-  int target_y = 200;
+  int target_y = 100;
   int target_x = 100;
+
   if(!halted){
-    // Catch finished condition (hopefully we enter this)
-    if((abs(target_y-total_y) < 5) && (abs(target_x-total_x) < 5)){
+    // STILL NOT ENTERING THIS
+    if(ydone==1 && xdone==1){
       done = 1;
       stop_Rover();  
       Serial.println("ROVER STOPPED");
@@ -348,11 +349,17 @@ if (Serial.available() > 0){
     if((abs(target_y + total_y) > 5) && finished_turning==false){
       Serial.println("going to target y");
       go_forwards(target_y, total_y);
-    }
+    }else if(abs(-target_y + total_y) <= 5){
+      ydone=1;
+      Serial.println(ydone);}
+      
     if((abs(target_x + total_x) > 5) && finished_turning==true){
+      Serial.println(abs(target_x + total_x));
       Serial.println("going to target x");
       go_forwards(target_x, total_x);  
-    } 
+    } else if(abs(-target_x + total_x) <= 5){
+      xdone=1;
+      Serial.println(xdone);}
   }
   
   if(halted && !done)
@@ -360,9 +367,8 @@ if (Serial.available() > 0){
     Serial.println("rotating");
     // turn 90 to work on other direction
     turn_90left(haltTime);
-    Serial.println("Finished rotating");
   }
-    
+
   
   /*
   if(now > 20000 && now < 40000){
@@ -597,7 +603,7 @@ float pidi(float pid_input){
 
 
 void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
-  int distance_error = -command_forwards_des_dist + sensor_forwards_distance;
+  int distance_error = sensor_forwards_distance - command_forwards_des_dist;
   halted = 0;
   if(abs(distance_error) < 5 ){
      // stop rover
@@ -610,32 +616,34 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
      Serial.println(haltTime);
      return;
      }
-  if(distance_error >= 15){
-    // go forwards
+  if(distance_error <= -15){
+    // goes forwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+    return;
+  }else if(distance_error >-15 && distance_error <0){
+    pwm_modulate(0.25);
+    //goes forwards
+    DIRRstate = LOW;
+    DIRLstate = HIGH;
+    return;
+  }else if(distance_error >= 15){
+    // goes backwards
     DIRRstate = HIGH;
     DIRLstate = LOW;
     return;
   }else if(distance_error >0 && distance_error <15){
     pwm_modulate(0.25);
+    //goes backwards
     DIRRstate = HIGH;
     DIRLstate = LOW;
-    return;
-  }else if(distance_error <= -15){
-    // go backwards
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
-    return;
-  }else if(distance_error < 0 && distance_error > -15){
-    pwm_modulate(0.25);
-    DIRRstate = LOW;
-    DIRLstate = HIGH;
     return;
    }  
  }
 
 void turn_90left(unsigned long haltTime){
     unsigned long now = millis();
-    if(now-haltTime < 5000){
+    if(now-haltTime < 4500){
       DIRRstate = LOW;
       DIRLstate = LOW;
     }
