@@ -14,10 +14,11 @@ This is a broker that is custom set-up to fit our needs. For more information ab
 
 REST API
 --------
-This is a 
+This is a node.js app which handles requests from the REACT front-end and communicates to our ESP32 via the MQTT broker, and is contained in this folder. It listens for requests on port 8080. To boot it up, simply run `npm start`.
 
 REACT Web-App
 -------------
+This 
 
 nginx Web Server
 ----------------
