@@ -12,7 +12,7 @@ const char* password = "Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
-const int mqtt_port = 8883; // Currently using unencrypted version
+const int mqtt_port = 8883; // Currently using encrypted version
 const char* mqtt_user = "esp32";
 const char* mqtt_pwd = "#8HAGxb3*V%+CD8^";
 
@@ -110,7 +110,12 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "toESP32/output") {
+  if (String(topic) == "toESP32/dir") {
+    Serial.print("Sending direction ");
+    Serial.println(messageTemp[0]);
+    Serial2.println(messageTemp[0]);
+  }
+  else if (String(topic) == "toESP32/output") {
     Serial.print("Changing output to ");
     if(messageTemp == "on"){
       Serial.println("on");

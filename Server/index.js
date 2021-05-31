@@ -49,18 +49,19 @@ client.on("error", error => {
 	process.exit(1)
 });
 
+const pubOptions={
+	retain:true,
+	qos:1
+};
+
 // You can call this function to publish to things
-function publish(topic,msg,options){
+function publish(topic,msg,options=pubOptions){
 	console.log("publishing",msg);
 	if (client.connected == true){
 		client.publish(topic,msg,options);
 		}
 }
 
-const options={
-	retain:true,
-	qos:1
-};
 
 // ----------------------- REST API ----------------------
 app.get("/",(req,res)=>{
@@ -77,13 +78,14 @@ app.post("/coords", (req,res) => {
     }
     // res.set('Content-Type', 'text/plain');
     console.log(JSON.stringify(receivedCoord));
-    publish('toESP32/x_coord',receivedCoord.coordinateX,options);
-    publish('toESP32/y_coord',receivedCoord.coordinateY,options);
+    publish('toESP32/x_coord',receivedCoord.coordinateX);
+    publish('toESP32/y_coord',receivedCoord.coordinateY);
     res.send(receivedCoord);
 });
 
 app.post("/move", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
+    publish('toESP32/dir', req.body.direction)
     res.send("Received direction " + req.body.direction);
 });
 
