@@ -1,4 +1,4 @@
-Important
+Important (DONE)
 =========
 Will need to wipe all these example garbage files when making the actual REST API to interface with Yuna's front-end React app. When making a fresh project, makes sure to run the following:
 ```
@@ -58,6 +58,9 @@ cannot connect Error [ERR_TLS_CERT_ALTNAME_INVALID]: Hostname/IP does not match 
 ```
 Basically suggests to me that the certificate I generated used the internal private IP address instead of the external one. Need to have a play around and try to figure out how to solve this. For now, cavemanned changes in such a way that everything still works like before (hopefully).
 
+**31/05/2021**
+Got SSL encryption working for MQTT stuff, all MQTT communication is now encrypted. Additionally, have HTTPS setup on nginx, but I cannot make http requests to our backend (must make HTTP requests), meaning that https://debonair.duckdns.org doesn't have full functionality. Might try working on this on a branch, potentially useful info here: https://stackoverflow.com/questions/11744975/enabling-https-on-express-js. Otherwise, using http://debonair.duckdns.org works fine.
+
 General
 =======
 - For MQTT stuff, will probs use [MQTT.js](https://www.npmjs.com/package/mqtt#api)
@@ -74,3 +77,4 @@ https://jasonwatmore.com/post/2020/07/17/react-axios-http-post-request-examples
 - Managing dynamic DNS hostname for server using [Duck DNS](https://www.duckdns.org/)
 
 - SSL stuff: https://jamielinux.com/docs/openssl-certificate-authority/index.html
+
