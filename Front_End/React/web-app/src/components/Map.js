@@ -11,7 +11,7 @@ function Map(){
     const handleClick=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'L' }));
-        axios.post('http://localhost:8080/move', { 'direction':'L' } )
+        axios.post('http://3.8.182.14:8080/move', { 'direction':'L' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -22,7 +22,7 @@ function Map(){
     const handleClick2=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'F' }));
-        axios.post('http://localhost:8080/move', { 'direction':'F' })
+        axios.post('http://3.8.182.14:8080/move', { 'direction':'F' })
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -33,7 +33,7 @@ function Map(){
     const handleClick3=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'B' }));
-        axios.post('http://localhost:8080/move', { 'direction':'B' } )
+        axios.post('http://3.8.182.14:8080/move', { 'direction':'B' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -44,7 +44,7 @@ function Map(){
     const handleClick4=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'R' }));
-        axios.post('http://localhost:8080/move', { 'direction':'R' } )
+        axios.post('http://3.8.182.14:8080/move', { 'direction':'R' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })

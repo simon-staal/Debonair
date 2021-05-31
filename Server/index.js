@@ -10,12 +10,13 @@ const port = 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Play around with this shit later if I can be fucked
 const corsOptions = {
-    origin: 'http://localhost:3000',
+    origin: 'http://3.8.182.14:3000',
     optionsSuccessStatus: 200
 }
 
-app.use(cors(corsOptions)); // Enables CORS for just out REACT APP (both must be running on same server)
+app.use(cors()); // Enables CORS for just out REACT APP (both must be running on same server)
 
 // ------------------ MQTT client ---------------
 const clientOptions = {
@@ -39,7 +40,7 @@ client.on("connect", () => {
 		console.log('Subscribed to topic: ' + topic);
 	});
 	// Testing publishing ability
-	publish('toESP32/test','hello',options);
+	publish('toESP32/test','hello');
 })
 
 // Runs if unable to connect to broker
@@ -48,18 +49,19 @@ client.on("error", error => {
 	process.exit(1)
 });
 
+const pubOptions={
+	retain:true,
+	qos:1
+};
+
 // You can call this function to publish to things
-function publish(topic,msg,options){
+function publish(topic,msg,options=pubOptions){
 	console.log("publishing",msg);
 	if (client.connected == true){
 		client.publish(topic,msg,options);
 		}
 }
 
-const options={
-	retain:true,
-	qos:1
-};
 
 // ----------------------- REST API ----------------------
 app.get("/",(req,res)=>{
@@ -76,13 +78,14 @@ app.post("/coords", (req,res) => {
     }
     // res.set('Content-Type', 'text/plain');
     console.log(JSON.stringify(receivedCoord));
-    publish('toESP32/x_coord',receivedCoord.coordinateX,options);
-    publish('toESP32/y_coord',receivedCoord.coordinateY,options);
+    publish('toESP32/x_coord',receivedCoord.coordinateX);
+    publish('toESP32/y_coord',receivedCoord.coordinateY);
     res.send(receivedCoord);
 });
 
 app.post("/move", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
+    publish('toESP32/dir', req.body.direction)
     res.send("Received direction " + req.body.direction);
 });
 
