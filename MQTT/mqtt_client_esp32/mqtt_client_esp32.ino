@@ -7,8 +7,8 @@
 #define TXD2 17
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "The Circus";
-const char* password = "Hail_Pietr0";
+const char* ssid = "AndroidAP8029"; //"The Circus";
+const char* password = "hirk8481"; //"Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -59,6 +59,9 @@ int value = 0;
 
 // LED Pin
 const int ledPin = 4;
+
+// Rover Status
+char dir = 'S';
 
 void setup_wifi() {
   delay(10);
@@ -111,9 +114,10 @@ void callback(char* topic, byte* message, unsigned int length) {
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
   if (String(topic) == "toESP32/dir") {
+    dir = (char)message[0];
     Serial.print("Sending direction ");
-    Serial.println(messageTemp[0]);
-    Serial2.println(messageTemp[0]);
+    Serial.println(dir);
+    Serial2.print(dir);
   }
   else if (String(topic) == "toESP32/output") {
     Serial.print("Changing output to ");
@@ -159,9 +163,8 @@ void loop() {
   if (now - lastMsg > 5000) {
     lastMsg = now;
     
-    char *testString = "test";
-    Serial.print("Test string: ");
-    Serial.println(testString);
-    client.publish("fromESP32/test", testString);
+    Serial.print("Rover direction: ");
+    Serial.println(dir);
+    client.publish("fromESP32/dir", &dir);
   }
 }
