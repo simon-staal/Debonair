@@ -40,7 +40,7 @@ client.on("connect", () => {
 		console.log('Subscribed to topic: ' + topic);
 	});
 	// Testing publishing ability
-	publish('toESP32/test','hello',options);
+	publish('toESP32/test','hello');
 })
 
 // Runs if unable to connect to broker
