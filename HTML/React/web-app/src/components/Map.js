@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import './Map.css';
 import RotateLeftIcon from '@material-ui/icons/RotateLeft';
 import RotateRightIcon from '@material-ui/icons/RotateRight';
@@ -7,9 +7,11 @@ import axios from 'axios';
 
 function Map(){
 
-    const [count,setCount]= useState(0);
-    const handleClick=(event)=>{
-        event.preventDefault();
+    //SetTimeout : calls a function or runs some code after a period of time, specified using the second argument (in milliseconds)
+
+    const handleClick=(event)=>{ 
+        if (event.type === "mousedown") {
+            event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'L' }));
         axios.post('http://localhost:8080/move', { 'direction':'L' } )
             .then(response=>{
@@ -18,20 +20,44 @@ function Map(){
             .catch(err => {
                 console.log("Received error: " + err);
             })
+        } else {
+            event.preventDefault();
+        console.log("Message sent: " + JSON.stringify({ 'direction':'S' }));
+        axios.post('http://localhost:8080/move', { 'direction':'S' } )
+            .then(response=>{
+                console.log(JSON.stringify(response.data));
+            })
+            .catch(err => {
+                console.log("Received error: " + err);
+            });
+        }
     }
     const handleClick2=(event)=>{
-        event.preventDefault();
+        if (event.type === "mousedown") {
+            event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'F' }));
-        axios.post('http://localhost:8080/move', { 'direction':'F' })
+        axios.post('http://localhost:8080/move', { 'direction':'F' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
             .catch(err => {
                 console.log("Received error: " + err);
             })
+        } else {
+            event.preventDefault();
+        console.log("Message sent: " + JSON.stringify({ 'direction':'S' }));
+        axios.post('http://localhost:8080/move', { 'direction':'S' } )
+            .then(response=>{
+                console.log(JSON.stringify(response.data));
+            })
+            .catch(err => {
+                console.log("Received error: " + err);
+            });
+        }
     }
     const handleClick3=(event)=>{
-        event.preventDefault();
+        if (event.type === "mousedown") {
+            event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'B' }));
         axios.post('http://localhost:8080/move', { 'direction':'B' } )
             .then(response=>{
@@ -40,9 +66,21 @@ function Map(){
             .catch(err => {
                 console.log("Received error: " + err);
             })
+        } else {
+            event.preventDefault();
+        console.log("Message sent: " + JSON.stringify({ 'direction':'S' }));
+        axios.post('http://localhost:8080/move', { 'direction':'S' } )
+            .then(response=>{
+                console.log(JSON.stringify(response.data));
+            })
+            .catch(err => {
+                console.log("Received error: " + err);
+            });
+        }
     }
     const handleClick4=(event)=>{
-        event.preventDefault();
+        if (event.type === "mousedown") {
+            event.preventDefault();
         console.log("Message sent: " + JSON.stringify({ 'direction':'R' }));
         axios.post('http://localhost:8080/move', { 'direction':'R' } )
             .then(response=>{
@@ -51,24 +89,36 @@ function Map(){
             .catch(err => {
                 console.log("Received error: " + err);
             })
+        } else {
+            event.preventDefault();
+        console.log("Message sent: " + JSON.stringify({ 'direction':'S' }));
+        axios.post('http://localhost:8080/move', { 'direction':'S' } )
+            .then(response=>{
+                console.log(JSON.stringify(response.data));
+            })
+            .catch(err => {
+                console.log("Received error: " + err);
+            });
+        }
     }
+ 
     //hold down the button 
     return(
         <nav>
             <h1> Map Page </h1> 
-            <button className="leftrotate" onClick={handleClick} >
+            <button className="leftrotate" onMouseDown={handleClick} onMouseUp={handleClick} >
            <RotateLeftIcon/>
             </button> 
-            <button className="uparrow" onClick={handleClick2} >
+            <button className="uparrow"  onMouseDown={handleClick2} onMouseUp={handleClick2}  >
            <i class="fas fa-angle-up"></i>
             </button> 
-            <button className="downarrow" onClick={handleClick3}>
+            <button className="downarrow"  onMouseDown={handleClick3} onMouseUp={handleClick3}   >
            <i class="fas fa-angle-down"></i>
             </button> 
-            <button className="rightrotate" onClick={handleClick4}>
+            <button className="rightrotate" onMouseDown={handleClick4} onMouseUp={handleClick4} >
            <RotateRightIcon/>
             </button>
-        </nav>
+         </nav>
     );
 }
 
