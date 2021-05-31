@@ -36,7 +36,7 @@ function Home(){
     const handleSubmit=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify(inputFields[0]));
-        axios.post('http://localhost:8080/coords', inputFields[0])
+        axios.post('http://3.8.182.14:8080/coords', inputFields[0])
             .then(response=>{
                 //setInputFields(response.coordinates)
                 console.log("Received message: " + JSON.stringify(response.data));

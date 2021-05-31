@@ -7,51 +7,51 @@
 #define TXD2 17
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "The Circus";
-const char* password = "Hail_Pietr0";
+const char* ssid = "AndroidAP8029"; //"The Circus";
+const char* password = "hirk8481"; //"Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
-const int mqtt_port = 1883; // Currently using unencrypted version
+const int mqtt_port = 8883; // Currently using encrypted version
 const char* mqtt_user = "esp32";
 const char* mqtt_pwd = "#8HAGxb3*V%+CD8^";
 
 const char* ca_cert = \
 "-----BEGIN CERTIFICATE-----\n" \
-"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\n" \
+"MIIFtTCCA52gAwIBAgIUKdBx7TTn8jGu+U1mGwEtDoeXaLIwDQYJKoZIhvcNAQEN\n" \
 "BQAwajEXMBUGA1UEAwwOQW4gTVFUVCBicm9rZXIxFjAUBgNVBAoMDU93blRyYWNr\n" \
 "cy5vcmcxFDASBgNVBAsMC2dlbmVyYXRlLUNBMSEwHwYJKoZIhvcNAQkBFhJub2Jv\n" \
-"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\n" \
+"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\n" \
-"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\n" \
-"48pa58/edqexF7wUSpjIB45TCvwrbQv+OQ==\n" \
+"eGFtcGxlLm5ldDCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBALF78P+s\n" \
+"oQxJa6my4J+43d2RqkGjUXpYj7jZ9dT+Ot/Bh5JxdP4fJ83y0a+2V9vAeJaZjPJK\n" \
+"HoI4yT/Jn29f4aMy7pUvMdzTWC9q5f5VLI9rpsfk72wSCR+GENEWMiWSDnXlybkt\n" \
+"2Wf1hWBRlg3V0hBABc24Zr56K1NeUE9WDvEH8zgO1a477TtEj7fST81xiq33cuSV\n" \
+"r3LFbyskbC5cMqHg8bEYSOH9/loTP3ul9Ib5Zq90YZB6VB3It7R5BIq/oJbrYsw1\n" \
+"UAQZ5H5JrjYBjV9SRYEgfxr/w2UJZATffzpvUSL3L8CJIK9uk70Q442vvwN78p+9\n" \
+"1sgt3ZI9BEEY7jNUSkNdi4L2pt3PaeHnDunCabXVOMlMDi8qRoINX7rgHkyO529z\n" \
+"ccjtwhyELnho7h1J95/d/w9uOHqYlTzx19R7GhNSZs/Kr3AgknKeAu8VwvuH/gtP\n" \
+"+P4E4Bd5HhUsLvZvuq7xViFGlC3Ad8DCI8bnppE/cVAZMfiLy7EPPb91nMEGmvus\n" \
+"4TgR4eGIHZHQHkMVJSqK1STW09e2x3wQJ7veGpVsIKD4HcgjfqDoD4mjC+fu9pq7\n" \
+"X4QuYdEziNGYwYqkMy00eAfUA09nCj02mrZ6PJc4kvWxKg6Jdela+g/UNytEVeAw\n" \
+"FKh8FzM4OfUTO7EcsTGwUmnTD3dha5zvmX35AgMBAAGjUzBRMB0GA1UdDgQWBBTa\n" \
+"Uan1Hgwwrgk0JlLFh6Nj89EBrzAfBgNVHSMEGDAWgBTaUan1Hgwwrgk0JlLFh6Nj\n" \
+"89EBrzAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBDQUAA4ICAQCI7D/e+4uH\n" \
+"F4KUqgJfXb0SPkZHCBalyqQmFHaD+2ohGUhso/X+sSFkwL92XZ6HRfqgBSJrMBS2\n" \
+"dZAlWBh6U/75ecQPUgLXQ5B5opgZtI7gXxO34Gn4D7F6hbqYNNtTvt8D6BkOCvKS\n" \
+"fxFOorf0gh8EH2zteeNuIqcPMl9BxU/7SSpbUxNhywwsvXXzqwQ9xzHXuSX429QC\n" \
+"8n3qO+2+il+n6erOSPh9/XLiaaXw9kUO39eOdyeeawLHzMGwje9hj6ajd7wpNWa+\n" \
+"f7GZGZHWZVmirc5MZggXMkL4fMIqfgxEsyZKTz7vfiegVS+xZEl3PMtVBkCeKmHR\n" \
+"rrpTgHxN7Ox1ifQ35giZDBAh2px4yzSDvVvqxoD6I3mh20oF6+pfCZhh0TWiFYBI\n" \
+"BhHSgbTj9OW3N1DLcZINx5uKwGtVyvA1eg0gi6a546cWfdeXC4vq2TinMBcjaWf/\n" \
+"7U0sIo0YN0BJRBu8IgenbcVI9UnDSk0ryVeKzDieoor70LlY3OwkfSSIcU4Z8Qkh\n" \
+"8vPGucuGX2Gcoayp9yMfUWQ5aek5ZXj80pw0MVQFsI24z+TlLu9RJO/nP3bE3ADo\n" \
+"Lhz27tN2lpVZIqrrwtl5yaKZXpmnJgsam5lWho5B8BRj6Au7RGp6BcipjOzhfI1e\n" \
+"KKaH0SCVC/XiMCCdR/dFBKwUKOoEfibqXQ==\n" \
 "-----END CERTIFICATE-----\n";
 
-WiFiClient espClient;
+WiFiClientSecure espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
@@ -59,6 +59,9 @@ int value = 0;
 
 // LED Pin
 const int ledPin = 4;
+
+// Rover Status
+char dir = 'S';
 
 void setup_wifi() {
   delay(10);
@@ -86,7 +89,7 @@ void setup() {
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); // Communicate with drive
 
   setup_wifi();
-  //espClient.setCACert(ca_cert); // Set SSL/TLS certificate
+  espClient.setCACert(ca_cert); // Set SSL/TLS certificate
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback); // Sets callback function
 
@@ -110,7 +113,13 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "toESP32/output") {
+  if (String(topic) == "toESP32/dir") {
+    dir = (char)message[0];
+    Serial.print("Sending direction ");
+    Serial.println(dir);
+    Serial2.print(dir);
+  }
+  else if (String(topic) == "toESP32/output") {
     Serial.print("Changing output to ");
     if(messageTemp == "on"){
       Serial.println("on");
@@ -121,16 +130,16 @@ void callback(char* topic, byte* message, unsigned int length) {
       digitalWrite(ledPin, LOW);
     }
   }
-  else if (String(topic) == "toESP32/x_coord")
+  //else if (String(topic) == "toESP32/x_coord")
 }
 
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    Serial.print("Attempting MQTTS connection...");
     // Attempt to connect
     if (client.connect("ESP32Client", mqtt_user, mqtt_pwd)) {
-      Serial.println("connected");
+      Serial.println("connected securely");
       // Subscribe
       client.subscribe("toESP32/#");
     } else {
@@ -154,9 +163,8 @@ void loop() {
   if (now - lastMsg > 5000) {
     lastMsg = now;
     
-    char *testString = "test";
-    Serial.print("Test string: ");
-    Serial.println(testString);
-    client.publish("fromESP32/test", testString);
+    Serial.print("Rover direction: ");
+    Serial.println(dir);
+    client.publish("fromESP32/dir", &dir);
   }
 }
