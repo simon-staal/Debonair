@@ -52,7 +52,7 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-float vref = 2.5; // value chosen by me
+float vref = 3; // value chosen by me
 
 float open_loop, closed_loop; // Duty Cycles
 float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
@@ -74,6 +74,9 @@ boolean CL_mode = 0;
 unsigned int loopTrigger;
 unsigned int com_count=0;   // a variables to count the interrupts. Used for program debugging.
 
+//**************************Commhnication variables ****************//
+char received_char = 'S';
+boolean new_data = false;
 //************************** Motor Constants **************************//
    
 int DIRRstate = LOW;              //initializing direction states
@@ -131,6 +134,10 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance); /
 void turn_90left(unsigned long haltTime);
 void turn_90right(); // Update if needed later
 
+//***********************Receiving data part****************//
+  void rec_one_char();
+  void show_new_data();
+
 //***************************Globals*******************************
 bool halted = 0;
 bool done = 0;
@@ -155,6 +162,8 @@ void setup() {
   SPI.setBitOrder(MSBFIRST);
   
   Serial.begin(38400);
+  // Communication with ESP32
+  Serial1.begin(9600);
 
   if(mousecam_init()==-1)
   {
@@ -203,6 +212,8 @@ void loop() {
   
   // main code here runs repeatedly:
 
+rec_one_char();
+show_new_data();
 //******************* Camera loop part: ********************//
 
 #if 0
@@ -307,67 +318,77 @@ Serial.print('\n');
   unsigned long now = millis();
   
   //setting motor movements:
-/*
+
 // MODE: DIRECT INPUT FROM USER
-if (Serial.available() > 0){
-  char_received = Serial.read();
-  if(char_received == 'F'){
-    DIRRstate = HIGH;   //goes forwards
-    DIRLstate = LOW;}
-  else if(char_received == 'B'){
-    DIRRstate = LOW;   //goes backwards
-    DIRLstate = HIGH;} 
-  else if(char_received == 'L'){
+  if(received_char == 'F'){
+    DIRRstate = LOW;   //goes forwards
+    DIRLstate = HIGH;
+    Serial.println(received_char);}
+  else if(received_char == 'B'){
+    DIRRstate = HIGH;   //goes backwards
+    DIRLstate = LOW;
+    Serial.println(received_char);} 
+  else if(received_char == 'L'){
     DIRRstate = LOW;   // turns left - rotates anticlockwise
-    DIRLstate = LOW;} 
-  else if(char_received == 'R'){
+    DIRLstate = LOW;
+    Serial.println(received_char);} 
+  else if(received_char == 'R'){
     DIRRstate = HIGH;   // turns right - rotates clockwise
-    DIRLstate = HIGH;}
-  else if(char_received == 'S'){
-    pwm_modulate(0);} // stops
+    DIRLstate = HIGH;
+    Serial.println(received_char);}
+  else if(received_char == 'S'){
+    pwm_modulate(0);
+    Serial.println(received_char);} // stops
   else{
-    pwm_modulate(0);} // by default stop 
+    pwm_modulate(0);
+    Serial.println("default stop");
+    Serial.println(received_char);} // by default stop 
+
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate);  
-  }
-*/
+
 
   // MODE: 
   //Serial.print("Start of movement section, time diff ");
   //Serial.println(now-lastMsg);
-  int target_y = 100;
-  int target_x = 100;
-
-  if(!halted){
-    // STILL NOT ENTERING THIS
-    if(ydone==1 && xdone==1){
-      done = 1;
-      stop_Rover();  
-      Serial.println("ROVER STOPPED");
-    }
-    
-    if((abs(target_y + total_y) > 5) && finished_turning==false){
-      Serial.println("going to target y");
-      go_forwards(target_y, total_y);
-    }else if(abs(-target_y + total_y) <= 5){
-      ydone=1;
-      Serial.println(ydone);}
-      
-    if((abs(target_x + total_x) > 5) && finished_turning==true){
-      Serial.println(abs(target_x + total_x));
-      Serial.println("going to target x");
-      go_forwards(target_x, total_x);  
-    } else if(abs(-target_x + total_x) <= 5){
-      xdone=1;
-      Serial.println(xdone);}
-  }
-  
-  if(halted && !done)
-  {
-    Serial.println("rotating");
-    // turn 90 to work on other direction
-    turn_90left(haltTime);
-  }
+//  int target_y = 200;
+//  int target_x = 100;
+//
+//  if(!halted){
+//    // STILL NOT ENTERING THIS
+//    if((ydone==1) && (xdone==1)){
+//      done = 1;
+//      stop_Rover();  
+//      Serial.println("ROVER STOPPED");
+//    }
+//    
+//    if((abs(target_y + total_y) > 5) && finished_turning==false){
+//      Serial.println("going to target y");
+//      go_forwards(target_y, total_y);
+//    }else if(abs(-target_y + total_y) <= 5){
+//      //stop_Rover();
+//      ydone=1;
+//      Serial.println("ydone=");
+//      Serial.print(ydone);}
+//      
+//    if((abs(target_x + total_x) > 5) && finished_turning==true){
+//      Serial.println(abs(-target_x + total_x));
+//      Serial.println("going to target x");
+//      go_forwards(target_x, total_x);
+//      Serial.println("vuoi uscireeeeee");  
+//    } else if(abs(-target_x + total_x) <= 5){
+//      //stop_Rover();
+//      xdone=1;
+//      Serial.println("xdone=");
+//      Serial.print(xdone);}
+//  }
+//  
+//  if(halted && !done)
+//  {
+//    Serial.println("rotating");
+//    // turn 90 to work on other direction
+//    turn_90left(haltTime);
+//  }
 
   
   /*
@@ -666,6 +687,22 @@ void turn_90right(){
 void stop_Rover(){
   pwm_modulate(0);
   return;
+}
+
+void rec_one_char() {
+  if(Serial1.available()){
+    received_char = Serial1.read();
+    new_data = true;
+  }
+}
+
+void show_new_data() {
+  if(new_data == true) {
+    Serial.print("An ");
+    Serial.print((byte)received_char);
+    Serial.println(" has arrived");
+    new_data = false;
+  }
 }
 
 /*end of the program.*/
