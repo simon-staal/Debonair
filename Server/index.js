@@ -10,12 +10,13 @@ const port = 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Play around with this shit later if I can be fucked
 const corsOptions = {
     origin: 'http://3.8.182.14:3000',
     optionsSuccessStatus: 200
 }
 
-app.use(cors(corsOptions)); // Enables CORS for just out REACT APP (both must be running on same server)
+app.use(cors()); // Enables CORS for just out REACT APP (both must be running on same server)
 
 // ------------------ MQTT client ---------------
 const clientOptions = {
