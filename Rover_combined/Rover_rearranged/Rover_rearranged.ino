@@ -134,6 +134,7 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance); /
 void turn_90left(unsigned long haltTime);
 void turn_90right(); // Update if needed later
 
+void obstacle_avoidance();
 //***********************Receiving data part ****************//
   void rec_one_char();
   void show_new_data();
@@ -143,9 +144,12 @@ bool halted = 0;
 bool done = 0;
 bool finished_turning=false;
 unsigned long haltTime;
+bool rover_stopped;
+bool reached_y2_position=0;
 
 bool ydone1=0;
 bool ydone2=0;
+int y_after_rotation;
 //*************************** Setup ****************************//
 
 void setup() {
@@ -162,8 +166,9 @@ void setup() {
   SPI.setBitOrder(MSBFIRST);
   
   Serial.begin(38400);
+  
   // Communication with ESP32
-  Serial1.begin(9600);
+  //Serial1.begin(9600);
 
   if(mousecam_init()==-1)
   {
@@ -313,50 +318,54 @@ Serial.print('\n');
     loopTrigger = 0;
   }
   
-  //************************** Rover Actions **************************//
+  //************************** Rover Modes of Operation **************************//
   
   unsigned long now = millis();
-  
-  //setting motor movements:
 
-// MODE: DIRECT INPUT FROM USER
-//  if(received_char == 'F'){
-//    DIRRstate = LOW;   //goes forwards
-//    DIRLstate = HIGH;
-//    Serial.println(received_char);}
-//  else if(received_char == 'B'){
-//    DIRRstate = HIGH;   //goes backwards
-//    DIRLstate = LOW;
-//    Serial.println(received_char);} 
-//  else if(received_char == 'L'){
-//    DIRRstate = LOW;   // turns left - rotates anticlockwise
-//    DIRLstate = LOW;
-//    Serial.println(received_char);} 
-//  else if(received_char == 'R'){
-//    DIRRstate = HIGH;   // turns right - rotates clockwise
-//    DIRLstate = HIGH;
-//    Serial.println(received_char);}
-//  else if(received_char == 'S'){
-//    pwm_modulate(0);
-//    Serial.println(received_char);} // stops
-//  else{
-//    pwm_modulate(0);
-//    Serial.println("default stop");
-//    Serial.println(received_char);} // by default stop 
-//
-// digitalWrite(DIRR, DIRRstate);
-// digitalWrite(DIRL, DIRLstate);  
+// REMOTE CONTROLLER MODE: DIRECT INPUT FROM USER
+/*
+ if(received_char == 'M'){
+ 
+  if(received_char == 'F'){
+    DIRRstate = LOW;   //goes forwards
+    DIRLstate = HIGH;
+    Serial.println(received_char);}
+  else if(received_char == 'B'){
+    DIRRstate = HIGH;   //goes backwards
+    DIRLstate = LOW;
+    Serial.println(received_char);} 
+  else if(received_char == 'L'){
+    DIRRstate = LOW;   // turns left - rotates anticlockwise
+    DIRLstate = LOW;
+    Serial.println(received_char);} 
+  else if(received_char == 'R'){
+    DIRRstate = HIGH;   // turns right - rotates clockwise
+    DIRLstate = HIGH;
+    Serial.println(received_char);}
+  else if(received_char == 'S'){
+    pwm_modulate(0);
+    Serial.println(received_char);} // stops
+  else{
+    pwm_modulate(0);
+    Serial.println("default stop");
+    Serial.println(received_char);} // by default stop 
+ }
+ */ 
 
+// COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
 
-    // MODE: 
-  //Serial.print("Start of movement section, time diff ");
-  //Serial.println(now-lastMsg);
-  
-  //coordinates are provided by the ESP32 from Command
-  int target_y = 100;
-  int target_x = 300;
+/*  if(received_char == 'C'){
 
-// NON è CHE PER CASO LA Y E LA X SI RISETTANO IN BASE ALLA POSIZIONE DELLA TELECAMERA?
+      // 1st received char = target_x
+      // 2nd received char = target_y
+*/ 
+  // Coordinates are provided by the ESP32 from Command
+  // here thery are just manually set - for now
+  int target_y = 500;
+  int target_x = 100;
+
+// ADD OBSTACLE AVOIDANCE
+
    if((ydone1==1) && (ydone2==1)){
       done = 1;
       stop_Rover();
@@ -369,7 +378,7 @@ Serial.print('\n');
       go_forwards(target_y, total_y);
       if(abs(-target_y + total_y) <= 5){
       ydone1=1;
-      Serial.println("ydone="); Serial.print(ydone);
+      Serial.println("ydone1="); Serial.print(ydone1);
       Serial.print("\n");}
     } 
     if(finished_turning==true && ydone1==1 && reached_y2_position==0 && rover_stopped!=1){
@@ -380,20 +389,18 @@ Serial.print('\n');
       // After rotating, to reach target_x, the y position must be accounted since for the rover 
       // the movement happens in the y direction
       
-      go_forwards((y_after_rotation + target_x), total_y);
-      Serial.println("vuoi uscireeeeee");  
+      go_forwards((y_after_rotation + target_x), total_y);  
      if(abs(-(y_after_rotation + target_x) + total_y) <= 5){
-      Serial.println("è dentroooooo");
+      Serial.println("Rover reached the x coordinate");
       ydone2=1;
       reached_y2_position=1;
-      Serial.println("xdone="); Serial.print(xdone);
+      Serial.println("ydone2="); Serial.print(ydone2);
       }
     }
   }
-  
   if(halted && !done)
   {
-    if((abs(-(y_after_rotation + target_x) + total_y) <= 5) && ydone==1){
+    if((abs(-(y_after_rotation + target_x) + total_y) <= 5) && ydone1==1){
       ydone2=1;
       ydone1=1;
       stop_Rover();
@@ -403,35 +410,23 @@ Serial.print('\n');
       Serial.println("rotating");
       // turn 90 to work on other direction
       turn_90left(haltTime);}
-  }
+   }
+//} // curly bracket of the if received_char== 'C'
 
-// EXPLORE FUNCTIONALITY 
+// EXPLORE MODE 
   // receives range of ints. Rotate Rover slowly until the int=0 (probs will need a range for this)
   // if int<0 rotate right
   // if int>0 rotate left
   // when the int=0 , Rover moves forwards (for how much? bool? or fixed distance?)
-  // 
+
+/*  if(received_char == 'E'){
+
+    //EXPLORE
+    
+    }
+*/
    
-  /*
-  if(now > 20000 && now < 40000){
-    go_forwards(-300,total_y);
-      }
-  if(now > 40000 && now < 45000){
-    turn_90left();}
-  if(now > 45000 && now < 50000){
-    turn_90right();}
-  if(now > 50000){
-    stop_Rover();}
-  //Serial.print("End of movement section, time taken = ");
-  //Serial.println(millis()-lastMsg);
-  */
-  /*
-   if (total_y >= 0 && total_y <100) {
-      DIRRstate = HIGH;   //goes forwards
-      DIRLstate = LOW;}
-    if(total_y >= 100){
-      pwm_modulate(0);}
-   */
+ 
    digitalWrite(DIRR, DIRRstate);
    digitalWrite(DIRL, DIRLstate);
  }
@@ -696,9 +691,14 @@ void turn_90left(unsigned long haltTime){
       stop_Rover();
       halted = 0;
       finished_turning=true;
+      y_after_rotation= total_y;
+      Serial.println(reached_y2_position);
     }
     return; 
 }
+
+// same as turn_90left
+//IMPLEMENT
 void turn_90right(){
     DIRRstate = HIGH;
     DIRLstate = HIGH;
