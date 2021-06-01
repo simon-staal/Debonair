@@ -74,9 +74,20 @@ boolean CL_mode = 0;
 unsigned int loopTrigger;
 unsigned int com_count=0;   // a variables to count the interrupts. Used for program debugging.
 
-//**************************Commhnication variables ****************//
+//**************************Communication variables ****************//
 char received_char = 'S';
 boolean new_data = false;
+
+//************************** Rover Constants / Variables ************************//
+  //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
+  const float Pi = 3.14159;
+  int radius = 130;
+  float C = 2*Pi*r;
+  float arc_length;
+  float angle;
+  float increment;
+  float x1 = 0;
+  float y1 = 0;
 //************************** Motor Constants **************************//
    
 int DIRRstate = LOW;              //initializing direction states
@@ -134,7 +145,8 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance); /
 void turn_90left(unsigned long haltTime);
 void turn_90right(); // Update if needed later
 
-void obstacle_avoidance();
+void obstacle_avoidance(int range);
+float angle_measurement();
 //***********************Receiving data part ****************//
   void rec_one_char();
   void show_new_data();
@@ -145,10 +157,10 @@ bool done = 0;
 bool finished_turning=false;
 unsigned long haltTime;
 bool rover_stopped;
-bool reached_y2_position=0;
+bool reached_x_position=0;
 
 bool ydone1=0;
-bool ydone2=0;
+bool xdone=0;
 int y_after_rotation;
 //*************************** Setup ****************************//
 
@@ -366,7 +378,7 @@ Serial.print('\n');
 
 // ADD OBSTACLE AVOIDANCE
 
-   if((ydone1==1) && (ydone2==1)){
+   if((ydone1==1) && (xdone==1)){
       done = 1;
       stop_Rover();
       rover_stopped=1;
@@ -381,27 +393,25 @@ Serial.print('\n');
       Serial.println("ydone1="); Serial.print(ydone1);
       Serial.print("\n");}
     } 
-    if(finished_turning==true && ydone1==1 && reached_y2_position==0 && rover_stopped!=1){
+    if(finished_turning==true && ydone1==1 && reached_x_position==0 && rover_stopped!=1){
       //Serial.println(abs(target_x + total_y));
       Serial.println("going to target x");
+      go_forwards((y_after_rotation + target_x), total_y); 
       
-      // the sensor perceives as the y-direction wherever the front of the rover points.
-      // After rotating, to reach target_x, the y position must be accounted since for the rover 
-      // the movement happens in the y direction
-      
-      go_forwards((y_after_rotation + target_x), total_y);  
+      // The sensor perceives as the y-direction wherever the front of the rover points.
+      // After the rotation has finished, to reach target_x, the y position must be taken into account 
      if(abs(-(y_after_rotation + target_x) + total_y) <= 5){
       Serial.println("Rover reached the x coordinate");
-      ydone2=1;
-      reached_y2_position=1;
-      Serial.println("ydone2="); Serial.print(ydone2);
+      xdone=1;
+      reached_x_position=1;
+      Serial.println("xdone="); Serial.print(xdone);
       }
     }
   }
   if(halted && !done)
   {
     if((abs(-(y_after_rotation + target_x) + total_y) <= 5) && ydone1==1){
-      ydone2=1;
+      xdone=1;
       ydone1=1;
       stop_Rover();
       Serial.print("\n");
@@ -426,7 +436,6 @@ Serial.print('\n');
     }
 */
    
- 
    digitalWrite(DIRR, DIRRstate);
    digitalWrite(DIRL, DIRLstate);
  }
@@ -692,7 +701,7 @@ void turn_90left(unsigned long haltTime){
       halted = 0;
       finished_turning=true;
       y_after_rotation= total_y;
-      Serial.println(reached_y2_position);
+      Serial.println(reached_x_position);
     }
     return; 
 }
@@ -710,6 +719,18 @@ void stop_Rover(){
   return;
 }
 
+void obstacle_avoidance(int range){};
+
+float angle_measurement(){
+  
+  increment = sqrt(pow(total_x - x1) + pow(total_y - y1));
+  arc_length = arc_length + increment;
+  angle = (arc_length*360)/C;
+  x1 = total_x;
+  y1 = total_y;
+  };
+
+//***** ESP32 related functions***********//
 void rec_one_char() {
   if(Serial1.available()){
     received_char = Serial1.read();
@@ -721,7 +742,7 @@ void show_new_data() {
   if(new_data == true) {
     Serial.print("An ");
     Serial.print((byte)received_char);
-    Serial.println(" has arrived");
+    Serial.println("has arrived");
     new_data = false;
   }
 }
