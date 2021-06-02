@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const mqtt = require('mqtt');
-
+// Encryption
+const https = require('https');
+const fs = require('fs')
 
 const app = new express();
 const port = 8080;
@@ -9,6 +11,13 @@ const port = 8080;
 // ---------------- Admin shit -------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const key = fs.readFileSync(__dirname + '/SSL/selfsigned.key');
+const cert = fs.readFileSync(__dirname + '/SSL/selfsigned.crt');
+const SSL_options = {
+  key: key,
+  cert: cert
+};
 
 // Play around with this shit later if I can be fucked
 const corsOptions = {
@@ -95,6 +104,8 @@ app.use((req, res, next) => {
 });
 
 // Server
-app.listen(port, function(){
-    console.log(`Listening on URL http://localhost:${port}`);
+const server = https.createServer(SSL_options, app);
+
+server.listen(port, () => {
+    console.log(`Listening on URL https://localhost:${port}`);
 })
