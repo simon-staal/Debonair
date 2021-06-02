@@ -109,10 +109,12 @@ app.use((req, res, next) => {
 const httpServer = http.createServer(app);
 const httpsServer = https.createServer(SSL_options, app);
 
+// Disabling HTTP, only allowing HTTPS connections
+/*
 httpServer.listen(HTTP_port, () => {
 	console.log(`Listening at URL http://debonair.duckdns.org:${HTTP_port}`);
 })
-
+*/
 httpsServer.listen(HTTPS_port, () => {
     console.log(`Listening at URL https://debonair.duckdns.org:${HTTPS_port}`);
 })
