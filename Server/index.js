@@ -12,8 +12,8 @@ const port = 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const key = fs.readFileSync(__dirname + '/SSL/selfsigned.key');
-const cert = fs.readFileSync(__dirname + '/SSL/selfsigned.crt');
+const key = fs.readFileSync('/etc/letsencrypt/live/debonair.duckdns.org/fullchain.pem');
+const cert = fs.readFileSync('/etc/letsencrypt/live/debonair.duckdns.org/privkey.pem');
 const SSL_options = {
   key: key,
   cert: cert
@@ -74,7 +74,7 @@ function publish(topic,msg,options=pubOptions){
 
 // ----------------------- REST API ----------------------
 app.get("/",(req,res)=>{
-    res.render('index.html');
+    res.send('Hello from server!');
   });
 
 app.post("/coords", (req,res) => {
