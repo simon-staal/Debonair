@@ -18,7 +18,7 @@ This is a node.js app which handles requests from the REACT front-end and commun
 
 REACT Web-App
 -------------
-This is our front-end application contained [**here**](../Front_End/React). It is hosted on port 3000, and communicates with the rover via requests to the REST API.
+This is our front-end application contained [**here**](../Front_End/React). It is hosted on port 3000, and communicates with the rover via requests to the REST API. For our app to run on our AWS instance, I needed to downgrade npm to npm@7.5.4 (as per [**this issue**](https://github.com/facebook/create-react-app/issues/10811)).
 
 nginx Web Server
 ----------------
@@ -32,3 +32,5 @@ Your key file has been saved at:
    /etc/letsencrypt/live/debonair.duckdns.org/privkey.pem
 ```
 Additionally, set up the certificate to auto-renew every week as certificates are only valid for 3 months.
+
+Having issues with https://debonair.duckdns.org accessing our backend as it makes HTTP requests instead of HTTPS requests, discuss fix at meeting.
