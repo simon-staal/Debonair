@@ -79,9 +79,29 @@ app.get("/",(req,res)=>{
     res.send('Hello from server!');
   });
 
+app.get("/coords", (req,res) => {
+	let response = {
+		// NEED TO IMPLEMENT THINGS TO HOLD INFORMATION
+		'coordinateX': 0, //Rover coordinate x
+		'coordinateY': 0, //Rover coordinate y
+		'newObstacle': 0 //Any updates to ball positions (1 => new position)
+	};
+	res.send(response);
+});
+
+app.get("/obstacles", (req,res) => {
+	let response = {
+		// STILL NEED TO IMPLEMENT THINGS TO HOLD INFORMATION
+		'pink': [NULL, NULL], //pink XY coords
+		'green': [NULL, NULL], //green XY coords
+		'blue': [NULL, NULL], //blue XY coords
+		'orange': [NULL, NULL] //orange XY coords
+	};
+	res.send(response);
+})
+
 app.post("/coords", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
-    console.log(req.body);
     
     let receivedCoord = {
         'coordinateX': req.body.coordinateX,
