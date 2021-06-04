@@ -6,6 +6,7 @@
 
 using namespace std;
 
+pair<int,int> genIntermed(vector<pair<int,int>> &obstacles, pair<int, int> dest, pair<int, int> pos = {0,0});
 vector<int> inTheWay(pair<int,int> x_range, pair<int,int> y_range, vector<pair<int,int>> &obstacles);
 pair<int,int> avoid(pair<int,int> obstacle, pair<int,int> x_range, pair<int,int> y_range);
 int clearance = 100;
@@ -21,11 +22,21 @@ int main() {
   cin >> dest.first >> dest.second;
   vector<pair<int,int>> obstacles = {{200,200}, {-200,200}, {300,-200}}; //assumption that this has already been filled with pairs corresponding to object coordinates
   vector<pair<int,int>> path; //coordinates for the path the rover should take to avoid obstacles
-  bool r_l; //boolean variable that declares if dest is on left or right of rover start point (false/0 is left and true/1 is right)
+  pair<int,int> intermed = genIntermed(obstacles, dest);
+  path.push_back(intermed);
+  while(intermed != dest){
+    intermed = genIntermed(obstacles,dest,intermed);
+    path.push_back(intermed);
+  }
+  cout << "New path" << endl;
+  for(int i = 0; i < path.size(); i++){
+    cout << path[i].first << "," << path[i].second << endl;
+  }
 
-  //path = obstacles_in_path(pos, dest, obstacles, r_l, clearance);
+}
 
-  // INITIALISE PATH BOUNDARIES (snallest value always first)
+pair<int,int> genIntermed(vector<pair<int,int>> &obstacles, pair<int, int> dest, pair<int, int> pos)
+{
   pair<int,int> y_range;
   pair<int,int> x_range;
 
@@ -47,10 +58,6 @@ int main() {
   }
 
   vector<int> obsRef = inTheWay(x_range, y_range, obstacles);
-  cout << "Obstacles in the way" << endl;
-  for(int i = 0; i < obsRef.size(); i++){
-    cout << obstacles[obsRef[i]].first << "," << obstacles[obsRef[i]].second << endl;
-  }
 
   int closest = -1;
   int minDistance = INT_MAX;
@@ -61,12 +68,8 @@ int main() {
       minDistance = dist;
     }
   }
-  
-  pair<int,int> intermed = avoid(obstacles[closest], x_range, y_range);
-  cout << "New path" << endl;
-  cout << intermed.first << "," << intermed.second << endl;
-  cout << dest.first << "," << dest.second << endl;
-
+  pair<int,int> intermed = (closest == -1) ? dest : avoid(obstacles[closest], x_range, y_range);
+  return intermed;
 }
 
 vector<int> inTheWay(pair<int,int> x_range, pair<int,int> y_range, vector<pair<int,int>> &obstacles)
@@ -113,21 +116,3 @@ pair<int,int> avoid(pair<int,int> obstacle, pair<int,int> x_range, pair<int,int>
   }
   return newDest;
 }
-
-/*
-vector<pair<int,int>> obstacles_in_path(pair<int,int> pos, pair<int,int> dest, vector <pair<int,int>> obstacles, bool r_l, int clearance){
-
-  vector<pair> obstacles;
-  for(int i = 0; i <= obstacles.size(); i++){
-
-    if(r_l && (obstacles[i].first < dest.first + clearance) && (obstacles[i].first > pos.first - clearance)){
-
-      float percent = (obstacles[i].second - pos.second)/(dest.second - pos.second);
-      float y_path_intersect =
-
-    }
-  }
-
-
-}
-*/
