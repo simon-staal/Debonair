@@ -1,14 +1,25 @@
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const mqtt = require('mqtt');
-
-
-const app = new express();
-const port = 8080;
+// Encryption
+const https = require('https');
+const fs = require('fs')
 
 // ---------------- Admin shit -------------------
+const app = new express();
+const HTTP_port = 8080;
+const HTTPS_port = 8443;
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const cert = fs.readFileSync('/etc/letsencrypt/live/debonair.duckdns.org/fullchain.pem', 'utf8');
+const key = fs.readFileSync('/etc/letsencrypt/live/debonair.duckdns.org/privkey.pem', 'utf8');
+const SSL_options = {
+  key: key,
+  cert: cert
+};
 
 // Play around with this shit later if I can be fucked
 const corsOptions = {
@@ -65,7 +76,7 @@ function publish(topic,msg,options=pubOptions){
 
 // ----------------------- REST API ----------------------
 app.get("/",(req,res)=>{
-    res.render('index.html');
+    res.send('Hello from server!');
   });
 
 app.post("/coords", (req,res) => {
@@ -95,6 +106,15 @@ app.use((req, res, next) => {
 });
 
 // Server
-app.listen(port, function(){
-    console.log(`Listening on URL http://localhost:${port}`);
+const httpServer = http.createServer(app);
+const httpsServer = https.createServer(SSL_options, app);
+
+// Disabling HTTP, only allowing HTTPS connections
+/*
+httpServer.listen(HTTP_port, () => {
+	console.log(`Listening at URL http://debonair.duckdns.org:${HTTP_port}`);
+})
+*/
+httpsServer.listen(HTTPS_port, () => {
+    console.log(`Listening at URL https://debonair.duckdns.org:${HTTPS_port}`);
 })

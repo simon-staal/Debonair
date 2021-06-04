@@ -88,6 +88,12 @@ boolean new_data = false;
   float increment;
   float x1 = 0;
   float y1 = 0;
+
+  //flag for angle measurement
+  int angle_flag = 0;
+  float current_angle = 0; //every time the Rover is reset the initial angle is 0°
+
+  
 //************************** Motor Constants **************************//
    
 int DIRRstate = LOW;              //initializing direction states
@@ -145,7 +151,7 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance); /
 void turn_90left(unsigned long haltTime);
 void turn_90right(); // Update if needed later
 
-void obstacle_avoidance(int range);
+void compensate_x(float);
 float angle_measurement();
 //***********************Receiving data part ****************//
   void rec_one_char();
@@ -288,6 +294,10 @@ total_y1 = (total_y1 + distance_y);
 total_x = (float)(total_x1/157.0) * 10; //Conversion from counts per inch to mm (400 counts per inch)
 total_y = (float)(total_y1/157.0) * 10; //Conversion from counts per inch to mm (400 counts per inch)
     
+if(total_x ==0 && total_y == 0){
+  
+  }
+
 
 Serial.print('\n');
 Serial.println("dx (mm) = "+String(distance_x));
@@ -329,6 +339,10 @@ Serial.print('\n');
     digitalWrite(13, LOW);   // reset pin13.
     loopTrigger = 0;
   }
+
+  //************************** angle rotation measurment *************************//
+
+  
   
   //************************** Rover Modes of Operation **************************//
   
@@ -376,8 +390,12 @@ Serial.print('\n');
   int target_y = 500;
   int target_x = 100;
 
-// ADD OBSTACLE AVOIDANCE
+  O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
+  P_to_coord = target_x; //O_to_coord * cos(alpha); // simply the x target value
+  alpha = acos(P_to_coord/O_to_coord);
 
+/*
+ * COORDINATE MODE WITH 90° FIXED ROTATIONS
    if((ydone1==1) && (xdone==1)){
       done = 1;
       stop_Rover();
@@ -421,6 +439,8 @@ Serial.print('\n');
       // turn 90 to work on other direction
       turn_90left(haltTime);}
    }
+  */
+ 
 //} // curly bracket of the if received_char== 'C'
 
 // EXPLORE MODE 
@@ -689,6 +709,7 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
 
 void turn_90left(unsigned long haltTime){
     unsigned long now = millis();
+    angle_flag = 1;
     if(now-haltTime < 4500){
       DIRRstate = LOW;
       DIRLstate = LOW;
@@ -709,8 +730,21 @@ void turn_90left(unsigned long haltTime){
 // same as turn_90left
 //IMPLEMENT
 void turn_90right(){
-    DIRRstate = HIGH;
-    DIRLstate = HIGH;
+  unsigned long now = millis();
+    if(now-haltTime < 4500){
+      DIRRstate = HIGH;
+      DIRLstate = HIGH;
+    }
+  else{
+      Serial.print("We have stopped rotating ");
+      Serial.println(now);
+      Serial.println(haltTime);
+      stop_Rover();
+      halted = 0;
+      finished_turning=true;
+      y_after_rotation= total_y;
+      Serial.println(reached_x_position);
+    }
     return;
 }
 
@@ -728,6 +762,9 @@ float angle_measurement(){
   angle = (arc_length*360)/C;
   x1 = total_x;
   y1 = total_y;
+  Serial.print('increment ='); Serial.println(increment);
+  Serial.print('arc_length ='); Serial.println(arc_length);
+  Serial.print('x1 ='); Serial.println(x1);
   };
 
 //***** ESP32 related functions***********//

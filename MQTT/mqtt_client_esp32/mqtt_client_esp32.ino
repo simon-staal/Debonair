@@ -2,6 +2,7 @@
 #include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <Wire.h> // Not 100% sure if this included is needed, test without
+#include <Math.h> // Needed for distance calculation stuff
 
 #define RXD2 16
 #define TXD2 17
@@ -60,8 +61,10 @@ int value = 0;
 // LED Pin
 const int ledPin = 4;
 
-// Rover Status
+// Rover Parameters
 char dir = 'S';
+int angle = 0;
+std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
 
 void setup_wifi() {
   delay(10);
