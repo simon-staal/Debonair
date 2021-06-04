@@ -4,7 +4,6 @@ import TextField from '@material-ui/core/TextField';
 import {makeStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import axios from 'axios';
-//import Gridmap from './Gridmap.js'
 import "./Home.css"
 
 const useStyles = makeStyles((theme)=>({
@@ -48,7 +47,7 @@ function Home(){
     }
 
     return(
-        <Container>
+        <nav>
             <h1> Home Page </h1>
             <h2>Coordinates</h2>
             <form className={classes.root} onSubmit={event=> handleSubmit(event)}>
@@ -76,9 +75,7 @@ function Home(){
                 Submit
                 </Button>
             </form>
-            <nav className="Map">
-            </nav>
-        </Container>
+        </nav>
     );
 }
 
