@@ -33,7 +33,7 @@ app.use(cors()); // Enables CORS (required to work with browsers)
 const db_uri = "mongodb+srv://s_staal:1R2rulethem@ll@debonair.wmggl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 const db_client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-var dbo;
+var dbo; // Use MongoClient connection pooling to re-use connection to the database
 const time = new Date();
 // Holds information about our rover
 const rover = {
@@ -46,7 +46,10 @@ const rover = {
 
 // Database to track the obstacles
 db_client.connect((err, db) => {
-	if (err) throw err;
+	if (err) {
+		console.log(error);
+		process.kill(process.pid, 'SIGTERM');
+	}
 	console.log("MongoDB connected");
 	dbo = db.db("mydb");
 	const obstacles = dbo.collection("obstacles");
@@ -57,7 +60,10 @@ db_client.connect((err, db) => {
 		{ colour: 'orange', x: NULL, y: NULL}
 	];
 	obstacles.insertMany(initObs, (err, res) => {
-		if (err) throw err;
+		if (err) {
+			console.log(error);
+			process.kill(process.pid, 'SIGTERM');
+		}
 		console.log("Initialised obstacle database");
 	});
 });
@@ -65,7 +71,10 @@ db_client.connect((err, db) => {
 // Accesses the database entry associated with an obstacle
 function getObstacle(colour) {
 	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
-		if (err) throw err;
+		if (err) {
+			console.log(err);
+			return {};
+		}
 		return res;
 	});
 }
@@ -89,7 +98,7 @@ client.on("connect", () => {
 	client.subscribe(topic, (err, granted) => {
 		if (err) {
 		 console.log(err);
-		 return;
+		 process.kill(process.pid, 'SIGTERM');
 		}
 		console.log('Subscribed to topic: ' + topic);
 	});
@@ -100,7 +109,7 @@ client.on("connect", () => {
 // Runs if unable to connect to broker
 client.on("error", error => {
 	console.log("cannot connect " + error);
-	process.exit(1)
+	process.kill(process.pid, 'SIGTERM');
 });
 
 const pubOptions={
@@ -110,8 +119,34 @@ const pubOptions={
 
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
-	console.log("message is "+ message);
-	console.log("topic is "+ topic);
+	if (topic === "fromeESP32/status") {
+		rover.status = message.toString();
+	}
+	if (topic === "fromESP32/obstacle") {
+		// figure out what message will be / how to turn it into something useable
+		// Probably a JSON onject as a string
+		// i.e. "{ \"colour\":\"pink\", \"x\":1450, \"y\":-420 }"
+		let msg = JSON.parse(message.toString());
+		let query = { colour: msg.colour };
+		let newCoords = { $set: {x: msg.x, y: msg.y } };
+		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
+			if (err) {
+				console.log(err);
+				console.log("Obstacle attempted: " + msg.colour);
+			}
+			console.log("Updated " + msg.colour + " to x: " + msg.x + " y: " + msg.y);
+		})
+	}
+	if (topic === "fromESP32/rover_coords") {
+		// again probs a JSON object
+		// i.e. "{ \"x\":0, \"y\":0 }" would be sent from esp32
+		let msg = JSON.parse(message.toString());
+		rover.x = msg.x;
+		rover.y = msg.y;
+		rover.lastUpdate = time.getTime();
+	}
+	// console.log("message is "+ message);
+	// console.log("topic is "+ topic);
 });
 
 // You can call this function to publish to things
@@ -190,4 +225,16 @@ httpServer.listen(HTTP_port, () => {
 */
 httpsServer.listen(HTTPS_port, () => {
     console.log(`Listening at URL https://debonair.duckdns.org:${HTTPS_port}`);
+})
+
+// Handles shutting down application on critical errors
+process.on('SIGTERM', () => {
+	httpsServer.close(() => {
+		console.log('HTTPS server terminated');
+	});
+	client.end(() => {
+		console.log('MQTT client disconnected');
+	});
+	dbo.close();
+	console.log("Disconnected from MongoDB");
 })
