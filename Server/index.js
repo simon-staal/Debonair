@@ -30,7 +30,7 @@ const SSL_options = {
 app.use(cors()); // Enables CORS (required to work with browsers)
 
 // Data storage stuff (database + rover info)
-const db_uri = "mongodb+srv://s_staal:1R2rulethem@ll@debonair.wmggl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const db_uri = "mongodb+srv://s_staal:1R2rulethem@ll@debonair.wmggl.mongodb.net/Debonair?retryWrites=true&w=majority";
 const db_client = new MongoClient(db_uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 var dbo; // Use MongoClient connection pooling to re-use connection to the database
@@ -48,10 +48,11 @@ const rover = {
 db_client.connect((err, db) => {
 	if (err) {
 		console.log(err);
-		process.kill(process.pid, 'SIGTERM');
+		// process.kill(process.pid, 'SIGTERM');
+		throw err;
 	}
 	console.log("MongoDB connected");
-	dbo = db.db("mydb");
+	dbo = db.db("Debonair");
 	const obstacles = dbo.collection("obstacles");
 	let initObs = [
 		{ colour: 'pink', x: NULL, y: NULL },
@@ -62,7 +63,8 @@ db_client.connect((err, db) => {
 	obstacles.insertMany(initObs, (err, res) => {
 		if (err) {
 			console.log(err);
-			process.kill(process.pid, 'SIGTERM');
+			// process.kill(process.pid, 'SIGTERM');
+			throw err;
 		}
 		console.log("Initialised obstacle database");
 	});
@@ -74,7 +76,8 @@ function getObstacle(colour) {
 		if (err) {
 			console.log(err);
 			console.log("Obstacle attempted: " + colour);
-			return {};
+			throw err;
+			// return {};
 		}
 		return res;
 	});
@@ -134,7 +137,8 @@ client.on('message', (topic, message, packet) => {
 			if (err) {
 				console.log(err);
 				console.log("Obstacle attempted: " + msg.colour);
-				return;
+				throw err;
+				// return;
 			}
 			newObstacle = 1; // Tells front-end we have new obstacle data
 			console.log("Updated " + msg.colour + " to x: " + msg.x + " y: " + msg.y);
