@@ -4,7 +4,7 @@ import TextField from '@material-ui/core/TextField';
 import {makeStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import axios from 'axios';
-import Gridmap from './Gridmap.js'
+//import Gridmap from './Gridmap.js'
 import "./Home.css"
 
 const useStyles = makeStyles((theme)=>({
@@ -36,7 +36,7 @@ function Home(){
     const handleSubmit=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify(inputFields[0]));
-        axios.post('http://3.8.182.14:8080/coords', inputFields[0])
+        axios.post('https://debonair.duckdns.org:8443/coords', inputFields[0])
             .then(response=>{
                 //setInputFields(response.coordinates)
                 console.log("Received message: " + JSON.stringify(response.data));
@@ -77,7 +77,6 @@ function Home(){
                 </Button>
             </form>
             <nav className="Map">
-            <Gridmap/>
             </nav>
         </Container>
     );
