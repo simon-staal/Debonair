@@ -31,7 +31,7 @@ app.use(cors()); // Enables CORS (required to work with browsers)
 
 // Data storage stuff (database + rover info)
 const db_uri = "mongodb+srv://s_staal:1R2rulethem@ll@debonair.wmggl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
-const db_client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const db_client = new MongoClient(db_uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 var dbo; // Use MongoClient connection pooling to re-use connection to the database
 const time = new Date();
@@ -47,7 +47,7 @@ const rover = {
 // Database to track the obstacles
 db_client.connect((err, db) => {
 	if (err) {
-		console.log(error);
+		console.log(err);
 		process.kill(process.pid, 'SIGTERM');
 	}
 	console.log("MongoDB connected");
@@ -61,7 +61,7 @@ db_client.connect((err, db) => {
 	];
 	obstacles.insertMany(initObs, (err, res) => {
 		if (err) {
-			console.log(error);
+			console.log(err);
 			process.kill(process.pid, 'SIGTERM');
 		}
 		console.log("Initialised obstacle database");
@@ -195,11 +195,12 @@ app.get("/obstacles", (req,res) => {
 // Tells backend to reset obstacle coordinates
 app.get("/reset", (req,res) => {
 	let emptyCoords = {$set: {x: null, y: null} };
-	dbo.collection("obstacles").updateMany({}, emptyCoords, (err, res) => {
+	dbo.collection("obstacles").updateMany({}, emptyCoords, (err, response) => {
 		if (err) {
 			console.log(err);
 			res.send("Failure");
 		}
+		// Potentially check # of rows updated using response.result.nModified
 		res.send("Success");
 	})
 })
@@ -234,7 +235,7 @@ app.use((req, res, next) => {
 });
 
 // Server
-const httpServer = http.createServer(app);
+// const httpServer = http.createServer(app);
 const httpsServer = https.createServer(SSL_options, app);
 
 // Disabling HTTP, only allowing HTTPS connections
