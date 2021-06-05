@@ -1,3 +1,4 @@
+// Communication
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
@@ -5,15 +6,20 @@ const mqtt = require('mqtt');
 // Encryption
 const https = require('https');
 const fs = require('fs')
+// Database
+const MongoClient = require('mongodb').MongoClient
 
 // ---------------- Admin shit -------------------
+// Setting up communication
 const app = new express();
 const HTTP_port = 8080;
 const HTTPS_port = 8443;
 
+// To read JSON packages from frontend
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Setup certificates for encrypted communication with front-end (HTTPS)
 const cert = fs.readFileSync('/etc/letsencrypt/live/debonair.duckdns.org/fullchain.pem', 'utf8');
 const key = fs.readFileSync('/etc/letsencrypt/live/debonair.duckdns.org/privkey.pem', 'utf8');
 const SSL_options = {
@@ -21,13 +27,50 @@ const SSL_options = {
   cert: cert
 };
 
-// Play around with this shit later if I can be fucked
-const corsOptions = {
-    origin: 'http://3.8.182.14:3000',
-    optionsSuccessStatus: 200
+app.use(cors()); // Enables CORS (required to work with browsers)
+
+// Data storage stuff (database + rover info)
+const db_uri = "mongodb+srv://s_staal:1R2rulethem@ll@debonair.wmggl.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const db_client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+var dbo;
+const time = new Date();
+// Holds information about our rover
+const rover = {
+	"x":null,
+	"y":null,
+	"lastUpdate": time.getTime(),
+	"status":"offline",
+	"battery":null
+};
+
+// Database to track the obstacles
+db_client.connect((err, db) => {
+	if (err) throw err;
+	console.log("MongoDB connected");
+	dbo = db.db("mydb");
+	const obstacles = dbo.collection("obstacles");
+	let initObs = [
+		{ colour: 'pink', x: NULL, y: NULL },
+		{ colour: 'green', x: NULL, y: NULL },
+		{ colour: 'blue', x: NULL, y: NULL },
+		{ colour: 'orange', x: NULL, y: NULL}
+	];
+	obstacles.insertMany(initObs, (err, res) => {
+		if (err) throw err;
+		console.log("Initialised obstacle database");
+	});
+});
+
+// Accesses the database entry associated with an obstacle
+function getObstacle(colour) {
+	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
+		if (err) throw err;
+		return res;
+	});
 }
 
-app.use(cors()); // Enables CORS for just out REACT APP (both must be running on same server)
+let newObstacle = 0; // Flag indicating if we have detected a new obstacle
 
 // ------------------ MQTT client ---------------
 const clientOptions = {
@@ -65,6 +108,12 @@ const pubOptions={
 	qos:1
 };
 
+// Callback function for when messages are received
+client.on('message', (topic, message, packet) => {
+	console.log("message is "+ message);
+	console.log("topic is "+ topic);
+});
+
 // You can call this function to publish to things
 function publish(topic,msg,options=pubOptions){
 	console.log("publishing",msg);
@@ -81,22 +130,25 @@ app.get("/",(req,res)=>{
 
 app.get("/coords", (req,res) => {
 	let response = {
-		// NEED TO IMPLEMENT THINGS TO HOLD INFORMATION
-		'coordinateX': 0, //Rover coordinate x
-		'coordinateY': 0, //Rover coordinate y
-		'newObstacle': 0 //Any updates to ball positions (1 => new position)
+		'coordinateX': rover.x, //Rover coordinate x
+		'coordinateY': rover.y, //Rover coordinate y
+		'newObstacle': newObstacle //Any updates to ball positions (1 => new position)
 	};
 	res.send(response);
 });
 
 app.get("/obstacles", (req,res) => {
+	let pink = getObstacle("pink");
+	let green = getObstacle("green");
+	let blue = getObstacle("blue");
+	let orange = getObstacle("orange");
 	let response = {
-		// STILL NEED TO IMPLEMENT THINGS TO HOLD INFORMATION
-		'pink': [NULL, NULL], //pink XY coords
-		'green': [NULL, NULL], //green XY coords
-		'blue': [NULL, NULL], //blue XY coords
-		'orange': [NULL, NULL] //orange XY coords
+		'pink': [pink.x, pink.y], //pink XY coords
+		'green': [green.x, green.y], //green XY coords
+		'blue': [blue.x, blue.y], //blue XY coords
+		'orange': [orange.x, orange.y] //orange XY coords
 	};
+	newObstacle = 0; // Resets newObstacle flag
 	res.send(response);
 })
 
@@ -109,6 +161,7 @@ app.post("/coords", (req,res) => {
     }
     // res.set('Content-Type', 'text/plain');
     console.log(JSON.stringify(receivedCoord));
+	// Not sure about this yet
     publish('toESP32/x_coord',receivedCoord.coordinateX);
     publish('toESP32/y_coord',receivedCoord.coordinateY);
     res.send(receivedCoord);
