@@ -26,8 +26,9 @@ module EEE_IMGPROC(
 	source_eop,
 	
 	// conduit
-	mode
-	
+	mode,
+	outbuffer,
+	received_data_spi
 );
 
 
@@ -60,7 +61,8 @@ output								source_eop;
 
 // conduit export
 input                         mode;
-
+input		[15:0]					received_data_spi;
+output	[15:0]						outbuffer;
 ////////////////////////////////////////////////////////////////////////
 //
 parameter IMAGE_W = 11'd640;
@@ -79,6 +81,26 @@ wire         sop, eop, in_valid, out_ready;
 wire[7:0] hue ;
 wire[7:0] saturation, value, min;
 
+reg red_f, yellow_f, green_f, blue_f, grey_f;
+
+wire [15:0] value_spi;
+
+assign value_spi = received_data_spi;
+
+initial begin
+	red_f <= 0;
+	yellow_f <= 0;
+	green_f <= 0;
+	blue_f <= 0;
+	grey_f <= 0;
+end
+
+
+always @(negedge clk)begin
+	if(value_spi == 100)begin
+		red_f = 1;
+	end
+end
 
 /*
 // Detect red areas
@@ -97,13 +119,16 @@ assign hue = (red == green && red == blue) ? 0 :((value != red)? (value != green
                 (blue < green) ? ((60*(green - blue)/(value - min))>>1): (((360*(value-min) +(60*(green - blue)))/(value - min))>>1));
 					 
 ///Detect Ping Pong balls
-reg prev_detect_high_r, prev_high_r;
-reg prev_detect_high_y, prev_high_y;
-reg prev_detect_high_g, prev_high_g;
-reg prev_detect_high_b, prev_high_b;
+reg prev_detect_high_r, prev_high_r, prev_high_r2;
+reg prev_detect_high_y, prev_high_y, prev_high_y2;
+reg prev_detect_high_g, prev_high_g, prev_high_g2;
+reg prev_detect_high_b, prev_high_b, prev_high_b2;
 wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;	
-assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 10 && hue >= 0)) && (saturation > 30 && value > 249))||(hue <= 11 && hue >= 0 && ((value > 230 && saturation > 17 && saturation < 155)||(value > 210 && saturation > 130)))||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 9)) && ((value > 64 && saturation > 96) || (saturation > 78 && value > 168)))); //sat > 102
-assign orange_ball_detect = (((hue >= 28 && hue <= 30) && (saturation > 76 && value > 253)) || ((hue >= 15 && hue <=25) && (saturation > 134 && value > 80)) || ((hue >= 23 && hue <= 26) && ((value > 155 && saturation > 127)||(value > 39 && saturation > 247))));
+assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 7 && hue >= 0)) && (saturation > 84 && value > 245))||(hue <= 7 && hue >= 0 && ((value > 229 && saturation > 17 && saturation < 155)||(value > 210 && saturation > 130)))||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 7)) && ((value >  86 && saturation > 100) || (saturation > 82 && value > 168)))); //sat > 102
+assign orange_ball_detect = (((hue >= 16 && hue <=25) && (saturation > 133 && value > 78)) || ((hue >= 23 && hue <= 30) && ((value > 155 && saturation > 127)||(saturation >= 153 && value > 252)||(value > 41 && saturation > 247))));
+//assign green_ball_detect = (((hue >= 50 && hue <= 75) && (saturation > 150 && value > 66)) || ((hue >= 50 && hue <= 75) && ( (saturation > 127 && value > 175))));
+//assign blue_ball_detect = (((hue >= 78 && hue <= 98) && ((value > 45 && saturation > 110) || (saturation > 94 && value > 91) || (saturation > 107 && value > 216))));
+
 
 
 //assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102); //sat > 102
@@ -114,51 +139,69 @@ assign orange_ball_detect = (((hue >= 28 && hue <= 30) && (saturation > 76 && va
 initial begin
 	prev_detect_high_r <= 0;
 	prev_high_r <= 0;
+	prev_high_r2 <= 0;
 	prev_detect_high_y <= 0;
 	prev_high_y <= 0;
+	prev_high_y2 <= 0;
 	prev_detect_high_g <= 0;
 	prev_high_g <= 0;
+	prev_high_g2 <= 0;
 	prev_detect_high_b <= 0;
 	prev_high_b <= 0;
+	prev_high_b2 <= 0;
 end
 
 always@(negedge clk) begin
-	prev_high_r <= prev_detect_high_r;
+	prev_high_r2 = prev_high_r;
+	prev_high_r = prev_detect_high_r;
 	//prev_detect_high_r <= ((green_ball_detect || orange_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect));
-	prev_detect_high_r <= (pink_ball_detect);
-	prev_high_y <= prev_detect_high_y;
-	prev_detect_high_y <= (orange_ball_detect);
-	prev_high_g <= prev_detect_high_g;
-	prev_detect_high_g <= (green_ball_detect);
-	prev_high_b <= prev_detect_high_b;
-	prev_detect_high_b <= (blue_ball_detect);
+	prev_detect_high_r = (pink_ball_detect);
+	prev_high_y2 = prev_high_y;
+	prev_high_y = prev_detect_high_y;
+	prev_detect_high_y = (orange_ball_detect);
+	prev_high_g2 = prev_high_g;
+	prev_high_g = prev_detect_high_g;
+	prev_detect_high_g = (green_ball_detect);
+	prev_high_b2 = prev_high_b;
+	prev_high_b = prev_detect_high_b;
+	prev_detect_high_b = (blue_ball_detect);
 end
 
 // Highlight detected areas
 wire [23:0] color_high;
 assign grey = green[7:1] + red[7:2] + blue[7:2]; //Grey = green/2 + red/4 + blue/4
-assign color_high  =  (pink_ball_detect && prev_detect_high_r && prev_high_r) ? {8'hff,8'h10,8'h0} 
-	: ((green_ball_detect && prev_detect_high_g && prev_high_g)? {8'h04,8'hbd,8'h42} 
-	: ((orange_ball_detect && prev_detect_high_y && prev_high_y)? {8'hea,8'h9e,8'h1b} 
-	: ((blue_ball_detect && prev_detect_high_b && prev_high_b) ? {8'h0,8'h0,8'hff}
+assign color_high  =  (pink_ball_detect && prev_detect_high_r && prev_high_r && prev_high_r2) ? {8'hff,8'h10,8'h0} 
+	: ((green_ball_detect && prev_detect_high_g && prev_high_g && prev_high_g2)? {8'h04,8'hbd,8'h42} 
+	: ((orange_ball_detect && prev_detect_high_y && prev_high_y && prev_high_y2)? {8'hea,8'h9e,8'h1b} 
+	: ((blue_ball_detect && prev_detect_high_b && prev_high_b && prev_high_b2) ? {8'h0,8'h0,8'hff}
 	: ((grey_ball_detect) ? {8'h0,8'h0,8'h0}
 	: {grey,grey,grey})) )) ;
 
 // Show bounding box
 wire [23:0] new_image_r;
 wire bb_active_r;
-assign bb_active_r = (x == left_r) | (x == right_r);
+assign bb_active_r = (x == left_r && left_r != IMAGE_W-11'h1) | (x == right_r && right_r != 0);
 assign new_image_r = bb_active_r ? {24'hff0000} : color_high;
 
 wire [23:0] new_image_y;
 wire bb_active_y;
-assign bb_active_y = (x == left_y) | (x == right_y);
+assign bb_active_y = (x == left_y && left_y != IMAGE_W-11'h1) | (x == right_y && right_y != 0);
 assign new_image_y = bb_active_y ? {24'hffff00} : new_image_r;
+
+wire [23:0] new_image_g;
+wire bb_active_g;
+assign bb_active_g = (x == left_g && left_g != IMAGE_W-11'h1) | (x == right_g && right_g != 0);
+assign new_image_g = bb_active_g ? {24'h00ff00} : new_image_y;
+
+wire [23:0] new_image_b;
+wire bb_active_b;
+assign bb_active_b = (x == left_b && left_b != IMAGE_W-11'h1) | (x == right_b && right_b != 0);
+assign new_image_b = bb_active_b ? {24'h0000ff} : new_image_g;
 
 // Switch output pixels depending on mode switch
 // Don't modify the start-of-packet word - it's a packet discriptor
 // Don't modify data in non-video packets
-assign {red_out, green_out, blue_out} = (mode & ~sop & packet_video) ? new_image_y : {red,green,blue};
+assign {red_out, green_out, blue_out} = (mode & ~sop & packet_video) ? new_image_b : {red,green,blue};
 
 //Count valid pixels to tget the image coordinates. Reset and detect packet type on Start of Packet.
 reg [10:0] x, y;
@@ -181,40 +224,153 @@ always@(posedge clk) begin
 end
 
 //Find first and last red pixels
-reg [10:0] x_min_r, x_max_r, x_min_y, x_max_y;
-wire [10:0] x_dist_r, x_dist_y;
+reg [10:0] x_min_r, x_max_r, x_min_y, x_max_y, x_min_g, x_max_g, x_min_b, x_max_b;
+wire [10:0] x_dist_r, x_dist_y, x_dist_g, x_dist_b;
+
+reg	data_drive_mux;
+
+initial begin
+	data_drive_mux = 0;
+end
+
+reg left_or_right;
+
+reg[15:0] drive_instr;
+reg[15:0] data_value;
+
+assign outbuffer = (data_drive_mux) ? data_value : drive_instr;
+
+
+always@(posedge clk)begin
+	if (distance_r == 0 && distance_y == 0 && distance_g == 0 && distance_b == 0 && msg_state == 3)begin //if no balls on the screen rotate right
+		//rotating right
+		data_drive_mux <= 0;
+		drive_instr <= {16'b0000100000000000}; //rotate the drone right 
+	end
+	else begin
+		if ((distance_r != 0) && ((distance_r < distance_y) || (distance_y == 0)) && ((distance_r < distance_g)|| (distance_g == 0)) && ((distance_r < distance_b) || (distance_b == 0)) && msg_state == 3) begin //red ball nearest
+			if(x_min_r > 320)begin //case: if x_min is greater than the middle pixel
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if(x_max_r < 320) begin//case if x_max is smaller than the middle pixel
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (((320-x_min_r) > (x_max_r - 320)) && (((320-x_min_r) - (x_max_r - 320)) > 30))begin //if the image is more to the left 
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (((x_max_r - 320) > (320 - x_min_r)) && (((x_max_r - 320) - (320-x_min_r)) > 30))begin //if the image is more to the right
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if (distance_r > 25) begin //if the red ping pong ball is too far
+				drive_instr <= {16'b0100000000000000}; //move the drone forward
+				data_drive_mux <= 0;
+			end
+			else if (distance_r < 20) begin //if the red ping pong ball is too near
+				drive_instr <= {16'b0010000000000000}; //move the drone backward
+				data_drive_mux <= 0;
+			end
+			else begin //send distance measurement as long as it's within 20cm to 25cm
+				data_value <= {1'b1,distance_r[4:0],3'b000,7'h0}; //send the distance + ball colour
+				data_drive_mux <= 1;
+			end
+		end
+		
+		else if ((distance_y != 0) &&((distance_y < distance_r) || (distance_r == 0)) && ((distance_y < distance_g) || (distance_g == 0)) && ((distance_y < distance_b) || (distance_b == 0)) && msg_state == 3) begin //yellow ball nearest
+			if(x_min_y > 320)begin //case: if x_min is greater than the middle pixel
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if(x_max_y < 320) begin//case if x_max is smaller than the middle pixel
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (((320-x_min_y) > (x_max_y - 320)) && (((320-x_min_y) - (x_max_y - 320)) > 30))begin //if the image is more to the left 
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (((x_max_y - 320) > (320 - x_min_y)) && (((x_max_y - 320) - (320-x_min_y)) > 30))begin //if the image is more to the right
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if (distance_y > 25) begin //if the red ping pong ball is too far
+				drive_instr <= {16'b0100000000000000}; //move the drone forward
+				data_drive_mux <= 0;
+			end
+			else if (distance_y < 20) begin //if the red ping pong ball is too near
+				drive_instr <= {16'b0010000000000000}; //move the drone backward
+				data_drive_mux <= 0;
+			end
+			else begin //send distance measurement as long as it's within 20cm to 25cm
+				data_value <= {1'b1,distance_y[4:0],3'b001,7'h0}; //send the distance + ball colour
+				data_drive_mux <= 1;
+			end
+			
+		end
+		/*
+		else if ((distance_g < distance_r) && (distance_g < distance_y) && (distance_g < distance_b) && msg_state == 3) begin //green ball nearests
+		
+		end
+		else if ((distance_b < distance_r) && (distance_b < distance_g) && (distance_b < distance_y) && msg_state == 3) begin //blue ball nearest
+		
+		end
+		*/
+	end
+end
+
 
 assign x_dist_r = (x_min_r > x_max_r) ? 0 : (x_max_r-x_min_r);
 assign x_dist_y = (x_min_y > x_max_y) ? 0 : (x_max_y-x_min_y);
+assign x_dist_g = (x_min_g > x_max_g) ? 0 : (x_max_g-x_min_g);
+assign x_dist_b = (x_min_b > x_max_b) ? 0 : (x_max_b-x_min_b);
 
 initial begin
 	x_min_r <= 0;
 	x_max_r <= 0;
 	x_min_y <= 0;
 	x_max_y <= 0;
+	x_min_g <= 0;
+	x_max_g <= 0;
+	x_min_b <= 0;
+	x_max_b <= 0;
 end
 
 always@(posedge clk) begin
 	//if (((green_ball_detect || blue_ball_detect || pink_ball_detect || grey_ball_detect) && prev_detect_high && prev_high) & in_valid) begin	//Update bounds when the pixel is red
-	if ((pink_ball_detect && prev_detect_high_r && prev_high_r) & in_valid) begin
+	if ((pink_ball_detect && prev_detect_high_r && prev_high_r && prev_high_r2) & in_valid) begin
 		if (x < x_min_r) x_min_r <= x;
 		if (x > x_max_r) x_max_r <= x;
 	end
-	if ((orange_ball_detect && prev_detect_high_y && prev_high_y) & in_valid) begin
+	if ((orange_ball_detect && prev_detect_high_y && prev_high_y && prev_high_y2) & in_valid) begin
 		if (x < x_min_y) x_min_y <= x;
 		if (x > x_max_y) x_max_y <= x;
+	end
+	if ((green_ball_detect && prev_detect_high_y && prev_high_y && prev_high_y2) & in_valid) begin
+		if (x < x_min_g) x_min_g <= x;
+		if (x > x_max_g) x_max_g <= x;
+	end
+	if ((blue_ball_detect && prev_detect_high_y && prev_high_y && prev_high_y2) & in_valid) begin
+		if (x < x_min_b) x_min_b <= x;
+		if (x > x_max_b) x_max_b <= x;
 	end
 	if (sop & in_valid) begin	//Reset bounds on start of packet
 		x_min_r <= IMAGE_W-11'h1;
 		x_max_r <= 0;
 		x_min_y <= IMAGE_W-11'h1;
 		x_max_y <= 0;
+		x_min_g <= IMAGE_W-11'h1;
+		x_max_g <= 0;
+		x_min_b <= IMAGE_W-11'h1;
+		x_max_b <= 0;
 	end
 end
 
 //Process bounding box at the end of the frame.
 reg [1:0] msg_state;
-reg [10:0] left_r, right_r, left_y, right_y;
+reg [10:0] left_r, right_r, left_y, right_y, left_g, right_g, left_b, right_b;
 reg [7:0] frame_count;
 always@(posedge clk) begin
 	if (eop & in_valid & packet_video) begin  //Ignore non-video packets
@@ -224,6 +380,11 @@ always@(posedge clk) begin
 		right_r <= x_max_r;
 		left_y <= x_min_y;
 		right_y <= x_max_y;
+		left_g <= x_min_g;
+		right_g <= x_max_g;
+		left_b <= x_min_b;
+		right_b <= x_max_b;
+		
 		
 		//Start message writer FSM once every MSG_INTERVAL frames, if there is room in the FIFO
 		frame_count <= frame_count - 1;
@@ -246,7 +407,7 @@ reg msg_buf_wr;
 wire msg_buf_rd, msg_buf_flush;
 wire [7:0] msg_buf_size;
 wire msg_buf_empty;
-wire [31:0] distance_r, distance_y;
+reg [31:0] distance_r, distance_y, distance_g, distance_b;
 `define RED_BOX_MSG_ID "RBB"
 
 wire[6:0] ratio1,ratio2;
@@ -256,10 +417,39 @@ assign ratio2 = 16'd20;
 wire [10:0] constan;
 assign constan = 16'd734;
 
-assign distance_r = (x_dist_r > 145) ? ((constan * ratio1)/ratio2/x_dist_r) : (((constan * ratio1)/ratio2)/x_dist_r + ((((constan * ratio1)/ratio2)/x_dist_r) * (((145-x_dist_r) * 3) * (x_dist_r * 3)))/1000000);
-assign distance_y =  (x_dist_y > 145) ? ((constan * ratio1)/ratio2/x_dist_y) : (((constan * ratio1)/ratio2)/x_dist_y + ((((constan * ratio1)/ratio2)/x_dist_y) * (((145-x_dist_y) * 3) * (x_dist_y * 3)))/1000000);
+
+
+always @(posedge clk)begin
+	if(x_min_r != IMAGE_W-11'h1 && x_max_r != 0 && !red_f) begin 
+		distance_r = (x_dist_r > 145) ? ((constan * ratio1)/ratio2/x_dist_r) : (((constan * ratio1)/ratio2)/x_dist_r + ((((constan * ratio1)/ratio2)/x_dist_r) * (((145-x_dist_r) * 3) * (x_dist_r * 3)))/1000000);
+	end
+	else begin
+		distance_r = 0;
+	end
+	if (x_min_y != IMAGE_W-11'h1 && x_max_y != 0 && !yellow_f) begin
+		distance_y = (x_dist_y > 145) ? ((constan * ratio1)/ratio2/x_dist_y) : (((constan * ratio1)/ratio2)/x_dist_y + ((((constan * ratio1)/ratio2)/x_dist_y) * (((145-x_dist_y) * 3) * (x_dist_y * 3)))/1000000);
+	end
+	else begin
+		distance_y = 0;
+	end
+	if (x_min_g != IMAGE_W-11'h1 && x_max_g != 0 && !green_f)begin
+		distance_g = (x_dist_g > 145) ? ((constan * ratio1)/ratio2/x_dist_g) : (((constan * ratio1)/ratio2)/x_dist_g + ((((constan * ratio1)/ratio2)/x_dist_g) * (((145-x_dist_g) * 3) * (x_dist_g * 3)))/1000000);
+	end
+	else begin
+		distance_g = 0;
+	end
+	if (x_min_b != IMAGE_W-11'h1 && x_max_b != 0 && !blue_f) begin
+		distance_b = (x_dist_b > 145) ? ((constan * ratio1)/ratio2/x_dist_b) : (((constan * ratio1)/ratio2)/x_dist_b + ((((constan * ratio1)/ratio2)/x_dist_b) * (((145-x_dist_b) * 3) * (x_dist_b * 3)))/1000000);
+	end
+	else begin
+		distance_b = 0;
+	end
+	
+
+end
 //((732 * (79/20))/147) =19.66 ish 19
  // -> 14.9
+reg [15:0] outt_r, outt_y;
 
 //79/20 = 3.95 -> 3
 
@@ -275,6 +465,12 @@ always@(*) begin	//Write words to FIFO as state machine advances
 		end
 		2'b10: begin
 			//msg_buf_in = {5'b0, x_min, 5'b0, y_min};	//Top left coordinate
+			outt_r = distance_y[15:0];
+			outt_y = distance_r[15:0];
+			/*for (i = 0; i < 16; i = i+1)begin
+				out = out >> 1;
+			end
+			*/
 			msg_buf_in = distance_y; //Bottom right coordinate
 			msg_buf_wr = 1'b1; //changed!!!!!!!!!!
 		end
