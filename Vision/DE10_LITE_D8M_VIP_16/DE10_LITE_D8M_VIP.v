@@ -57,7 +57,7 @@ module DE10_LITE_D8M_VIP(
 	inout 		          		GSENSOR_SDO,
 
 	//////////// Arduino //////////
-	inout 		    [15:0]		ARDUINO_IO,
+	inout 		    [15:0]		ARDUINO_IO, 
 	inout 		          		ARDUINO_RESET_N,
 
 	//////////// GPIO, GPIO connect to D8M-GPIO //////////
@@ -111,8 +111,101 @@ wire        MIPI_PIXEL_CLK_d;
 reg         MIPI_PIXEL_VS_d;
 reg         MIPI_PIXEL_HS_d;
 reg   [9:0] MIPI_PIXEL_D_d;
+wire	[15:0] outbuffer;
+
+
 
 assign MIPI_PIXEL_CLK_d = ~MIPI_PIXEL_CLK;
+
+//CODE BELOW SOURCE INSPIRATION: https://www.fpga4fun.com/SPI2.html
+/////////////////////////////////////////////////////////////////////
+
+
+// sync SCK to the FPGA clock using a 3-bits shift register
+reg [2:0] SCKr;  always @(posedge MAX10_CLK1_50) SCKr <= {SCKr[1:0], ARDUINO_IO[6]};
+wire SCK_risingedge = (SCKr[2:1]==2'b01);  // now we can detect SCK rising edges
+wire SCK_fallingedge = (SCKr[2:1]==2'b10);  // and falling edges
+
+// same thing for SSEL
+reg [2:0] SSELr;  always @(posedge MAX10_CLK1_50) SSELr <= {SSELr[1:0], ARDUINO_IO[7]};
+wire SSEL_active = ~SSELr[1];  // SSEL is active low
+wire SSEL_startmessage = (SSELr[2:1]==2'b10);  // message starts at falling edge
+wire SSEL_endmessage = (SSELr[2:1]==2'b01);  // message stops at rising edge
+
+// and for MOSI
+reg [1:0] MOSIr;  always @(posedge MAX10_CLK1_50) MOSIr <= {MOSIr[0], ARDUINO_IO[2]};
+wire MOSI_data = MOSIr[1];
+
+
+// we handle SPI in 8-bits format, so we need a 3 bits counter to count the bits as they come in
+reg [3:0] bitcnt;
+
+reg byte_received;  // high when a byte has been received
+reg [15:0] byte_data_received;
+
+always @(posedge MAX10_CLK1_50)
+begin
+  if(~SSEL_active)
+    bitcnt <= 4'b0000;
+  else
+  if(SCK_risingedge)
+  begin
+    bitcnt <= bitcnt + 4'b0001;
+	 byte_data_received <= {byte_data_received[14:0], MOSI_data};
+  end
+end
+
+//byte received to indicate receiving data is finished
+always @(posedge MAX10_CLK1_50) byte_received <= SSEL_active && SCK_risingedge && (bitcnt==6'b111111);
+
+
+reg [15:0] byte_data_sent;
+
+reg [15:0] cnt;
+always @(posedge MAX10_CLK1_50) if(SSEL_startmessage) cnt<=cnt+16'h1;  // count the messages
+
+always @(posedge MAX10_CLK1_50)
+if(SSEL_active)
+begin
+  if(SSEL_startmessage)
+    byte_data_sent <= outbuffer;  // first byte sent in a message is the message count
+  else
+  if(SCK_fallingedge)
+  begin
+    if(bitcnt==4'b000000)
+      byte_data_sent <= 16'h0;  // after that, we send 0s
+    else
+      byte_data_sent <= {byte_data_sent[14:0], 1'b0};
+  end
+end
+
+assign ARDUINO_IO[5] = byte_data_sent[15];  // send MSB first
+// we assume that there is only one slave on the SPI bus
+// so we don't bother with a tri-state buffer for MISO
+// otherwise we would need to tri-state MISO when SSEL is inactive
+
+
+
+
+/////////////////////////////////////////////////////////////////////
+//CODE ABOVE SOURCE INSPIRATION: https://www.fpga4fun.com/SPI2.html
+
+/*
+always @(ARDUINO_IO[6] or ARDUINO_IO[7])begin
+	if(ARDUINO_IO[7])begin
+		outbuffer_reg = outbuffer;	
+	end
+	else if(ARDUINO_IO[6] && ready == 1)begin
+		#1;
+		outbuffer_reg = outbuffer_reg >> 1;
+		ready = 0;
+	end
+	else if(!ARDUINO_IO[6])begin
+		ready = 1;
+	end
+end
+
+*/
 
 always @ (posedge MIPI_PIXEL_CLK_d) begin
    MIPI_PIXEL_VS_d <= MIPI_PIXEL_VS;
@@ -176,8 +269,21 @@ Qsys u0 (
 		.altpll_0_locked_conduit_export            (),            				//          altpll_0_locked_conduit.export
 		.altpll_0_phasedone_conduit_export         (),         					//       altpll_0_phasedone_conduit.export		
 		
-		.eee_imgproc_0_conduit_mode_new_signal     (SW[0])
+		.eee_imgproc_0_conduit_mode_new_signal     (SW[0]),
+		.eee_imgproc_0_conduit_outbuffer_1_new_signal (outbuffer),
+		.eee_imgproc_0_conduit_outbuffer_1_new_signal_1 (byte_data_received) //                    
+		//uart_0_external_connection_rxd             (ARDUINO_IO[11]),             //       uart_0_external_connection.rxd
+		//.uart_0_external_connection_txd             (ARDUINO_IO[10]) 
+		//.spi_0_external_MISO                        (ARDUINO_IO[2]),                        //                   spi_0_external.MISO
+		//.spi_0_external_MOSI                        (ARDUINO_IO[5]),                        //                                 .MOSI
+	//	.spi_0_external_SCLK                        (ARDUINO_IO[6]),                        //                                 .SCLK
+//		.spi_0_external_SS_n                        (ARDUINO_IO[7])                         //             
 	);
+	
+
+
+
+
 
 FpsMonitor uFps(
 	.clk50(MAX10_CLK2_50),
