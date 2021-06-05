@@ -73,6 +73,7 @@ function getObstacle(colour) {
 	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
 		if (err) {
 			console.log(err);
+			console.log("Obstacle attempted: " + colour);
 			return {};
 		}
 		return res;
@@ -133,7 +134,9 @@ client.on('message', (topic, message, packet) => {
 			if (err) {
 				console.log(err);
 				console.log("Obstacle attempted: " + msg.colour);
+				return;
 			}
+			newObstacle = 1; // Tells front-end we have new obstacle data
 			console.log("Updated " + msg.colour + " to x: " + msg.x + " y: " + msg.y);
 		})
 	}
@@ -163,6 +166,7 @@ app.get("/",(req,res)=>{
     res.send('Hello from server!');
   });
 
+// Requests rover coordinates
 app.get("/coords", (req,res) => {
 	let response = {
 		'coordinateX': rover.x, //Rover coordinate x
@@ -172,6 +176,7 @@ app.get("/coords", (req,res) => {
 	res.send(response);
 });
 
+// Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
 	let pink = getObstacle("pink");
 	let green = getObstacle("green");
@@ -185,8 +190,22 @@ app.get("/obstacles", (req,res) => {
 	};
 	newObstacle = 0; // Resets newObstacle flag
 	res.send(response);
+});
+
+// Tells backend to reset obstacle coordinates
+app.get("/reset", (req,res) => {
+	let emptyCoords = {$set: {x: null, y: null} };
+	dbo.collection("obstacles").updateMany({}, emptyCoords, (err, res) => {
+		if (err) {
+			console.log(err);
+			res.send("Failure");
+		}
+		res.send("Success");
+	})
 })
 
+// Sends desired coordinates to rover 
+// WILL NEED TO UPDATE WITH PATHFINDING
 app.post("/coords", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
     
@@ -202,6 +221,7 @@ app.post("/coords", (req,res) => {
     res.send(receivedCoord);
 });
 
+// Sends directions to rover
 app.post("/move", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
     publish('toESP32/dir', req.body.direction)
