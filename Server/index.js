@@ -39,6 +39,7 @@ const time = new Date();
 const rover = {
 	"x":null,
 	"y":null,
+	"angle":null,
 	"lastUpdate": time.getTime(),
 	"status":"offline",
 	"battery":null
@@ -129,9 +130,9 @@ client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/obstacle") {
 		// figure out what message will be / how to turn it into something useable
 		// Probably a JSON onject as a string
-		// i.e. "{ \"colour\":\"pink\", \"x\":1450, \"y\":-420 }"
+		// i.e. "{ \"col\":\"pink\",\"x\":1450,\"y\":-420 }"
 		let msg = JSON.parse(message.toString());
-		let query = { colour: msg.colour };
+		let query = { colour: msg.col };
 		let newCoords = { $set: {x: msg.x, y: msg.y } };
 		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
 			if (err) {
@@ -146,10 +147,11 @@ client.on('message', (topic, message, packet) => {
 	}
 	if (topic === "fromESP32/rover_coords") {
 		// again probs a JSON object
-		// i.e. "{ \"x\":0, \"y\":0 }" would be sent from esp32
+		// i.e. "{\"x\":0,\"y\":0,\"a\":0}" would be sent from esp32
 		let msg = JSON.parse(message.toString());
 		rover.x = msg.x;
 		rover.y = msg.y;
+		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
 	}
 	// console.log("message is "+ message);

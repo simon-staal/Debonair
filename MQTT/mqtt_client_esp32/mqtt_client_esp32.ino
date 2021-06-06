@@ -63,8 +63,11 @@ const int ledPin = 4;
 
 // Rover Parameters
 char dir = 'S';
-int angle = 0;
-std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+struct Rover{
+  int angle = 0;
+  std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+};
+Rover rover;
 
 void setup_wifi() {
   delay(10);
@@ -159,7 +162,12 @@ void loop() {
   if (!client.connected()) {
     reconnect();
   }
-  client.loop();
+  client.loop(); // Allows client to process incoming messages and maintain connection to server
+
+  // Sends rover details to backend
+  char buffer[30];
+  genCoordMsg(buffer);
+  client.publish("fromESP32/rover_coords", buffer);
 
   // Sends test message every 5 seconds
   long now = millis();
@@ -170,4 +178,41 @@ void loop() {
     Serial.println(dir);
     client.publish("fromESP32/dir", &dir);
   }
+}
+
+void genCoordMsg(char *buf)
+{
+    int cur = 0;
+    char x[6] = "{\"x\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = x[i];
+    }
+    char num[6];
+    sprintf(num, "%d", rover.coords.first);
+    int cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char y[6] = ",\"y\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = y[i];
+    }
+    sprintf(num, "%d", rover.coords.second);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char a[6] = ",\"a\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = a[i];
+    }
+    sprintf(num, "%d", rover.angle);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 30){
+      buf[cur++] = '\0';
+    }
 }
