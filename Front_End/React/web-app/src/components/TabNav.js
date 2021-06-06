@@ -71,16 +71,14 @@ const TabNav = () => {
             
             <li className="nav-item active">
               <NavLink className="nav-link" to="/" exact>
-                <i 
-                className="fas fa-tachometer-alt">
-                </i>Home
+              <i class="fas fa-map-marker-alt"></i>Coords
               </NavLink>
             </li>
 
             <li className="nav-item">
               <NavLink className="nav-link" to="/map" exact>
-              <i class="fas fa-map-marked-alt"></i>
-              Map
+              <i class="fas fa-gamepad"></i>
+              Controller
               </NavLink> 
             </li>
 
