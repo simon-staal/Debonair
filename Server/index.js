@@ -55,10 +55,10 @@ db_client.connect((err) => {
 	dbo = db_client.db("Debonair");
 	const obstacles = dbo.collection("obstacles");
 	let initObs = [
-		{ colour: 'pink', x: NULL, y: NULL },
-		{ colour: 'green', x: NULL, y: NULL },
-		{ colour: 'blue', x: NULL, y: NULL },
-		{ colour: 'orange', x: NULL, y: NULL}
+		{ colour: 'pink', x: null, y: null },
+		{ colour: 'green', x: null, y: null },
+		{ colour: 'blue', x: null, y: null },
+		{ colour: 'orange', x: null, y: null}
 	];
 	obstacles.insertMany(initObs, (err, res) => {
 		if (err) {
