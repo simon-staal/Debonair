@@ -78,3 +78,7 @@ https://jasonwatmore.com/post/2020/07/17/react-axios-http-post-request-examples
 
 - SSL stuff: https://jamielinux.com/docs/openssl-certificate-authority/index.html
 
+MongoDB
+-------
+Using MongoDB for database, following user details to access cluster:
+s_staal:LNFfaKDXPekXvb76
