@@ -30,7 +30,7 @@ const SSL_options = {
 app.use(cors()); // Enables CORS (required to work with browsers)
 
 // Data storage stuff (database + rover info)
-const db_uri = "mongodb+srv://s_staal:1R2rulethem@ll@debonair.wmggl.mongodb.net/Debonair?retryWrites=true&w=majority";
+const db_uri = "mongodb+srv://s_staal:LNFfaKDXPekXvb76@cluster0.wmggl.mongodb.net/Debonair?retryWrites=true&w=majority";
 const db_client = new MongoClient(db_uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 var dbo; // Use MongoClient connection pooling to re-use connection to the database
@@ -45,14 +45,14 @@ const rover = {
 };
 
 // Database to track the obstacles
-db_client.connect((err, db) => {
+db_client.connect((err) => {
 	if (err) {
 		console.log(err);
 		// process.kill(process.pid, 'SIGTERM');
 		throw err;
 	}
 	console.log("MongoDB connected");
-	dbo = db.db("Debonair");
+	dbo = db_client.db("Debonair");
 	const obstacles = dbo.collection("obstacles");
 	let initObs = [
 		{ colour: 'pink', x: NULL, y: NULL },
