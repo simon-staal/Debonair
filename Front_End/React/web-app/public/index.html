@@ -66,14 +66,12 @@
       }
      
       function disprover(){
-       //axios.get('https://debonair.duckdns.org:8443/obstacles')
-       //.then(response=>{
-         //stepx = response.data.coordX;
-         //stepy = response.data.coordY;
-         //flag = response.data.newObstacle;})
-      stepx=300;
-      stepy=300;
-      flag=1;
+       axios.get('https://debonair.duckdns.org:8443/obstacles')
+       .then(response=>{
+         stepx = response.data.coordX;
+         stepy = response.data.coordY;
+         flag = response.data.newObstacle;})
+     
       //request the data with axios get
       if (stepx>1000 | stepy>1000){
         document.getElementById("msg").innerHTML="Invalid Coordinate"
@@ -96,24 +94,17 @@
       var pinkx_res, pinky_res, greenx_res, greeny_res, bluex_res, bluey_res,orangex_res, orangey_res;
 
       function dispball(){
-       // axios.get('https://debonair.duckdns.org:8443/obstacles')
-        //.then(response=>{
-          // pinkx_res = response.data.pink[0];
-          // pinky_res = response.data.pink[1];
-          // greenx_res = response.data.green[0];
-          // greeny_res = response.data.green[1];
-          // bluex_res = response.data.blue[0];
-          // bluey_res = response.data.blue[1];
-          // orangex_res = response.data.orange[0];
-          // orangey_res = response.data.orange[1];})
-          pinkx_res=null;
-          pinky_res=null;
-          greenx_res=null;
-          greeny_res=null;
-          bluex_res=300;
-          bluey_res=900;
-          orangex_res=null;
-          orangey_res=null;
+        axios.get('https://debonair.duckdns.org:8443/obstacles')
+        .then(response=>{
+          pinkx_res = response.data.pink[0];
+          pinky_res = response.data.pink[1];
+          greenx_res = response.data.green[0];
+          greeny_res = response.data.green[1];
+          bluex_res = response.data.blue[0];
+          bluey_res = response.data.blue[1];
+          orangex_res = response.data.orange[0];
+          orangey_res = response.data.orange[1];})
+      
         //axios with flag and if flag triggered, request ball position
         // check if x is equal to the original x => if different update position, else do nothing.  
         if(pinkx !== pinkx_res ){
