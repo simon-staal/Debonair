@@ -278,6 +278,7 @@ process.on('SIGTERM', () => {
 	client.end(() => {
 		console.log('MQTT client disconnected');
 	});
-	db_client.close();
-	console.log("Disconnected from MongoDB");
+	db_client.close(() => {
+		console.log("Disconnected from MongoDB");
+	});
 })
