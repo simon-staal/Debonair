@@ -50,7 +50,7 @@
     
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script >
-      var flag;
+var flag;
 var stepx;
 var stepy;
 var pinkx =null;
@@ -86,10 +86,10 @@ var orangey=null;
 }
 
 function disprover(){
- axios.get('https://debonair.duckdns.org:8443/obstacles')
+ axios.get('https://debonair.duckdns.org:8443/coords')
  .then(response=>{
-   stepx = response.data.coordX;
-   stepy = response.data.coordY;
+   stepx = response.data.coordinateX;
+   stepy = response.data.coordinateY;
    flag = response.data.newObstacle;})
 
 //request the data with axios get
