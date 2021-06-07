@@ -103,10 +103,10 @@ if(flag==1){
 //If coordinates are outside of the map, notify user that they are invalid coordinates
 var y=document.getElementById('i1').offsetTop; 
 var x=document.getElementById('i1').offsetLeft;      
-x=x+stepx*300/1000;
-y=y-stepy*300/1000;
-document.getElementById('i1').style.left= x + "px"; //y axis update
-document.getElementById('i1').style.top= y + "px";    //x axis update
+var posx=x+stepx*300/1000;
+var posy=y-stepy*300/1000;
+document.getElementById('i1').style.left= posx + "px"; //x axis update
+document.getElementById('i1').style.top= posy + "px";    //y axis update
 document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy
 }
 
