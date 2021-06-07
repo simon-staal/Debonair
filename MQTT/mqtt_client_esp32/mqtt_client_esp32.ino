@@ -55,8 +55,7 @@ const char* ca_cert = \
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
-char msg[50];
-int value = 0;
+char buffer[30]; // buffer for messages sent by ESP32
 
 // LED Pin
 const int ledPin = 4;
@@ -71,7 +70,7 @@ Rover rover;
 
 // Obstacle Parameters
 struct Obstacle{
-  char colour[7],
+  int colour; // pink = 1, green = 2, blue = 3, orange = 4
   std::pair<int,int> coords = {0,0};
 };
 Obstacle obstacle;
@@ -82,6 +81,7 @@ void setup_wifi();
 void callback(char* topic, byte* message, unsigned int length); // Called when receiving message from MQTT broker
 void reconnect();
 void genCoordMsg(char *buf); // Generates message containing rover information as JSON string
+void genObsMsg(char *buf); // Generates message containing obstacle information as JSON string
 
 void setup_wifi() {
   delay(10);
@@ -177,14 +177,23 @@ void loop() {
     reconnect();
   }
   client.loop(); // Allows client to process incoming messages and maintain connection to server
+  // Handles publishing data about new obstacle to server
+  if (newObstacle) {
+    genObsMsg(buffer);
+    Serial.print("Sending message: ");
+    Serial.println(buffer);
+    client.publish("fromESP32/obstacle", buffer);
+    newObstacle = 0;
+  }
 
-  // Sends rover details to backend
-  char buffer[30];
-  
-
+  // Updates server with rover coords
+  /*
+  genCoordMsg(buffer);
+  client.publish("fromESP32/rover_coords", buffer);
+  */
   // Sends test message every 2 seconds
   long now = millis();
-  if (now - lastMsg > 2000) {
+  if (now - lastMsg > 5000) {
     lastMsg = now;
     
     genCoordMsg(buffer);
@@ -194,6 +203,10 @@ void loop() {
     rover.coords.first = (rover.coords.first + 1)%1000;
     rover.coords.second = (rover.coords.second + 1)%1000;
     rover.angle = (rover.angle + 1)%360;
+    obstacle.colour = (obstacle.colour+1)%4 + 1;
+    obstacle.coords.first = (obstacle.coords.first +100)%1000;
+    obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
+    newObstacle = 1;
   }
 }
 
@@ -224,6 +237,39 @@ void genCoordMsg(char *buf)
         buf[cur++] = a[i];
     }
     sprintf(num, "%d", rover.angle);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 30){
+      buf[cur++] = '\0';
+    }
+}
+
+void genObsMsg(char *buf)
+{
+    int cur = 0;
+    char c[6] = "{\"c\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = c[i];
+    }
+    buf[cur++] = (char)(obstacle.colour+48);
+    char x[6] = ",\"x\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = x[i];
+    }
+    char num[6];
+    sprintf(num, "%d", obstacle.coords.first);
+    int cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char y[6] = ",\"y\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = y[i];
+    }
+    sprintf(num, "%d", obstacle.coords.second);
     cnt = 0;
     while(num[cnt]){
       buf[cur++] = num[cnt++];

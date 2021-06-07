@@ -97,6 +97,23 @@ function getObstacle(colour) {
 	return result
 }
 
+// Converts code into colour string
+function getObsColour(col) {
+	switch(col) {
+		case 1:
+			return "pink";
+		case 2:
+			return "green";
+		case 3:
+			return "blue";
+		case 4:
+			return "orange";
+		default:
+			console.log("Invalid obstacle colour received from ESP32");
+			return "INVALID";
+	}
+}
+
 let newObstacle = 0; // Flag indicating if we have detected a new obstacle
 
 // ------------------ MQTT client ---------------
@@ -141,11 +158,12 @@ client.on('message', (topic, message, packet) => {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
-		// figure out what message will be / how to turn it into something useable
-		// Probably a JSON onject as a string
-		// i.e. "{ \"c\":\"pink\",\"x\":1450,\"y\":-420 }"
+		// i.e. "{ \"c\":1,\"x\":1450,\"y\":-420 }"
+		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
+		// Colour_code: pink=1, green=2, blue=3, orange=4
 		let msg = JSON.parse(message.toString());
-		let query = { colour: msg.c };
+		let obsColour = getObsColour(msg.c);
+		let query = { colour: obsColour };
 		let newCoords = { $set: {x: msg.x, y: msg.y } };
 		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
 			if (err) {
@@ -159,8 +177,7 @@ client.on('message', (topic, message, packet) => {
 		})
 	}
 	if (topic === "fromESP32/rover_coords") {
-		// again probs a JSON object
-		// i.e. "{\"x\":0,\"y\":0,\"a\":0}" would be sent from esp32
+		// JSON object with following fields {x:0, y:0, a:0} corresponding to x, y and angle values
 		let msg = JSON.parse(message.toString());
 		rover.x = msg.x;
 		rover.y = msg.y;
