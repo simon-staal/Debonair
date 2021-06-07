@@ -153,9 +153,11 @@ client.on('message', (topic, message, packet) => {
 		rover.y = msg.y;
 		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
+		//console.log(JSON.stringify(msg));
+		console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
 	}
-	console.log("message is "+ message);
-	console.log("topic is "+ topic);
+	//console.log("message is "+ message);
+	//console.log("topic is "+ topic);
 });
 
 // You can call this function to publish to things
@@ -177,6 +179,7 @@ app.get("/coords", (req,res) => {
 	let response = {
 		'coordinateX': rover.x, //Rover coordinate x
 		'coordinateY': rover.y, //Rover coordinate y
+		'angle': rover.angle, //Rover angle
 		'newObstacle': newObstacle //Any updates to ball positions (1 => new position)
 	};
 	res.send(response);
@@ -262,6 +265,6 @@ process.on('SIGTERM', () => {
 	client.end(() => {
 		console.log('MQTT client disconnected');
 	});
-	dbo.close();
+	db_client.close();
 	console.log("Disconnected from MongoDB");
 })
