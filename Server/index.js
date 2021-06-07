@@ -88,7 +88,7 @@ function getObstacle(colour) {
 			throw err;
 			// return {};
 		}
-		//console.log(JSON.stringify(res));
+		console.log(JSON.stringify(res));
 		result.x = res.x;
 		result.y = res.y;
 		//console.log(JSON.stringify(result));
@@ -208,6 +208,7 @@ app.get("/coords", (req,res) => {
 		'angle': rover.angle, //Rover angle
 		'newObstacle': newObstacle //Any updates to ball positions (1 => new position)
 	};
+	newObstacle = newObstacle ? 0 : newObstacle; // Resets newObstacle flag
 	res.send(response);
 });
 
@@ -224,7 +225,6 @@ app.get("/obstacles", (req,res) => {
 		'blue': [blue.x, blue.y], //blue XY coords
 		'orange': [orange.x, orange.y] //orange XY coords
 	};
-	newObstacle = 0; // Resets newObstacle flag
 	console.log(JSON.stringify(response));
 	res.send(response);
 });
@@ -238,7 +238,7 @@ app.get("/reset", (req,res) => {
 			res.send("Failure");
 		}
 		// Potentially check # of rows updated using response.result.nModified
-		consle.log("Reset "+response.result.nModified+" elements");
+		console.log("Reset "+response.result.nModified+" elements");
 		res.send("Success");
 	})
 })
