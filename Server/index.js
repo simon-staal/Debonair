@@ -171,9 +171,9 @@ client.on('message', (topic, message, packet) => {
 				throw err;
 				// return;
 			}
-			newObstacle = 1; // Tells front-end we have new obstacle data
 			console.log("Updated " + obsColour + " to x: " + msg.x + " y: " + msg.y);
 		})
+		newObstacle = 1; // Tells front-end we have new obstacle data
 	}
 	if (topic === "fromESP32/rover_coords") {
 		// JSON object with following fields {x:0, y:0, a:0} corresponding to x, y and angle values
@@ -214,6 +214,7 @@ app.get("/coords", (req,res) => {
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
 	let pink = getObstacle("pink");
+	console.log(JSON.stringify(pink));
 	let green = getObstacle("green");
 	let blue = getObstacle("blue");
 	let orange = getObstacle("orange");
