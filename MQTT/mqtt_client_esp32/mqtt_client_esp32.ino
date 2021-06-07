@@ -8,8 +8,8 @@
 #define TXD2 17
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "AndroidAP8029"; //"The Circus";
-const char* password = "hirk8481"; //"Hail_Pietr0";
+const char* ssid = /*"AndroidAP8029";*/"The Circus";
+const char* password = /*"hirk8481";*/"Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -166,18 +166,17 @@ void loop() {
 
   // Sends rover details to backend
   char buffer[30];
-  genCoordMsg(buffer);
-  client.publish("fromESP32/rover_coords", buffer);
+  
 
   // Sends test message every 5 seconds
   long now = millis();
-  if (now - lastMsg > 5000) {
+  if (now - lastMsg > 2000) {
     lastMsg = now;
     
-    Serial.print("Rover direction: ");
-    Serial.println(dir);
-    client.publish("fromESP32/dir", &dir);
-  }
+    genCoordMsg(buffer);
+    Serial.print("Sending message: ");
+    Serial.println(buffer);
+    client.publish("fromESP32/rover_coords", buffer);
 }
 
 void genCoordMsg(char *buf)
