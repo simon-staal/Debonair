@@ -73,7 +73,10 @@ db_client.connect((err) => {
 
 // Accesses the database entry associated with an obstacle
 function getObstacle(colour) {
-	var result;
+	const result = {
+		x:null,
+		y:null
+	};
 	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
 		if (err) {
 			console.log(err);
@@ -81,9 +84,12 @@ function getObstacle(colour) {
 			throw err;
 			// return {};
 		}
-		console.log(JSON.stringify(res));
-		result = res;
+		//console.log(JSON.stringify(res));
+		result.x = res.x;
+		result.y = res.y;
+		//console.log(JSON.stringify(result));
 	});
+	//console.log(JSON.stringify(result));
 	return result
 }
 
@@ -191,13 +197,13 @@ app.get("/coords", (req,res) => {
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
 	let pink = getObstacle("pink");
-	console.log(JSON.stringify(pink));
+	//console.log(JSON.stringify(pink));
 	let green = getObstacle("green");
-	console.log(JSON.stringify(green));
+	//console.log(JSON.stringify(green));
 	let blue = getObstacle("blue");
-	console.log(JSON.stringify(blue));
+	//console.log(JSON.stringify(blue));
 	let orange = getObstacle("orange");
-	console.log(JSON.stringify(orange));
+	//console.log(JSON.stringify(orange));
 	let response = {
 		'pink': [pink.x, pink.y], //pink XY coords
 		'green': [green.x, green.y], //green XY coords
