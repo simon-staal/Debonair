@@ -73,6 +73,7 @@ db_client.connect((err) => {
 
 // Accesses the database entry associated with an obstacle
 function getObstacle(colour) {
+	var result;
 	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
 		if (err) {
 			console.log(err);
@@ -81,8 +82,9 @@ function getObstacle(colour) {
 			// return {};
 		}
 		console.log(JSON.stringify(res));
-		return res;
+		result = res;
 	});
+	return result
 }
 
 let newObstacle = 0; // Flag indicating if we have detected a new obstacle
