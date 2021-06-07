@@ -55,6 +55,10 @@ db_client.connect((err) => {
 	console.log("MongoDB connected");
 	dbo = db_client.db("Debonair");
 	const obstacles = dbo.collection("obstacles");
+	obstacles.deleteMany({}, (err, obj) => {
+		if (err) throw err;
+		console.log("Cleared obstacle collection, removed " + obj.result.n + " entries");
+	})
 	let initObs = [
 		{ colour: 'pink', x: null, y: null },
 		{ colour: 'green', x: null, y: null },
@@ -197,13 +201,9 @@ app.get("/coords", (req,res) => {
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
 	let pink = getObstacle("pink");
-	//console.log(JSON.stringify(pink));
 	let green = getObstacle("green");
-	//console.log(JSON.stringify(green));
 	let blue = getObstacle("blue");
-	//console.log(JSON.stringify(blue));
 	let orange = getObstacle("orange");
-	//console.log(JSON.stringify(orange));
 	let response = {
 		'pink': [pink.x, pink.y], //pink XY coords
 		'green': [green.x, green.y], //green XY coords
