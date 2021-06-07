@@ -80,6 +80,7 @@ function getObstacle(colour) {
 			throw err;
 			// return {};
 		}
+		console.log(JSON.stringify(res));
 		return res;
 	});
 }
@@ -130,9 +131,9 @@ client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/obstacle") {
 		// figure out what message will be / how to turn it into something useable
 		// Probably a JSON onject as a string
-		// i.e. "{ \"col\":\"pink\",\"x\":1450,\"y\":-420 }"
+		// i.e. "{ \"c\":\"pink\",\"x\":1450,\"y\":-420 }"
 		let msg = JSON.parse(message.toString());
-		let query = { colour: msg.col };
+		let query = { colour: msg.c };
 		let newCoords = { $set: {x: msg.x, y: msg.y } };
 		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
 			if (err) {
