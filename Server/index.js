@@ -189,9 +189,13 @@ app.get("/coords", (req,res) => {
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
 	let pink = getObstacle("pink");
+	console.log(JSON.stringify(pink));
 	let green = getObstacle("green");
+	console.log(JSON.stringify(green));
 	let blue = getObstacle("blue");
+	console.log(JSON.stringify(blue));
 	let orange = getObstacle("orange");
+	console.log(JSON.stringify(orange));
 	let response = {
 		'pink': [pink.x, pink.y], //pink XY coords
 		'green': [green.x, green.y], //green XY coords
