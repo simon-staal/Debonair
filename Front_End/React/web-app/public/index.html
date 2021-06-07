@@ -50,7 +50,7 @@
     
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script >
-      var flag;
+var flag;
 var stepx;
 var stepy;
 var pinkx =null;
@@ -86,10 +86,10 @@ var orangey=null;
 }
 
 function disprover(){
- axios.get('https://debonair.duckdns.org:8443/obstacles')
+ axios.get('https://debonair.duckdns.org:8443/coords')
  .then(response=>{
-   stepx = response.data.coordX;
-   stepy = response.data.coordY;
+   stepx = response.data.coordinateX;
+   stepy = response.data.coordinateY;
    flag = response.data.newObstacle;})
 
 //request the data with axios get
@@ -103,10 +103,10 @@ if(flag==1){
 //If coordinates are outside of the map, notify user that they are invalid coordinates
 var y=document.getElementById('i1').offsetTop; 
 var x=document.getElementById('i1').offsetLeft;      
-x=x+stepx*300/1000;
-y=y-stepy*300/1000;
-document.getElementById('i1').style.left= x + "px"; //y axis update
-document.getElementById('i1').style.top= y + "px";    //x axis update
+var posx=x+stepx*300/1000;
+var posy=y-stepy*300/1000;
+document.getElementById('i1').style.left= posx + "px"; //x axis update
+document.getElementById('i1').style.top= posy + "px";    //y axis update
 document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy
 }
 
