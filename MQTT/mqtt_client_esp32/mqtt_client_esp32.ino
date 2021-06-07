@@ -193,7 +193,7 @@ void loop() {
   */
   // Sends test message every 2 seconds
   long now = millis();
-  if (now - lastMsg > 5000) {
+  if (now - lastMsg > 10000) {
     lastMsg = now;
     
     genCoordMsg(buffer);

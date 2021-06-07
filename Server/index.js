@@ -224,6 +224,7 @@ app.get("/obstacles", (req,res) => {
 		'orange': [orange.x, orange.y] //orange XY coords
 	};
 	newObstacle = 0; // Resets newObstacle flag
+	console.log(JSON.stringify(response));
 	res.send(response);
 });
 
@@ -236,6 +237,7 @@ app.get("/reset", (req,res) => {
 			res.send("Failure");
 		}
 		// Potentially check # of rows updated using response.result.nModified
+		consle.log("Reset "+response.result.nModified+" elements");
 		res.send("Success");
 	})
 })
