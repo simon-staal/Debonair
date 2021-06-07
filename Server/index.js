@@ -158,7 +158,6 @@ client.on('message', (topic, message, packet) => {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
-		// i.e. "{ \"c\":1,\"x\":1450,\"y\":-420 }"
 		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
 		// Colour_code: pink=1, green=2, blue=3, orange=4
 		let msg = JSON.parse(message.toString());
@@ -168,12 +167,12 @@ client.on('message', (topic, message, packet) => {
 		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
 			if (err) {
 				console.log(err);
-				console.log("Obstacle attempted: " + msg.colour);
+				console.log("Obstacle attempted: " + obsColour);
 				throw err;
 				// return;
 			}
 			newObstacle = 1; // Tells front-end we have new obstacle data
-			console.log("Updated " + msg.colour + " to x: " + msg.x + " y: " + msg.y);
+			console.log("Updated " + obsColour + " to x: " + msg.x + " y: " + msg.y);
 		})
 	}
 	if (topic === "fromESP32/rover_coords") {
@@ -183,11 +182,8 @@ client.on('message', (topic, message, packet) => {
 		rover.y = msg.y;
 		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
-		//console.log(JSON.stringify(msg));
-		console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
+		//console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
 	}
-	//console.log("message is "+ message);
-	//console.log("topic is "+ topic);
 });
 
 // You can call this function to publish to things

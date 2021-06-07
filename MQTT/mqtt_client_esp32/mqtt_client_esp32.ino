@@ -203,7 +203,7 @@ void loop() {
     rover.coords.first = (rover.coords.first + 1)%1000;
     rover.coords.second = (rover.coords.second + 1)%1000;
     rover.angle = (rover.angle + 1)%360;
-    obstacle.colour = (obstacle.colour+1)%4 + 1;
+    obstacle.colour = (obstacle.colour)%4 + 1;
     obstacle.coords.first = (obstacle.coords.first +100)%1000;
     obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
     newObstacle = 1;
