@@ -73,6 +73,10 @@ db_client.connect((err) => {
 
 // Accesses the database entry associated with an obstacle
 function getObstacle(colour) {
+	const result = {
+		x:null,
+		y:null
+	};
 	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
 		if (err) {
 			console.log(err);
@@ -80,8 +84,13 @@ function getObstacle(colour) {
 			throw err;
 			// return {};
 		}
-		return res;
+		//console.log(JSON.stringify(res));
+		result.x = res.x;
+		result.y = res.y;
+		//console.log(JSON.stringify(result));
 	});
+	//console.log(JSON.stringify(result));
+	return result
 }
 
 let newObstacle = 0; // Flag indicating if we have detected a new obstacle
@@ -130,9 +139,9 @@ client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/obstacle") {
 		// figure out what message will be / how to turn it into something useable
 		// Probably a JSON onject as a string
-		// i.e. "{ \"col\":\"pink\",\"x\":1450,\"y\":-420 }"
+		// i.e. "{ \"c\":\"pink\",\"x\":1450,\"y\":-420 }"
 		let msg = JSON.parse(message.toString());
-		let query = { colour: msg.col };
+		let query = { colour: msg.c };
 		let newCoords = { $set: {x: msg.x, y: msg.y } };
 		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
 			if (err) {
@@ -188,9 +197,13 @@ app.get("/coords", (req,res) => {
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
 	let pink = getObstacle("pink");
+	//console.log(JSON.stringify(pink));
 	let green = getObstacle("green");
+	//console.log(JSON.stringify(green));
 	let blue = getObstacle("blue");
+	//console.log(JSON.stringify(blue));
 	let orange = getObstacle("orange");
+	//console.log(JSON.stringify(orange));
 	let response = {
 		'pink': [pink.x, pink.y], //pink XY coords
 		'green': [green.x, green.y], //green XY coords

@@ -69,6 +69,14 @@ struct Rover{
 };
 Rover rover;
 
+// Obstacle Parameters
+struct Obstacle{
+  char colour[7],
+  std::pair<int,int> coords = {0,0};
+};
+Obstacle obstacle;
+bool newObstacle = 0;
+
 //****************Function declarations******************
 void setup_wifi(); 
 void callback(char* topic, byte* message, unsigned int length); // Called when receiving message from MQTT broker
