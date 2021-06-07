@@ -154,8 +154,8 @@ client.on('message', (topic, message, packet) => {
 		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
 	}
-	// console.log("message is "+ message);
-	// console.log("topic is "+ topic);
+	console.log("message is "+ message);
+	console.log("topic is "+ topic);
 });
 
 // You can call this function to publish to things

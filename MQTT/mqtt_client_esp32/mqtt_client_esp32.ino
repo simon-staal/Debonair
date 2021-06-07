@@ -69,6 +69,12 @@ struct Rover{
 };
 Rover rover;
 
+//****************Function declarations******************
+void setup_wifi(); 
+void callback(char* topic, byte* message, unsigned int length); // Called when receiving message from MQTT broker
+void reconnect();
+void genCoordMsg(char *buf); // Generates message containing rover information as JSON string
+
 void setup_wifi() {
   delay(10);
   // We start by connecting to a WiFi network
@@ -168,7 +174,7 @@ void loop() {
   char buffer[30];
   
 
-  // Sends test message every 5 seconds
+  // Sends test message every 2 seconds
   long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
@@ -177,6 +183,10 @@ void loop() {
     Serial.print("Sending message: ");
     Serial.println(buffer);
     client.publish("fromESP32/rover_coords", buffer);
+    rover.coords.first = (rover.coords.first + 1)%1000;
+    rover.coords.second = (rover.coords.second + 1)%1000;
+    rover.angle = (rover.angle + 1)%360;
+  }
 }
 
 void genCoordMsg(char *buf)

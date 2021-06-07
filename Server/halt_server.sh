@@ -2,11 +2,13 @@
 
 set -euo pipefail
 
-if [[ $# -eq 0 ]] ; then
-    >&2 echo "Usage: ./halt_server.sh <IP>"
-    >&2 echo "<IP> is the IP of the instance being connected to"
-    exit 1
-fi
+IP="3.8.182.14"
+
+#if [[ $# -eq 0 ]] ; then
+#    >&2 echo "Usage: ./halt_server.sh <IP>"
+#    >&2 echo "<IP> is the IP of the instance being connected to"
+#    exit 1
+#fi
 
 # Finds ssh key
 KEY=$(echo *.pem)
@@ -32,7 +34,7 @@ SEP=$(echo $(printf '=%.0s' $(eval "echo {1.."$(($TERMINAL_WIDTH))"}")))
 
 echo "$SEP"
 echo "Connecting to server instance"
-ssh -A -i ${KEY} ubuntu@${1} << EOF
+ssh -A -i ${KEY} ubuntu@${IP} << EOF
   #!/bin/bash
   set -euo pipefail
   echo "Connection successful"
@@ -43,9 +45,15 @@ ssh -A -i ${KEY} ubuntu@${1} << EOF
   echo "$SEP"
 
   echo "$SEP"
-  echo "Halting REST web service"
-  screen -X -S "rest" quit
+  echo "Attempting graceful shutdown of REST web service"
+  sudo kill $(ps h --ppid $(screen -ls | grep rest | cut -d. -f1) -o pid)
+  echo "Shut down REST web service successfully (and gracefully ;D)"
   echo "$SEP"
-  
+
+  echo "Attempting graceful shutdown of REACT web-app"
+  sudo kill $(ps h --ppid $(screen -ls | grep react | cut -d. -f1) -o pid)
+  echo "Shut down REACT web-app successfully"
+  echo "$SEP"
+
   echo "Server processes halted, Done"
 EOF
