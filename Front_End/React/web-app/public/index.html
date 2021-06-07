@@ -53,6 +53,7 @@
 var flag;
 var stepx;
 var stepy;
+var angle;
 var pinkx =null;
 var pinky =null;
 var greenx =null;
@@ -66,14 +67,14 @@ function reset1(){
 clearTimeout(my_time);
 document.getElementById('i1').style.left= "820px";
 document.getElementById('i1').style.top= "410px";
-document.getElementById('pinkball').style.left= "200px";
-document.getElementById('pinkball').style.top= "1170px";
-document.getElementById('greenball').style.left= "250px";
-document.getElementById('greenball').style.top= "1170px";
-document.getElementById('blueball').style.left= "295px";
-document.getElementById('blueball').style.top= "1163px";
-document.getElementById('orangeball').style.left= "345px";
-document.getElementById('orangeball').style.top= "1163px";
+document.getElementById('pinkball').style.top= "200px";
+document.getElementById('pinkball').style.left= "1170px";
+document.getElementById('greenball').style.top= "250px";
+document.getElementById('greenball').style.left= "1170px";
+document.getElementById('blueball').style.top= "295px";
+document.getElementById('blueball').style.left= "1163px";
+document.getElementById('orangeball').style.top= "345px";
+document.getElementById('orangeball').style.left= "1167px";
 document.getElementById("msg").innerHTML="";
 var pinkx =null;
 var pinky =null;
@@ -85,12 +86,14 @@ var orangex=null;
 var orangey=null;
 }
 
+
 function disprover(){
  axios.get('https://debonair.duckdns.org:8443/coords')
  .then(response=>{
    stepx = response.data.coordinateX;
    stepy = response.data.coordinateY;
-   flag = response.data.newObstacle;})
+   flag = response.data.newObstacle;
+    angle= response.data.angle;})
 
 //request the data with axios get
 if (stepx>1000 | stepy>1000){
@@ -101,13 +104,12 @@ if(flag==1){
   dispball();
 }
 //If coordinates are outside of the map, notify user that they are invalid coordinates
-var y=document.getElementById('i1').offsetTop; 
-var x=document.getElementById('i1').offsetLeft;      
-var posx=x+stepx*300/1000;
-var posy=y-stepy*300/1000;
-document.getElementById('i1').style.left= posx + "px"; //x axis update
-document.getElementById('i1').style.top= posy + "px";    //y axis update
-document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy
+
+var x=820+stepx*300/1000;
+var y=410-stepy*300/1000;
+document.getElementById('i1').style.left= x + "px"; //x axis update
+document.getElementById('i1').style.top= y + "px";    //y axis update
+document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy + " Angle: " + angle;
 }
 
 //////////////////////
