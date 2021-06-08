@@ -6,7 +6,7 @@
 #include "pathfinding.hpp"
 
 int clearance = 100;
-
+/*
 int main() {
 
 
@@ -24,7 +24,7 @@ int main() {
   }
 
 }
-
+*/
 std::vector<std::pair<int,int>> genPath(std::pair<int,int> pos, std::pair<int,int> dest, std::vector<std::pair<int,int>> obstacles)
 {
   std::vector<std::pair<int,int>> path; //coordinates for the path the rover should take to avoid obstacles
@@ -33,8 +33,8 @@ std::vector<std::pair<int,int>> genPath(std::pair<int,int> pos, std::pair<int,in
   while(intermed != dest){
     intermed = genIntermed(obstacles,dest,intermed);
     path.push_back(intermed);
-
   }
+return path;
 }
 
 std::pair<int,int> genIntermed(std::vector<std::pair<int,int>> &obstacles, std::pair<int, int> dest, std::pair<int, int> pos)
