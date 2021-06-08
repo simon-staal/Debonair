@@ -22,7 +22,6 @@
     "http": "^0.0.1-security",
     "https": "^1.0.0",
     "mongodb": "^3.6.9",
-    "mqtt": "^4.2.6",
-    "node-addon-api": "^3.2.1"
+    "mqtt": "^4.2.6"
   }
 }
