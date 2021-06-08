@@ -9,7 +9,7 @@
   align-items: center;
   width: 40px;
   height: 40px;
-  position: fixed;
+  position: absolute;
 }
 .leftrotate:hover {
   background-color: grey;
@@ -33,7 +33,7 @@
   align-items: center;
   width: 40px;
   height: 40px;
-  position: fixed;
+  position: absolute;
   padding-left: 10px;
 }
 .uparrow:hover {
@@ -60,7 +60,7 @@
   align-items: center;
   width: 40px;
   height: 40px;
-  position: fixed;
+  position: absolute;
   padding-left: 10px;
 }
 .downarrow:hover {
@@ -87,7 +87,7 @@
   align-items: center;
   width: 40px;
   height: 40px;
-  position: fixed;
+  position: absolute;
 }
 .rightrotate:hover {
   background-color: grey;
@@ -99,4 +99,25 @@
   box-shadow: 0 5px #666;
   transform: translateY(4px);
   position: fixed;
+}
+
+.grid {
+  opacity: 0.3;
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  margin-left: 550px;
+  z-index: 1;
+}
+
+.ground {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  margin-left: 550px;
+}
+
+.header {
+  margin-left: 10px;
+  margin-top: 10px;
 }

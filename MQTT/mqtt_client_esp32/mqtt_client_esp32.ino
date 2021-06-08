@@ -3,9 +3,29 @@
 #include <PubSubClient.h>
 #include <Wire.h> // Not 100% sure if this included is needed, test without
 #include <Math.h> // Needed for distance calculation stuff
+#include <SPI.h> // Needed for comms with vision
+
+// **************DEFINITIONS*************
+
+#define VSPI_MISO   MISO
+#define VSPI_MOSI   MOSI
+#define VSPI_SCLK   SCK
+#define VSPI_SS     SS
 
 #define RXD2 16
 #define TXD2 17
+
+//***************COMMUNICATION SETUP*************
+
+// Parameters for SPI
+SPISettings settings(100000, MSBFIRST, SPI_MODE0);
+uint8_t spi_counter[6]; // [0] = c20, [1] = c21, [2] = c22, [3] = c23, [4] = c24, [5] = c25
+uint16_t spi_val;
+uint8_t spi_reg;
+uint16_t spi_returnval;
+
+void calcDistance(int col);
+void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
 const char* ssid = "AndroidAP8029"; //"The Circus";
@@ -55,16 +75,33 @@ const char* ca_cert = \
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
-char msg[50];
-int value = 0;
+char buffer[30]; // buffer for messages sent by ESP32
 
 // LED Pin
 const int ledPin = 4;
 
 // Rover Parameters
 char dir = 'S';
-int angle = 0;
-std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+struct Rover{
+  int angle = 0;
+  std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+};
+Rover rover;
+
+// Obstacle Parameters
+struct Obstacle{
+  int colour; // pink = 1, green = 2, blue = 3, orange = 4
+  std::pair<int,int> coords = {0,0};
+};
+Obstacle obstacle;
+bool newObstacle = 0;
+
+//****************Function declarations******************
+void setup_wifi(); 
+void callback(char* topic, byte* message, unsigned int length); // Called when receiving message from MQTT broker
+void reconnect();
+void genCoordMsg(char *buf); // Generates message containing rover information as JSON string
+void genObsMsg(char *buf); // Generates message containing obstacle information as JSON string
 
 void setup_wifi() {
   delay(10);
@@ -87,16 +124,22 @@ void setup_wifi() {
 }
 
 void setup() {
-  Serial.begin(115200);
-  // Will probably also need to setup wiring / pins to communicate? (not sure)
+  Serial.begin(115200); // Debugging
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); // Communicate with drive
 
+  // Set up wireless comms
   setup_wifi();
   espClient.setCACert(ca_cert); // Set SSL/TLS certificate
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback); // Sets callback function
 
   pinMode(ledPin, OUTPUT);
+
+  // Setup SPI stuff
+  pinMode(VSPI_SS, OUTPUT);
+  SPI.begin();
+  resetCounter();
+  spi_returnval = 0;
 }
 
 // This function is called whenever we receive a message to a topic we are subscribed to
@@ -156,18 +199,194 @@ void reconnect() {
 }
 
 void loop() {
+
+  // ************** SPI STUFF ******************
+  // Transfer stuff
+  SPI.beginTransaction(settings);
+  digitalWrite(VSPI_SS, LOW);
+  spi_val = SPI.transfer16(spi_returnval);
+  spi_returnval = 0;
+  digitalWrite(VSPI_SS, HIGH);
+  SPI.endTransaction();
+
+  // Processing data received
+  if (spi_val == 2048){
+    Serial2.print('R'); // Tells drive to turn right
+    resetCounter();
+  }
+  if (spi_val == 4096){
+    Serial2.print('L'); // Tells drive to turn left
+    resetCounter();
+  }
+  if (spi_val == 8192){
+    Serial2.print('B'); // Tells drive to go backwards
+    resetCounter();
+  }
+  if (spi_val == 16384){
+    Serial2.print('F'); // Tells drive to go forward
+    resetCounter();
+  }
+  if (spi_val > 32768){
+    Serial2.print('S'); // Tells drive to stop
+    spi_val -= 32768;
+    spi_val >>= 7;
+    spi_reg = spi_val & 7;
+    spi_val >>= 3;
+    switch(spi_reg)
+    {
+      case 0:
+        //Serial.print("We have a pink ball \n");
+        calcDistance(1);
+        break;
+      case 1:
+        //Serial.print("We have a yellow ball \n");
+        calcDistance(4);
+        break;
+      case 2:
+        //Serial.print("We have a green ball \n");
+        calcDistance(2);
+        break;
+      case 3:
+        //Serial.print("We have a blue ball \n");
+        calcDistance(3);
+        break;
+      default:
+        Serial.print("Invalid ball detected \n");
+    }
+  }
+
+  // ************** MQTT STUFF *******************
   if (!client.connected()) {
     reconnect();
   }
-  client.loop();
+  // Allows client to process incoming messages and maintain connection to MQTT broker
+  client.loop(); 
 
-  // Sends test message every 5 seconds
+  // Handles publishing data about new obstacle to server
+  if (newObstacle) {
+    genObsMsg(buffer);
+    Serial.print("Sending message: ");
+    Serial.println(buffer);
+    client.publish("fromESP32/obstacle", buffer);
+    newObstacle = 0;
+  }
+
+  // Updates server with rover coords
+  /*
+  genCoordMsg(buffer);
+  client.publish("fromESP32/rover_coords", buffer);
+  */
+  // Sends test message every 2 seconds
   long now = millis();
-  if (now - lastMsg > 5000) {
+  if (now - lastMsg > 10000) {
     lastMsg = now;
     
-    Serial.print("Rover direction: ");
-    Serial.println(dir);
-    client.publish("fromESP32/dir", &dir);
+    genCoordMsg(buffer);
+    Serial.print("Sending message: ");
+    Serial.println(buffer);
+    client.publish("fromESP32/rover_coords", buffer);
+    rover.coords.first = (rover.coords.first + 1)%1000;
+    rover.coords.second = (rover.coords.second + 1)%1000;
+    rover.angle = (rover.angle + 1)%360;
+    obstacle.colour = (obstacle.colour)%4 + 1;
+    obstacle.coords.first = (obstacle.coords.first +100)%1000;
+    obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
+    newObstacle = 1;
+  }
+
+}
+
+void genCoordMsg(char *buf)
+{
+    int cur = 0;
+    char x[6] = "{\"x\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = x[i];
+    }
+    char num[6];
+    sprintf(num, "%d", rover.coords.first);
+    int cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char y[6] = ",\"y\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = y[i];
+    }
+    sprintf(num, "%d", rover.coords.second);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char a[6] = ",\"a\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = a[i];
+    }
+    sprintf(num, "%d", rover.angle);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 30){
+      buf[cur++] = '\0';
+    }
+}
+
+void genObsMsg(char *buf)
+{
+    int cur = 0;
+    char c[6] = "{\"c\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = c[i];
+    }
+    buf[cur++] = (char)(obstacle.colour+48);
+    char x[6] = ",\"x\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = x[i];
+    }
+    char num[6];
+    sprintf(num, "%d", obstacle.coords.first);
+    int cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char y[6] = ",\"y\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = y[i];
+    }
+    sprintf(num, "%d", obstacle.coords.second);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 30){
+      buf[cur++] = '\0';
+    }
+}
+
+void resetCounter(){
+  for(int i = 0; i < 6; i++){
+    spi_counter[i] = 0;
+  }
+}
+
+void calcDistance(int col) 
+{
+  for(int i = 0; i < 6; i++){
+    if(spi_val = i+20){
+      spi_counter[i]++;
+      if(spi_counter[i] == 100){
+        obstacle.colour = col;
+        int x_diff = (i+20.0)*10.0*sin(rover.angle);
+        int y_diff = (i+20.0)*10.0*cos(rover.angle);
+        obstacle.coords.first = rover.coords.first + x_diff;
+        obstacle.coords.second = rover.coords.second + y_diff;
+        newObstacle = 1;
+        spi_returnval = 32768+i;
+        resetCounter();
+      }
+    }
   }
 }

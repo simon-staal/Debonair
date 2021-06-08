@@ -28,8 +28,11 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <title>Debonair</title>
+  
+    
   </head>
-  <body>
+
+  <body >
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
@@ -44,5 +47,144 @@
     -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+    
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script >
+var flag;
+var stepx;
+var stepy;
+var angle;
+var pinkx =null;
+var pinky =null;
+var greenx =null;
+var greeny =null;
+var bluex =null;
+var bluey = null;
+var orangex=null;
+var orangey=null;
+
+function reset1(){
+clearTimeout(my_time);
+document.getElementById('i1').style.left= "820px";
+document.getElementById('i1').style.top= "410px";
+document.getElementById('pinkball').style.top= "200px";
+document.getElementById('pinkball').style.left= "1170px";
+document.getElementById('greenball').style.top= "250px";
+document.getElementById('greenball').style.left= "1170px";
+document.getElementById('blueball').style.top= "295px";
+document.getElementById('blueball').style.left= "1163px";
+document.getElementById('orangeball').style.top= "345px";
+document.getElementById('orangeball').style.left= "1167px";
+document.getElementById("msg").innerHTML="";
+var pinkx =null;
+var pinky =null;
+var greenx =null;
+var greeny =null;
+var bluex =null;
+var bluey = null;
+var orangex=null;
+var orangey=null;
+}
+
+
+function disprover(){
+ axios.get('https://debonair.duckdns.org:8443/coords')
+ .then(response=>{
+   stepx = response.data.coordinateX;
+   stepy = response.data.coordinateY;
+   flag = response.data.newObstacle;
+    angle= response.data.angle;})
+
+//request the data with axios get
+if (stepx>1000 | stepy>1000){
+  document.getElementById("msg").innerHTML="Invalid Coordinate"
+  return
+}
+if(flag==1){
+  dispball();
+}
+//If coordinates are outside of the map, notify user that they are invalid coordinates
+
+var x=820+stepx*300/1000;
+var y=410-stepy*300/1000;
+document.getElementById('i1').style.left= x + "px"; //x axis update
+document.getElementById('i1').style.top= y + "px";    //y axis update
+document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy + " Angle: " + angle;
+}
+
+//////////////////////
+var pinkx_res, pinky_res, greenx_res, greeny_res, bluex_res, bluey_res,orangex_res, orangey_res;
+
+function dispball(){
+  axios.get('https://debonair.duckdns.org:8443/obstacles')
+  .then(response=>{
+    pinkx_res = response.data.pink[0];
+    pinky_res = response.data.pink[1];
+    greenx_res = response.data.green[0];
+    greeny_res = response.data.green[1];
+    bluex_res = response.data.blue[0];
+    bluey_res = response.data.blue[1];
+    orangex_res = response.data.orange[0];
+    orangey_res = response.data.orange[1];})
+
+  //axios with flag and if flag triggered, request ball position
+  // check if x is equal to the original x => if different update position, else do nothing.  
+  if(pinkx !== pinkx_res ){
+    pinkx=pinkx_res;
+    pinky=pinky_res;
+    document.getElementById('pinkball').style.left= 835+pinkx*300/1000 + "px"; //updates position of pink ball
+    document.getElementById('pinkball').style.top= 429-pinky*300/1000 + "px";    
+    document.getElementById("ballupdate").innerHTML="{PinkBall} X: " + pinkx + " Y : " + pinky // displays to user coordinates of the pink obstacle
+   
+  }
+   else if(greenx !== greenx_res){
+     greenx=greenx_res;
+     greeny=greeny_res;
+    document.getElementById('greenball').style.left= 835+greenx*300/1000 + "px"; //updates position of green ball
+    document.getElementById('greenball').style.top= 427-greeny*300/1000 + "px";    
+    document.getElementById("ballupdate").innerHTML="{GreenBall} X: " + greenx + " Y : " + greeny // displays to user coordinates of the green obstacle
+  }
+  else if(bluex !== bluex_res){
+    bluex=bluex_res;
+    bluey=bluey_res;
+    document.getElementById('blueball').style.left= 827+bluex*300/1000 + "px"; //updates position of blue
+    document.getElementById('blueball').style.top= 427-bluey*300/1000+ "px";    
+    document.getElementById("ballupdate").innerHTML="{BlueBall} X: " + bluex + " Y : " + bluey // displays to user coordinates of the blue obstacle
+  }
+  else if(orangex !== orangex_res){
+    orangex=orangex_res;
+    orangey=orangey_res;
+    document.getElementById('orangeball').style.left= 833+orangex*300/1000 + "px"; //updates position of orange ball
+    document.getElementById('orangeball').style.top= 426-orangey*300/1000 + "px";    
+    document.getElementById("ballupdate").innerHTML="{OrangeBall} X: " + orangex + " Y : " + orangey // displays to user coordinates of the orange obstacle
+  }
+}
+
+
+function timer(){
+disprover();
+my_time=setTimeout('timer()',100);
+}
+    </script>
+    
+    <img src=./images/rover.png id='i1' 
+     style="position:absolute; width:60px; height:60px; left: 820px; top: 410px; z-index:1;">
+    
+     <br><br>
+
+    <input type=button style="position:absolute; margin-top:100px; margin-left:20px;" onClick="timer()" value='Start'>
+    <input type=button style="position:absolute; margin-top:100px; margin-left:100px;" onClick="reset1()" value='Reset'>
+    
+    <div id='msg' style="position:absolute; margin-left:20px;margin-top:150px;"></div>
+    <div id='ballupdate' style="position:absolute; margin-left:10px;margin-top:180px;"></div>
+    
+    
+    <img src=./images/pinkball.png id=pinkball style="position: absolute; width:30px;height:30px; top:200px; left:1170px; z-index: 1;">
+    <img src=./images/greenball.png id=greenball style="position: absolute; width:30px;height:30px; top:250px; left:1170px; z-index: 1;">
+    <img src=./images/blueball.png id=blueball style="position: absolute; width:45px;height:35px; top:295px; left:1163px; z-index: 1;">
+    <img src=./images/orangeball.png id=orangeball style="position: absolute; width:36px;height:36px; top:345px; left:1167px; z-index: 1;">
+
+
+
   </body>
 </html>
