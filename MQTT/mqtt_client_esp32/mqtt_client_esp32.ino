@@ -28,8 +28,8 @@ void calcDistance(int col);
 void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = /*"AndroidAP8029";*/"The Circus";
-const char* password = /*"hirk8481";*/"Hail_Pietr0";
+const char* ssid = "AndroidAP8029"; //"The Circus";
+const char* password = "hirk8481"; //"Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
