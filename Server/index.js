@@ -103,6 +103,7 @@ function getObstacles() {
 			throw err;
 		}
 		console.log(JSON.stringify(res));
+		/*
 		obstacles.pink.x = res[0].x;
 		obstacles.pink.y = res[0].y;
 		obstacles.green.x = res[1].x;
@@ -111,6 +112,13 @@ function getObstacles() {
 		obstacles.blue.y = res[2].y;
 		obstacles.orange.x = res[3].x;
 		obstacles.orange.y = res[3].y;
+		*/
+		let i = 0;
+		for(let col in obstacles){
+			obstacles[col].x = res[i].x;
+			obstacles[col].y = res[i].y;
+			i++;
+		}
 		console.log(JSON.stringify(obstacles));
 		newObstacle = 1; // Tells front-end we have new obstacle data
 	});
@@ -234,14 +242,14 @@ app.get("/coords", (req,res) => {
 
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
-	console.log(JSON.stringify(obstacles));
+	//console.log(JSON.stringify(obstacles));
 	let response = {
 		'pink': [obstacles.pink.x, obstacles.pink.y], //pink XY coords
 		'green': [obstacles.green.x, obstacles.green.y], //green XY coords
 		'blue': [obstacles.blue.x, obstacles.blue.y], //blue XY coords
 		'orange': [obstacles.orange.x, obstacles.orange.y] //orange XY coords
 	};
-	console.log(JSON.stringify(response));
+	//console.log(JSON.stringify(response));
 	res.send(response);
 });
 
