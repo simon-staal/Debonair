@@ -45,6 +45,26 @@ const rover = {
 	"battery":null
 };
 
+// Holds information about obstacles
+const obstacles = {
+	"pink":{
+		"x":null,
+		"y":null
+	},
+	"green":{
+		"x":null,
+		"y":null
+	},
+	"blue":{
+		"x":null,
+		"y":null
+	},
+	"orange":{
+		"x":null,
+		"y":null
+	}
+};
+
 // Database to track the obstacles
 db_client.connect((err) => {
 	if (err) {
@@ -76,25 +96,24 @@ db_client.connect((err) => {
 });
 
 // Accesses the database entry associated with an obstacle
-function getObstacle(colour) {
-	const result = {
-		x:null,
-		y:null
-	};
-	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
+function getObstacles() {
+	dbo.collection("obstacles").find({}).toArray((err, res) => {
 		if (err) {
 			console.log(err);
-			console.log("Obstacle attempted: " + colour);
 			throw err;
-			// return {};
 		}
 		console.log(JSON.stringify(res));
-		result.x = res.x;
-		result.y = res.y;
-		//console.log(JSON.stringify(result));
+		obstacles.pink.x = res[0].x;
+		obstacles.pink.y = res[0].y;
+		obstacles.green.x = res[1].x;
+		obstacles.green.y = res[1].y;
+		obstacles.blue.x = res[2].x;
+		obstacles.blue.y = res[2].y;
+		obstacles.orange.x = res[3].x;
+		obstacles.orange.y = res[3].y;
+		console.log(JSON.stringify(obstacles));
+		newObstacle = 1; // Tells front-end we have new obstacle data
 	});
-	//console.log(JSON.stringify(result));
-	return result
 }
 
 // Converts code into colour string
@@ -172,8 +191,9 @@ client.on('message', (topic, message, packet) => {
 				// return;
 			}
 			console.log("Updated " + obsColour + " to x: " + msg.x + " y: " + msg.y);
+			getObstacles(); // Updates local obstacles
 		})
-		newObstacle = 1; // Tells front-end we have new obstacle data
+		
 	}
 	if (topic === "fromESP32/rover_coords") {
 		// JSON object with following fields {x:0, y:0, a:0} corresponding to x, y and angle values
@@ -195,7 +215,7 @@ function publish(topic,msg,options=pubOptions){
 }
 
 
-// ----------------------- REST API ----------------------
+// ----------------------- HTTP Request handler ----------------------
 app.get("/",(req,res)=>{
     res.send('Hello from server!');
   });
@@ -214,16 +234,11 @@ app.get("/coords", (req,res) => {
 
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
-	let pink = getObstacle("pink");
-	console.log(JSON.stringify(pink));
-	let green = getObstacle("green");
-	let blue = getObstacle("blue");
-	let orange = getObstacle("orange");
 	let response = {
-		'pink': [pink.x, pink.y], //pink XY coords
-		'green': [green.x, green.y], //green XY coords
-		'blue': [blue.x, blue.y], //blue XY coords
-		'orange': [orange.x, orange.y] //orange XY coords
+		'pink': [obstacles.pink.x, obstacles.orangepink.y], //pink XY coords
+		'green': [obstacles.green.x, obstacles.green.y], //green XY coords
+		'blue': [obstacles.blue.x, obstacles.blue.y], //blue XY coords
+		'orange': [obstacles.orange.x, obstacles.orange.y] //orange XY coords
 	};
 	console.log(JSON.stringify(response));
 	res.send(response);
