@@ -45,6 +45,26 @@ const rover = {
 	"battery":null
 };
 
+// Holds information about obstacles
+const obstacles = {
+	"pink":{
+		"x":null,
+		"y":null
+	},
+	"green":{
+		"x":null,
+		"y":null
+	},
+	"blue":{
+		"x":null,
+		"y":null
+	},
+	"orange":{
+		"x":null,
+		"y":null
+	}
+};
+
 // Database to track the obstacles
 db_client.connect((err) => {
 	if (err) {
@@ -55,6 +75,10 @@ db_client.connect((err) => {
 	console.log("MongoDB connected");
 	dbo = db_client.db("Debonair");
 	const obstacles = dbo.collection("obstacles");
+	obstacles.deleteMany({}, (err, obj) => {
+		if (err) throw err;
+		console.log("Cleared obstacle collection, removed " + obj.result.n + " entries");
+	})
 	let initObs = [
 		{ colour: 'pink', x: null, y: null },
 		{ colour: 'green', x: null, y: null },
@@ -72,25 +96,39 @@ db_client.connect((err) => {
 });
 
 // Accesses the database entry associated with an obstacle
-function getObstacle(colour) {
-	const result = {
-		x:null,
-		y:null
-	};
-	dbo.collection("obstacles").findOne({colour: `${colour}`}, (err, res) => {
+function getObstacles() {
+	dbo.collection("obstacles").find({}).toArray((err, res) => {
 		if (err) {
 			console.log(err);
-			console.log("Obstacle attempted: " + colour);
 			throw err;
-			// return {};
 		}
 		//console.log(JSON.stringify(res));
-		result.x = res.x;
-		result.y = res.y;
-		//console.log(JSON.stringify(result));
+		let i = 0;
+		for(let col in obstacles){
+			obstacles[col].x = res[i].x;
+			obstacles[col].y = res[i].y;
+			i++;
+		}
+		//console.log(JSON.stringify(obstacles));
+		newObstacle = 1; // Tells front-end we have new obstacle data
 	});
-	//console.log(JSON.stringify(result));
-	return result
+}
+
+// Converts code into colour string
+function getObsColour(col) {
+	switch(col) {
+		case 1:
+			return "pink";
+		case 2:
+			return "green";
+		case 3:
+			return "blue";
+		case 4:
+			return "orange";
+		default:
+			console.log("Invalid obstacle colour received from ESP32");
+			return "INVALID";
+	}
 }
 
 let newObstacle = 0; // Flag indicating if we have detected a new obstacle
@@ -137,36 +175,33 @@ client.on('message', (topic, message, packet) => {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
-		// figure out what message will be / how to turn it into something useable
-		// Probably a JSON onject as a string
-		// i.e. "{ \"c\":\"pink\",\"x\":1450,\"y\":-420 }"
+		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
+		// Colour_code: pink=1, green=2, blue=3, orange=4
 		let msg = JSON.parse(message.toString());
-		let query = { colour: msg.c };
+		let obsColour = getObsColour(msg.c);
+		let query = { colour: obsColour };
 		let newCoords = { $set: {x: msg.x, y: msg.y } };
 		dbo.collection("obstacles").updateOne(query, newCoords, (err, res) => {
 			if (err) {
 				console.log(err);
-				console.log("Obstacle attempted: " + msg.colour);
+				console.log("Obstacle attempted: " + obsColour);
 				throw err;
 				// return;
 			}
-			newObstacle = 1; // Tells front-end we have new obstacle data
-			console.log("Updated " + msg.colour + " to x: " + msg.x + " y: " + msg.y);
+			console.log("Updated " + obsColour + " to x: " + msg.x + " y: " + msg.y);
+			getObstacles(); // Updates local obstacles
 		})
+		
 	}
 	if (topic === "fromESP32/rover_coords") {
-		// again probs a JSON object
-		// i.e. "{\"x\":0,\"y\":0,\"a\":0}" would be sent from esp32
+		// JSON object with following fields {x:0, y:0, a:0} corresponding to x, y and angle values
 		let msg = JSON.parse(message.toString());
 		rover.x = msg.x;
 		rover.y = msg.y;
 		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
-		//console.log(JSON.stringify(msg));
-		console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
+		//console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
 	}
-	//console.log("message is "+ message);
-	//console.log("topic is "+ topic);
 });
 
 // You can call this function to publish to things
@@ -178,7 +213,7 @@ function publish(topic,msg,options=pubOptions){
 }
 
 
-// ----------------------- REST API ----------------------
+// ----------------------- HTTP Request handler ----------------------
 app.get("/",(req,res)=>{
     res.send('Hello from server!');
   });
@@ -191,26 +226,20 @@ app.get("/coords", (req,res) => {
 		'angle': rover.angle, //Rover angle
 		'newObstacle': newObstacle //Any updates to ball positions (1 => new position)
 	};
+	newObstacle = newObstacle ? 0 : newObstacle; // Resets newObstacle flag
 	res.send(response);
 });
 
 // Requests obstacle coordinates
 app.get("/obstacles", (req,res) => {
-	let pink = getObstacle("pink");
-	//console.log(JSON.stringify(pink));
-	let green = getObstacle("green");
-	//console.log(JSON.stringify(green));
-	let blue = getObstacle("blue");
-	//console.log(JSON.stringify(blue));
-	let orange = getObstacle("orange");
-	//console.log(JSON.stringify(orange));
+	//console.log(JSON.stringify(obstacles));
 	let response = {
-		'pink': [pink.x, pink.y], //pink XY coords
-		'green': [green.x, green.y], //green XY coords
-		'blue': [blue.x, blue.y], //blue XY coords
-		'orange': [orange.x, orange.y] //orange XY coords
+		'pink': [obstacles.pink.x, obstacles.pink.y], //pink XY coords
+		'green': [obstacles.green.x, obstacles.green.y], //green XY coords
+		'blue': [obstacles.blue.x, obstacles.blue.y], //blue XY coords
+		'orange': [obstacles.orange.x, obstacles.orange.y] //orange XY coords
 	};
-	newObstacle = 0; // Resets newObstacle flag
+	//console.log(JSON.stringify(response));
 	res.send(response);
 });
 
@@ -223,6 +252,7 @@ app.get("/reset", (req,res) => {
 			res.send("Failure");
 		}
 		// Potentially check # of rows updated using response.result.nModified
+		console.log("Reset "+response.result.nModified+" elements");
 		res.send("Success");
 	})
 })
@@ -278,6 +308,7 @@ process.on('SIGTERM', () => {
 	client.end(() => {
 		console.log('MQTT client disconnected');
 	});
-	db_client.close();
-	console.log("Disconnected from MongoDB");
+	db_client.close(() => {
+		console.log("Disconnected from MongoDB");
+	});
 })
