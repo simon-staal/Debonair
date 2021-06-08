@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="icon" href="%PUBLIC_URL%/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -27,7 +27,8 @@
     -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
-    <title>Debonair</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Audiowide|Sofia|Trirong">
+    <title> Debonair </title>
   
     
   </head>
@@ -54,6 +55,7 @@ var flag;
 var stepx;
 var stepy;
 var angle;
+var my_time;
 var pinkx =null;
 var pinky =null;
 var greenx =null;
@@ -62,8 +64,13 @@ var bluex =null;
 var bluey = null;
 var orangex=null;
 var orangey=null;
+var success;
 
 function reset1(){
+axios.get('https://debonair.duckdns.org:8443/reset')
+ .then(response=>{
+   console.log(response.data);
+    })
 clearTimeout(my_time);
 document.getElementById('i1').style.left= "820px";
 document.getElementById('i1').style.top= "410px";
@@ -76,6 +83,10 @@ document.getElementById('blueball').style.left= "1163px";
 document.getElementById('orangeball').style.top= "345px";
 document.getElementById('orangeball').style.left= "1167px";
 document.getElementById("msg").innerHTML="";
+document.getElementById("pinkballcoord").innerHTML="";
+document.getElementById("greenballcoord").innerHTML="";
+document.getElementById("blueballcoord").innerHTML="";
+document.getElementById("orangeballcoord").innerHTML="";
 var pinkx =null;
 var pinky =null;
 var greenx =null;
@@ -101,6 +112,7 @@ if (stepx>1000 | stepy>1000){
   return
 }
 if(flag==1){
+  //console.log(JSON.stringify(response.data));
   dispball();
 }
 //If coordinates are outside of the map, notify user that they are invalid coordinates
@@ -125,39 +137,43 @@ function dispball(){
     bluex_res = response.data.blue[0];
     bluey_res = response.data.blue[1];
     orangex_res = response.data.orange[0];
-    orangey_res = response.data.orange[1];})
-
-  //axios with flag and if flag triggered, request ball position
-  // check if x is equal to the original x => if different update position, else do nothing.  
-  if(pinkx !== pinkx_res ){
+    orangey_res = response.data.orange[1];
+    console.log(JSON.stringify(response.data));
+  })
+  .then(()=>{
+    if(pinkx !== pinkx_res ){
     pinkx=pinkx_res;
     pinky=pinky_res;
     document.getElementById('pinkball').style.left= 835+pinkx*300/1000 + "px"; //updates position of pink ball
     document.getElementById('pinkball').style.top= 429-pinky*300/1000 + "px";    
-    document.getElementById("ballupdate").innerHTML="{PinkBall} X: " + pinkx + " Y : " + pinky // displays to user coordinates of the pink obstacle
+    document.getElementById("pinkballcoord").innerHTML="{PinkBall} X: " + pinkx + " Y : " + pinky // displays to user coordinates of the pink obstacle
    
   }
-   else if(greenx !== greenx_res){
+   if(greenx !== greenx_res){
      greenx=greenx_res;
      greeny=greeny_res;
     document.getElementById('greenball').style.left= 835+greenx*300/1000 + "px"; //updates position of green ball
     document.getElementById('greenball').style.top= 427-greeny*300/1000 + "px";    
-    document.getElementById("ballupdate").innerHTML="{GreenBall} X: " + greenx + " Y : " + greeny // displays to user coordinates of the green obstacle
+    document.getElementById("greenballcoord").innerHTML="{GreenBall} X: " + greenx + " Y : " + greeny // displays to user coordinates of the green obstacle
   }
-  else if(bluex !== bluex_res){
+  if(bluex !== bluex_res){
     bluex=bluex_res;
     bluey=bluey_res;
     document.getElementById('blueball').style.left= 827+bluex*300/1000 + "px"; //updates position of blue
     document.getElementById('blueball').style.top= 427-bluey*300/1000+ "px";    
-    document.getElementById("ballupdate").innerHTML="{BlueBall} X: " + bluex + " Y : " + bluey // displays to user coordinates of the blue obstacle
+    document.getElementById("blueballcoord").innerHTML="{BlueBall} X: " + bluex + " Y : " + bluey // displays to user coordinates of the blue obstacle
   }
-  else if(orangex !== orangex_res){
+  if(orangex !== orangex_res){
     orangex=orangex_res;
     orangey=orangey_res;
     document.getElementById('orangeball').style.left= 833+orangex*300/1000 + "px"; //updates position of orange ball
     document.getElementById('orangeball').style.top= 426-orangey*300/1000 + "px";    
-    document.getElementById("ballupdate").innerHTML="{OrangeBall} X: " + orangex + " Y : " + orangey // displays to user coordinates of the orange obstacle
+    document.getElementById("orangeballcoord").innerHTML="{OrangeBall} X: " + orangex + " Y : " + orangey // displays to user coordinates of the orange obstacle
   }
+  })
+  //axios with flag and if flag triggered, request ball position
+  // check if x is equal to the original x => if different update position, else do nothing.  
+ 
 }
 
 
@@ -166,24 +182,27 @@ disprover();
 my_time=setTimeout('timer()',100);
 }
     </script>
-    
+
+  
     <img src=./images/rover.png id='i1' 
      style="position:absolute; width:60px; height:60px; left: 820px; top: 410px; z-index:1;">
     
-     <br><br>
+     <br>
 
-    <input type=button style="position:absolute; margin-top:100px; margin-left:20px;" onClick="timer()" value='Start'>
-    <input type=button style="position:absolute; margin-top:100px; margin-left:100px;" onClick="reset1()" value='Reset'>
+    <input type=button id="start" style="position:absolute; margin-left:20px;" onClick="timer()" value='Start'>
+    <input type=button id="reset" style="position:absolute; margin-left:100px;" onClick="reset1()" value='Reset'>
     
-    <div id='msg' style="position:absolute; margin-left:20px;margin-top:150px;"></div>
-    <div id='ballupdate' style="position:absolute; margin-left:10px;margin-top:180px;"></div>
+    <div id='msg' style="position:absolute; margin-left:20px;margin-top:50px;"></div>
+    <div id='pinkballcoord' style="position:absolute; margin-left:20px; margin-top:80px;"></div>
+    <div id='greenballcoord' style="position:absolute; margin-left:20px;margin-top:110px;"></div>
+    <div id='blueballcoord' style="position:absolute; margin-left:20px;margin-top:140px;"></div>
+    <div id='orangeballcoord' style="position:absolute; margin-left:20px;margin-top:170px;"></div>
+   
+    <img src=./images/pinkball.png  id=pinkball style="position: absolute; width:30px;height:30px; top:200px; left:1170px; z-index: 1;">
+    <img src=./images/greenball.png  id=greenball style="position: absolute; width:30px;height:30px; top:250px; left:1170px; z-index: 1;">
+    <img src=./images/blueball.png  id=blueball style="position: absolute; width:45px;height:35px; top:295px; left:1163px; z-index: 1;">
+    <img src=./images/orangeball.png  id=orangeball style="position: absolute; width:36px;height:36px; top:345px; left:1167px; z-index: 1;">
     
-    
-    <img src=./images/pinkball.png id=pinkball style="position: absolute; width:30px;height:30px; top:200px; left:1170px; z-index: 1;">
-    <img src=./images/greenball.png id=greenball style="position: absolute; width:30px;height:30px; top:250px; left:1170px; z-index: 1;">
-    <img src=./images/blueball.png id=blueball style="position: absolute; width:45px;height:35px; top:295px; left:1163px; z-index: 1;">
-    <img src=./images/orangeball.png id=orangeball style="position: absolute; width:36px;height:36px; top:345px; left:1167px; z-index: 1;">
-
 
 
   </body>

@@ -1,0 +1,18 @@
+.header1 {
+  position: absolute;
+  color: #0a0a47;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: white;
+  font-size: 120px;
+  margin-left: 30px;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-family: "Audiowide", sans-serif;
+}
+
+.content {
+  background: white;
+  margin-top: -100px;
+  position: absolute;
+  width: 100%;
+}
