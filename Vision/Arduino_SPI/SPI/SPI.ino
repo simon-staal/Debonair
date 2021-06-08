@@ -89,7 +89,7 @@ void loop() {
 
 void resetCounter(){
   for(int i = 0; i < 6; i++){
-    spi_counter[i] = 0
+    spi_counter[i] = 0;
   }
 }
 
@@ -99,8 +99,9 @@ void calcDistance()
     if(spi_val = i+20){
       spi_counter[i]++;
       if(spi_counter[i] == 100){
-        Serial.print("Distance is %dcm",i+20);
-        spi_returnval = 100;
+        Serial.print("Distance is: ");
+        Serial.println(i+20);
+        spi_returnval = 32868;
         resetCounter();
         delay(10000);
       }
