@@ -3,6 +3,8 @@ import './Map.css';
 import RotateLeftIcon from '@material-ui/icons/RotateLeft';
 import RotateRightIcon from '@material-ui/icons/RotateRight';
 import axios from 'axios';
+import grid from "./grid.png";
+import ground from "./background.jpg";
 
 
 function Map(){
@@ -105,7 +107,7 @@ function Map(){
     //hold down the button 
     return(
         <nav>
-            <h1> Map Page </h1> 
+            <h1 className="header"> Remote Control </h1> 
             <button className="leftrotate" onMouseDown={handleClick} onMouseUp={handleClick} >
            <RotateLeftIcon/>
             </button> 
@@ -118,6 +120,8 @@ function Map(){
             <button className="rightrotate" onMouseDown={handleClick4} onMouseUp={handleClick4} >
            <RotateRightIcon/>
             </button>
+            <img src={grid} alt="map" className="grid"/>
+            <img src={ground} alt="ground" className="ground"/>
          </nav>
     );
 }

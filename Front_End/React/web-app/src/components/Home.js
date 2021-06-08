@@ -1,20 +1,23 @@
 import React, { useState} from 'react';
-import Container from '@material-ui/core/Container';
 import TextField from '@material-ui/core/TextField';
 import {makeStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import axios from 'axios';
-//import Gridmap from './Gridmap.js'
-import "./Home.css"
+import grid from "./grid.png";
+import ground from "./background.jpg";
+import './Home.css'
+
 
 const useStyles = makeStyles((theme)=>({
     root:{
+        display: 'inline-block',
         '& .MuiTextField-root':{
-            margin: theme.spacing(1),
+            margin: theme.spacing(1),             
         },
     },
     button:{
-        margin: theme.spacing(1),
+        margin: theme.spacing(2),
+        
     }
 }))
 
@@ -48,21 +51,27 @@ function Home(){
     }
 
     return(
-        <Container>
-            <h1> Home Page </h1>
-            <h2>Coordinates</h2>
+        <div>
+            <h1 className="header"> Coordinate Mode </h1>
+            
             <form className={classes.root} onSubmit={event=> handleSubmit(event)}>
                 {inputFields.map((inputField,index)=>(
                     <div key={index}>
                     <TextField
                         name="coordinateX"
                         label="Coordinate X"
+                        type='number'
+                        display='flex'
+                        
                         value={inputField.coordinateX}
                         onChange={event=> handleChangeInput(index,event)}
                         />
                      <TextField
                         name="coordinateY"
                         label="Coordinate Y"
+                        type='number'
+                        display='flex'
+                       
                         value={inputField.coordinateY}
                         onChange={event=> handleChangeInput(index,event)}
                         />
@@ -76,9 +85,10 @@ function Home(){
                 Submit
                 </Button>
             </form>
-            <nav className="Map">
-            </nav>
-        </Container>
+            <img src={grid} alt="map" className="map"/>
+            <img src={ground} alt="mars" className="mars"/>
+            
+        </div>
     );
 }
 

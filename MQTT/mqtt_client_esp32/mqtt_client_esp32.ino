@@ -8,8 +8,8 @@
 #define TXD2 17
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "AndroidAP8029"; //"The Circus";
-const char* password = "hirk8481"; //"Hail_Pietr0";
+const char* ssid = /*"AndroidAP8029";*/"The Circus";
+const char* password = /*"hirk8481";*/"Hail_Pietr0";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -55,16 +55,33 @@ const char* ca_cert = \
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
-char msg[50];
-int value = 0;
+char buffer[30]; // buffer for messages sent by ESP32
 
 // LED Pin
 const int ledPin = 4;
 
 // Rover Parameters
 char dir = 'S';
-int angle = 0;
-std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+struct Rover{
+  int angle = 0;
+  std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+};
+Rover rover;
+
+// Obstacle Parameters
+struct Obstacle{
+  int colour; // pink = 1, green = 2, blue = 3, orange = 4
+  std::pair<int,int> coords = {0,0};
+};
+Obstacle obstacle;
+bool newObstacle = 0;
+
+//****************Function declarations******************
+void setup_wifi(); 
+void callback(char* topic, byte* message, unsigned int length); // Called when receiving message from MQTT broker
+void reconnect();
+void genCoordMsg(char *buf); // Generates message containing rover information as JSON string
+void genObsMsg(char *buf); // Generates message containing obstacle information as JSON string
 
 void setup_wifi() {
   delay(10);
@@ -159,15 +176,106 @@ void loop() {
   if (!client.connected()) {
     reconnect();
   }
-  client.loop();
+  client.loop(); // Allows client to process incoming messages and maintain connection to server
+  // Handles publishing data about new obstacle to server
+  if (newObstacle) {
+    genObsMsg(buffer);
+    Serial.print("Sending message: ");
+    Serial.println(buffer);
+    client.publish("fromESP32/obstacle", buffer);
+    newObstacle = 0;
+  }
 
-  // Sends test message every 5 seconds
+  // Updates server with rover coords
+  /*
+  genCoordMsg(buffer);
+  client.publish("fromESP32/rover_coords", buffer);
+  */
+  // Sends test message every 2 seconds
   long now = millis();
-  if (now - lastMsg > 5000) {
+  if (now - lastMsg > 10000) {
     lastMsg = now;
     
-    Serial.print("Rover direction: ");
-    Serial.println(dir);
-    client.publish("fromESP32/dir", &dir);
+    genCoordMsg(buffer);
+    Serial.print("Sending message: ");
+    Serial.println(buffer);
+    client.publish("fromESP32/rover_coords", buffer);
+    rover.coords.first = (rover.coords.first + 1)%1000;
+    rover.coords.second = (rover.coords.second + 1)%1000;
+    rover.angle = (rover.angle + 1)%360;
+    obstacle.colour = (obstacle.colour)%4 + 1;
+    obstacle.coords.first = (obstacle.coords.first +100)%1000;
+    obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
+    newObstacle = 1;
   }
+}
+
+void genCoordMsg(char *buf)
+{
+    int cur = 0;
+    char x[6] = "{\"x\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = x[i];
+    }
+    char num[6];
+    sprintf(num, "%d", rover.coords.first);
+    int cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char y[6] = ",\"y\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = y[i];
+    }
+    sprintf(num, "%d", rover.coords.second);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char a[6] = ",\"a\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = a[i];
+    }
+    sprintf(num, "%d", rover.angle);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 30){
+      buf[cur++] = '\0';
+    }
+}
+
+void genObsMsg(char *buf)
+{
+    int cur = 0;
+    char c[6] = "{\"c\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = c[i];
+    }
+    buf[cur++] = (char)(obstacle.colour+48);
+    char x[6] = ",\"x\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = x[i];
+    }
+    char num[6];
+    sprintf(num, "%d", obstacle.coords.first);
+    int cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    char y[6] = ",\"y\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = y[i];
+    }
+    sprintf(num, "%d", obstacle.coords.second);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 30){
+      buf[cur++] = '\0';
+    }
 }
