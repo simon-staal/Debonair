@@ -3,9 +3,31 @@
 #include <PubSubClient.h>
 #include <Wire.h> // Not 100% sure if this included is needed, test without
 #include <Math.h> // Needed for distance calculation stuff
+#include <SPI.h> // Needed for comms with vision
+
+// **************DEFINITIONS*************
+
+#define VSPI_MISO   MISO
+#define VSPI_MOSI   MOSI
+#define VSPI_SCLK   SCK
+#define VSPI_SS     SS
 
 #define RXD2 16
 #define TXD2 17
+
+//***************COMMUNICATION SETUP*************
+
+// Parameters for SPI
+SPISettings settings(100000, MSBFIRST, SPI_MODE0);
+uint16_t val;
+uint8_t counter20;
+uint8_t counter21;
+uint8_t counter22;
+uint8_t counter23;
+uint8_t counter24;
+uint8_t counter25;
+uint8_t reg;
+uint16_t returnval;
 
 // Parameters for the wifi connection (will need to change depending on location)
 const char* ssid = /*"AndroidAP8029";*/"The Circus";

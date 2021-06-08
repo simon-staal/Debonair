@@ -102,24 +102,14 @@ function getObstacles() {
 			console.log(err);
 			throw err;
 		}
-		console.log(JSON.stringify(res));
-		/*
-		obstacles.pink.x = res[0].x;
-		obstacles.pink.y = res[0].y;
-		obstacles.green.x = res[1].x;
-		obstacles.green.y = res[1].y;
-		obstacles.blue.x = res[2].x;
-		obstacles.blue.y = res[2].y;
-		obstacles.orange.x = res[3].x;
-		obstacles.orange.y = res[3].y;
-		*/
+		//console.log(JSON.stringify(res));
 		let i = 0;
 		for(let col in obstacles){
 			obstacles[col].x = res[i].x;
 			obstacles[col].y = res[i].y;
 			i++;
 		}
-		console.log(JSON.stringify(obstacles));
+		//console.log(JSON.stringify(obstacles));
 		newObstacle = 1; // Tells front-end we have new obstacle data
 	});
 }
