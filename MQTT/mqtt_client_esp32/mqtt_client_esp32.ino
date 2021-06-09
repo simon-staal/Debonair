@@ -23,13 +23,17 @@ uint8_t spi_counter[6]; // [0] = c20, [1] = c21, [2] = c22, [3] = c23, [4] = c24
 uint16_t spi_val;
 uint8_t spi_reg;
 uint16_t spi_returnval;
+uint16_t change_char = 0;
 
 void calcDistance(int col);
 void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "AndroidAP8029"; //"The Circus";
-const char* password = "hirk8481"; //"Hail_Pietr0";
+//const char* ssid = "AndroidAP8029"; //"The Circus";
+//const char* password = "hirk8481"; //"Hail_Pietr0";
+
+const char* ssid = "iPhonedeYuna";
+const char* password = "yuna1612"; 
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -194,7 +198,7 @@ void reconnect() {
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
-    }
+    } 
   }
 }
 
@@ -208,26 +212,33 @@ void loop() {
   spi_returnval = 0;
   digitalWrite(VSPI_SS, HIGH);
   SPI.endTransaction();
-
+  bool charhaschanged = false;
+  if (change_char != spi_val){
+    change_char = spi_val;
+    charhaschanged = true;
+  }
   // Processing data received
-  if (spi_val == 2048){
+  if (spi_val == 2048 && charhaschanged == true){
     Serial2.print('R'); // Tells drive to turn right
+    Serial.print("We're rotating right \n");
     resetCounter();
   }
-  if (spi_val == 4096){
+  if (spi_val == 4096 && charhaschanged == true){
     Serial2.print('L'); // Tells drive to turn left
     resetCounter();
   }
-  if (spi_val == 8192){
+  if (spi_val == 8192 && charhaschanged == true){
     Serial2.print('B'); // Tells drive to go backwards
     resetCounter();
   }
-  if (spi_val == 16384){
+  if (spi_val == 16384 && charhaschanged == true){
     Serial2.print('F'); // Tells drive to go forward
     resetCounter();
   }
-  if (spi_val > 32768){
+  if (spi_val > 32768 && charhaschanged == true){
     Serial2.print('S'); // Tells drive to stop
+  }
+  if (spi_val > 32768){
     spi_val -= 32768;
     spi_val >>= 7;
     spi_reg = spi_val & 7;
@@ -243,7 +254,7 @@ void loop() {
         calcDistance(4);
         break;
       case 2:
-        //Serial.print("We have a green ball \n");
+        Serial.print("We have a green ball \n");
         calcDistance(2);
         break;
       case 3:
@@ -277,6 +288,7 @@ void loop() {
   client.publish("fromESP32/rover_coords", buffer);
   */
   // Sends test message every 2 seconds
+  /*
   long now = millis();
   if (now - lastMsg > 10000) {
     lastMsg = now;
@@ -293,6 +305,7 @@ void loop() {
     obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
     newObstacle = 1;
   }
+  */
 
 }
 
@@ -367,20 +380,22 @@ void genObsMsg(char *buf)
 }
 
 void resetCounter(){
-  for(int i = 0; i < 6; i++){
+  for(int i = 0; i < 4; i++){
     spi_counter[i] = 0;
   }
 }
 
 void calcDistance(int col) 
 {
-  for(int i = 0; i < 6; i++){
-    if(spi_val = i+20){
+  for(int i = 0; i < 5; i++){
+    Serial.println("calculating distance...");
+    Serial.println(spi_val);
+    if(spi_val == i+26){
       spi_counter[i]++;
       if(spi_counter[i] == 100){
         obstacle.colour = col;
-        int x_diff = (i+20.0)*10.0*sin(rover.angle);
-        int y_diff = (i+20.0)*10.0*cos(rover.angle);
+        int x_diff = (i+26.0)*10.0*sin(rover.angle);
+        int y_diff = (i+26.0)*10.0*cos(rover.angle);
         obstacle.coords.first = rover.coords.first + x_diff;
         obstacle.coords.second = rover.coords.second + y_diff;
         newObstacle = 1;
