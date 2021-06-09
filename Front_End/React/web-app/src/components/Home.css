@@ -1,6 +1,8 @@
 .header {
   margin-left: 10px;
   margin-top: 10px;
+  margin-bottom: 30px;
+  font-family: "Audiowide", sans-serif;
 }
 .map {
   opacity: 0.3;
@@ -8,12 +10,23 @@
   height: 600px;
   position: absolute;
   z-index: 1;
-  margin-left: 154px;
+  margin-left: 550px;
+  margin-top: 57px;
 }
 
 .mars {
   width: 600px;
   height: 600px;
   position: absolute;
-  margin-left: 154px;
+  margin-left: 550px;
+  margin-top: 57px;
+}
+
+.h6 {
+  margin-left: 15px;
+  margin-top: 65px;
+}
+.title {
+  margin-left: 15px;
+  margin-top: 50px;
 }

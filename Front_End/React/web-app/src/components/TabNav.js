@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import {NavLink} from 'react-router-dom';
+import logo from './logo.png';
 import './TabNav.css';
 import $ from 'jquery';
 
@@ -47,16 +48,21 @@ const TabNav = () => {
   <nav className="navbar navbar-expand-lg navbar-mainbg">
     
       <NavLink className="navbar-brand navbar-logo" to="/" exact>
-        Debonair
+        <img src={logo} class="logo"></img>
       </NavLink>
-    
+      
     
       <button 
         className="navbar-toggler"
         onClick={ function(){
           setTimeout(function(){ animation(); });
         }}
-        type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        type="button" 
+        data-toggle="collapse" 
+        data-target="#navbarSupportedContent" 
+        aria-controls="navbarSupportedContent" 
+        aria-expanded="false" 
+        aria-label="Toggle navigation">
         <i className="fas fa-bars text-white"></i>
       </button>
  
@@ -71,12 +77,18 @@ const TabNav = () => {
             
             <li className="nav-item active">
               <NavLink className="nav-link" to="/" exact>
+              <i class="fas fa-home"></i>Home
+              </NavLink>
+            </li>
+
+            <li className="nav-item">
+              <NavLink className="nav-link" to="/coords" exact>
               <i class="fas fa-map-marker-alt"></i>Coords
               </NavLink>
             </li>
 
             <li className="nav-item">
-              <NavLink className="nav-link" to="/map" exact>
+              <NavLink className="nav-link" to="/controller" exact>
               <i class="fas fa-gamepad"></i>
               Controller
               </NavLink> 
@@ -84,11 +96,11 @@ const TabNav = () => {
 
             <li className="nav-item">
               <NavLink className="nav-link" to="/status" exact>
-                <i 
-                className="far fa-clone">
-                </i>Status
+                <i className="far fa-clone"></i>
+                Status
               </NavLink>
             </li>
+           
          </ul>
       </div>
   </nav>
