@@ -85,12 +85,14 @@ char buffer[30]; // buffer for messages sent by ESP32
 const int ledPin = 4;
 
 // Rover Parameters
-char dir = 'S';
 struct Rover{
   int angle = 0;
   std::pair<int,int> coords = {0,0}; // coords.first = x, coords.second = y
+  char mode = 'M';
+  char dir = 'S';
 };
 Rover rover;
+std::pair<int,int> dest = {0,0};
 
 // Obstacle Parameters
 struct Obstacle{
@@ -153,6 +155,7 @@ void callback(char* topic, byte* message, unsigned int length) {
   Serial.print(". Message: ");
   String messageTemp;
   
+  // For debugging, comment this out in production
   for (int i = 0; i < length; i++) {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
@@ -163,11 +166,17 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "toESP32/dir") {
-    dir = (char)message[0];
+  if (String(topic) == "toESP32/dir" && rover.mode == 'M') {
+    rover.dir = (char)message[0];
     Serial.print("Sending direction ");
-    Serial.println(dir);
-    Serial2.print(dir);
+    Serial.println(rover.dir);
+    Serial2.print(rover.dir);
+  }
+  else if (String(topic) == "toESP32/mode") {
+    rover.mode = (char)message[0];
+    Serial.print("Sending mode ");
+    Serial.println(rover.mode);
+    Serial2.print(rover.mode);
   }
   else if (String(topic) == "toESP32/output") {
     Serial.print("Changing output to ");
@@ -205,64 +214,67 @@ void reconnect() {
 void loop() {
 
   // ************** SPI STUFF ******************
-  // Transfer stuff
-  SPI.beginTransaction(settings);
-  digitalWrite(VSPI_SS, LOW);
-  spi_val = SPI.transfer16(spi_returnval);
-  spi_returnval = 0;
-  digitalWrite(VSPI_SS, HIGH);
-  SPI.endTransaction();
-  bool charhaschanged = false;
-  if (change_char != spi_val){
-    change_char = spi_val;
-    charhaschanged = true;
-  }
-  // Processing data received
-  if (spi_val == 2048 && charhaschanged == true){
-    Serial2.print('R'); // Tells drive to turn right
-    Serial.print("We're rotating right \n");
-    resetCounter();
-  }
-  if (spi_val == 4096 && charhaschanged == true){
-    Serial2.print('L'); // Tells drive to turn left
-    resetCounter();
-  }
-  if (spi_val == 8192 && charhaschanged == true){
-    Serial2.print('B'); // Tells drive to go backwards
-    resetCounter();
-  }
-  if (spi_val == 16384 && charhaschanged == true){
-    Serial2.print('F'); // Tells drive to go forward
-    resetCounter();
-  }
-  if (spi_val > 32768 && charhaschanged == true){
-    Serial2.print('S'); // Tells drive to stop
-  }
-  if (spi_val > 32768){
-    spi_val -= 32768;
-    spi_val >>= 7;
-    spi_reg = spi_val & 7;
-    spi_val >>= 3;
-    switch(spi_reg)
-    {
-      case 0:
-        //Serial.print("We have a pink ball \n");
-        calcDistance(1);
-        break;
-      case 1:
-        //Serial.print("We have a yellow ball \n");
-        calcDistance(4);
-        break;
-      case 2:
-        Serial.print("We have a green ball \n");
-        calcDistance(2);
-        break;
-      case 3:
-        //Serial.print("We have a blue ball \n");
-        calcDistance(3);
-        break;
-      default:
-        Serial.print("Invalid ball detected \n");
+  // Only care about vision if we are in exploration mode
+  if (rover.mode == 'E') { 
+    // Transfer stuff
+    SPI.beginTransaction(settings);
+    digitalWrite(VSPI_SS, LOW);
+    spi_val = SPI.transfer16(spi_returnval);
+    spi_returnval = 0;
+    digitalWrite(VSPI_SS, HIGH);
+    SPI.endTransaction();
+    bool charhaschanged = false;
+    if (change_char != spi_val){
+      change_char = spi_val;
+      charhaschanged = true;
+    }
+    // Processing data received
+    if (spi_val == 2048 && charhaschanged == true){
+      Serial2.print('R'); // Tells drive to turn right
+      //Serial.print("We're rotating right \n");
+      resetCounter();
+    }
+    if (spi_val == 4096 && charhaschanged == true){
+      Serial2.print('L'); // Tells drive to turn left
+      resetCounter();
+    }
+    if (spi_val == 8192 && charhaschanged == true){
+      Serial2.print('B'); // Tells drive to go backwards
+      resetCounter();
+    }
+    if (spi_val == 16384 && charhaschanged == true){
+      Serial2.print('F'); // Tells drive to go forward
+      resetCounter();
+    }
+    if (spi_val > 32768 && charhaschanged == true){
+      Serial2.print('S'); // Tells drive to stop
+    }
+    if (spi_val > 32768){
+      spi_val -= 32768;
+      spi_val >>= 7;
+      spi_reg = spi_val & 7;
+      spi_val >>= 3;
+      switch(spi_reg)
+      {
+        case 0:
+          //Serial.print("We have a pink ball \n");
+          calcDistance(1);
+          break;
+        case 1:
+          //Serial.print("We have a yellow ball \n");
+          calcDistance(4);
+          break;
+        case 2:
+          Serial.print("We have a green ball \n");
+          calcDistance(2);
+          break;
+        case 3:
+          //Serial.print("We have a blue ball \n");
+          calcDistance(3);
+          break;
+        default:
+          Serial.print("Invalid ball detected \n");
+      }
     }
   }
 

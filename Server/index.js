@@ -29,6 +29,8 @@ const SSL_options = {
 
 app.use(cors()); // Enables CORS (required to work with browsers)
 
+// ------------------------ Database stuff ----------------------
+
 // Data storage stuff (database + rover info)
 const db_uri = "mongodb+srv://s_staal:LNFfaKDXPekXvb76@cluster0.wmggl.mongodb.net/Debonair?retryWrites=true&w=majority";
 const db_client = new MongoClient(db_uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -280,6 +282,11 @@ app.post("/move", (req,res) => {
     publish('toESP32/dir', req.body.direction)
     res.send("Received direction " + req.body.direction);
 });
+
+app.post("/mode", (req, res) => {
+	publish('toESP32/mode', req.body.mode);
+	res.send("Updated mode " + req.body.mode);
+})
 
 // Incorrect route
 app.use((req, res, next) => {
