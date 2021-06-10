@@ -150,6 +150,10 @@ void setup() {
 
 // This function is called whenever we receive a message to a topic we are subscribed to
 void callback(char* topic, byte* message, unsigned int length) {
+  if (String(topic) == "toESP32/test") {
+    client.publish("fromESP32/test", "test_response");
+  }
+  
   // For debugging, comment this out in production
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
@@ -246,7 +250,7 @@ void reconnect() {
 }
 
 void loop() {
-
+  /*
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
   if (rover.mode == 'E') { 
@@ -311,14 +315,14 @@ void loop() {
       }
     }
   }
-
+  */
   // ************** MQTT STUFF *******************
   if (!client.connected()) {
     reconnect();
   }
   // Allows client to process incoming messages and maintain connection to MQTT broker
   client.loop(); 
-
+  /*
   // Handles publishing data about new obstacle to server
   if (newObstacle) {
     genObsMsg(buffer);
@@ -327,7 +331,7 @@ void loop() {
     client.publish("fromESP32/obstacle", buffer);
     newObstacle = 0;
   }
-
+  */
   // Updates server with rover coords
   /*
   genCoordMsg(buffer);

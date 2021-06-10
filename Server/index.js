@@ -30,7 +30,7 @@ const SSL_options = {
 app.use(cors()); // Enables CORS (required to work with browsers)
 
 // ------------------------ Database stuff ----------------------
-
+/*
 // Data storage stuff (database + rover info)
 const db_uri = "mongodb+srv://s_staal:LNFfaKDXPekXvb76@cluster0.wmggl.mongodb.net/Debonair?retryWrites=true&w=majority";
 const db_client = new MongoClient(db_uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -134,7 +134,7 @@ function getObsColour(col) {
 }
 
 let newObstacle = 0; // Flag indicating if we have detected a new obstacle
-
+*/
 // ------------------ MQTT client ---------------
 const clientOptions = {
 	clientId:"mqttjs01",
@@ -144,6 +144,9 @@ const clientOptions = {
 }
 const client  = mqtt.connect("mqtts://debonair.duckdns.org", clientOptions);
 
+let start;
+let end;
+let total;
 // Runs on connection to the broker
 client.on("connect", () => {
 	console.log("connected " + client.connected);
@@ -157,7 +160,11 @@ client.on("connect", () => {
 		console.log('Subscribed to topic: ' + topic);
 	});
 	// Testing publishing ability
-	publish('toESP32/test','hello');
+	for(i = 0; i < 1; i++) {
+		start = Date.now();
+		publish('toESP32/test','test');
+	}
+	
 })
 
 // Runs if unable to connect to broker
@@ -173,7 +180,11 @@ const pubOptions={
 
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
-	if (topic === "fromeESP32/status") {
+	if (topic == "fromeESP32/test") {
+		end = Date.now();
+		console.log("Time taken = " + (end-start) + "ms");
+	}
+	if (topic === "fromESP32/status") {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
@@ -216,6 +227,7 @@ function publish(topic,msg,options=pubOptions){
 
 
 // ----------------------- HTTP Request handler ----------------------
+/*
 app.get("/",(req,res)=>{
     res.send('Hello from server!');
   });
@@ -285,7 +297,7 @@ app.post("/mode", (req, res) => {
 	publish('toESP32/mode', req.body.mode);
 	res.send("Updated mode " + req.body.mode);
 })
-
+*/
 // Incorrect route
 app.use((req, res, next) => {
     res.status(404).send("404: This route doesn't exist");
