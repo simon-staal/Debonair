@@ -173,7 +173,7 @@ const pubOptions={
 
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
-	if (topic === "fromeESP32/status") {
+	if (topic === "fromESP32/status") {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
