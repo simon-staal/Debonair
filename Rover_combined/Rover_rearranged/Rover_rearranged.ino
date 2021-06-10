@@ -80,7 +80,7 @@ unsigned int com_count=0;   // a variables to count the interrupts. Used for pro
 //**************************Communication variables ****************//
 char received_char = 'S';
 boolean new_data = false;
-char change_char;
+char change_char = 'S';
 char mode = 'M';
 char dir = 'S';
 int destinationX = 0;
@@ -152,8 +152,8 @@ int y_after_rotation;
 bool stopped_rover = false;
 bool destination_reached; // in COORDINATE mode
 
-float anglechanged = 0;
-float sumchanged = 0;
+long anglechanged = 0;
+long sumchanged = 0;
 float target;
 float sensor;
 float sum_dist = 0;
@@ -463,8 +463,8 @@ if (haschanged){
     DIRLstate = HIGH;
     
     Serial.println(dir);
-    sumchanged = sumchanged + dy_mm;
-    anglechanged = 0;
+    sumchanged += dy_mm;
+    //anglechanged = 0;
     //accumulate the distance
     Serial.println("sumchanged Forwards"+ String(sumchanged));
     }
@@ -473,8 +473,8 @@ if (haschanged){
     DIRLstate = LOW;
     
     Serial.println(dir);
-    sumchanged = sumchanged + dy_mm;      // need negative?
-    anglechanged = 0;
+    sumchanged += dy_mm;      // need negative?
+    //anglechanged = 0;
     Serial.println("sumchanged Backwards"+ String(sumchanged));
     }
   else if(dir == 'L'){
@@ -485,7 +485,7 @@ if (haschanged){
     O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
     anglechanged = (anglechanged + alpha);
-    sumchanged = 0;
+    //sumchanged = 0;
     Serial.println("alpha in Left rotation"+ String(alpha));
     Serial.println("anglechanged in Left rotation"+ String(anglechanged));
     }
@@ -497,15 +497,15 @@ if (haschanged){
     O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
     anglechanged = (anglechanged + alpha);
-    sumchanged = 0;
+    //sumchanged = 0;
     Serial.println("alpha in Right rotation"+ String(alpha));
     Serial.println("anglechanged in Right rotation"+ String(anglechanged));
     }
   else if(dir == 'S'){
     pwm_modulate(0);
     //stop_Rover();
-    anglechanged = 0;
-    sumchanged = 0;
+    //anglechanged = 0;
+    //sumchanged = 0;
     Serial.println(dir);
     Serial.println("current_x in S = "+ String(current_x));
     Serial.println("current_y in S = "+ String(current_y));
