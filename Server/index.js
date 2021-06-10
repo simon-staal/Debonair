@@ -152,6 +152,15 @@ function publish(topic,msg,options=pubOptions){
 		}
 }
 
+function sendTest() {
+    setTimeout(() => {
+        for(i = 0; i < 1; i++) {
+			start = Date.now();
+			publish('toESP32/test','test');
+		}
+    }, 5000);
+}
+
 let start;
 let end;
 let total;
@@ -167,16 +176,7 @@ client.on("connect", () => {
 		}
 		console.log('Subscribed to topic: ' + topic);
 	})
-	.then(async () => {
-		// Testing publishing ability
-		await delay(5000);
-		for(i = 0; i < 1; i++) {
-			start = Date.now();
-			publish('toESP32/test','test');
-		}
-	})
-	
-	
+	sendTest();
 })
 
 // Runs if unable to connect to broker
