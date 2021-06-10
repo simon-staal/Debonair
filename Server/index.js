@@ -144,6 +144,14 @@ const clientOptions = {
 }
 const client  = mqtt.connect("mqtts://debonair.duckdns.org", clientOptions);
 
+// You can call this function to publish to things
+function publish(topic,msg,options=pubOptions){
+	console.log("Publishing " + msg + " to " + topic);
+	if (client.connected == true){
+		client.publish(topic,msg,options);
+		}
+}
+
 let start;
 let end;
 let total;
@@ -180,7 +188,7 @@ const pubOptions={
 
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
-	if (topic == "fromeESP32/test") {
+	if (topic === "fromeESP32/test") {
 		end = Date.now();
 		console.log("Time taken = " + (end-start) + "ms");
 	}
@@ -216,14 +224,6 @@ client.on('message', (topic, message, packet) => {
 		//console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
 	}
 });
-
-// You can call this function to publish to things
-function publish(topic,msg,options=pubOptions){
-	console.log("publishing",msg);
-	if (client.connected == true){
-		client.publish(topic,msg,options);
-		}
-}
 
 
 // ----------------------- HTTP Request handler ----------------------
