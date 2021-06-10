@@ -147,10 +147,6 @@ void setup() {
 
 // This function is called whenever we receive a message to a topic we are subscribed to
 void callback(char* topic, byte* message, unsigned int length) {
-  if (String(topic) == "toESP32/test") {
-    client.publish("fromESP32/test", "test_response");
-  }
-  
   // For debugging, comment this out in production
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
@@ -162,6 +158,10 @@ void callback(char* topic, byte* message, unsigned int length) {
     messageTemp += (char)message[i];
   }
   Serial.println();
+
+  if (String(topic) == "toESP32/test") {
+    client.publish("fromESP32/test", "2");
+  }
 
   // Add more if statements to control more GPIOs with MQTT (figure out communication with pins)
 

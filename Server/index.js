@@ -166,12 +166,16 @@ client.on("connect", () => {
 		 process.kill(process.pid, 'SIGTERM');
 		}
 		console.log('Subscribed to topic: ' + topic);
-	});
-	// Testing publishing ability
-	for(i = 0; i < 1; i++) {
-		start = Date.now();
-		publish('toESP32/test','test');
-	}
+	})
+	.then(async () => {
+		// Testing publishing ability
+		await delay(5000);
+		for(i = 0; i < 1; i++) {
+			start = Date.now();
+			publish('toESP32/test','test');
+		}
+	})
+	
 	
 })
 
@@ -182,7 +186,7 @@ client.on("error", error => {
 });
 
 const pubOptions={
-	retain:true,
+	retain:false,
 	qos:1
 };
 

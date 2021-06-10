@@ -22,6 +22,7 @@ Followed the following [guide](https://obrienlabs.net/how-to-setup-your-own-mqtt
 - `mosquitto_pub -h localhost -t "test/test" -m "<message>" -u "<username>" -P "<password>"` to publish to a topic using authentication
 - `sudo cat /var/log/mosquitto/mosquitto.log` to view logs
 - `sudo nano /etc/mosquitto/acl` to edit permissions
+- `sudo nano /etc/mosquitto/conf.d/myconfig.conf` to edit config
 
 **SSL**
 SSL encryption for the broker was set up as follows:
