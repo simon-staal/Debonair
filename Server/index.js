@@ -154,16 +154,18 @@ function publish(topic,msg,options=pubOptions){
 
 function sendTest() {
     setTimeout(() => {
-        for(i = 0; i < 1; i++) {
-			start = Date.now();
-			publish('toESP32/test','test');
-		}
-    }, 5000);
+			setInterval(() => {
+				start = Date.now();
+				publish('toESP32/testa','a');
+				//publish('toESP32/dir', 'a');
+    			},1000);
+	}, 1000);
 }
 
 let start;
 let end;
-let total;
+let total = 0;
+let i = 0;
 // Runs on connection to the broker
 client.on("connect", () => {
 	console.log("connected " + client.connected);
@@ -192,9 +194,14 @@ const pubOptions={
 
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
-	if (topic === "fromeESP32/test") {
+	if (topic === "fromESP32/test") {
 		end = Date.now();
+		total += (end-start);
+		i += 1;
 		console.log("Time taken = " + (end-start) + "ms");
+		if (i === 100) {
+			console.log("Average for " + i +"iterations = " + (total/i) + "ms");
+		}
 	}
 	if (topic === "fromESP32/status") {
 		rover.status = message.toString();
