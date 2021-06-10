@@ -324,14 +324,14 @@ void loop() {
     genObsMsg(buffer);
     Serial.print("Sending message: ");
     Serial.println(buffer);
-    client.publish("fromESP32/obstacle", buffer);
+    client.publish("fromESP32/obstacle", buffer, false); // Ensure messages arent retained
     newObstacle = 0;
   }
 
   // Updates server with rover coords
   /*
   genCoordMsg(buffer);
-  client.publish("fromESP32/rover_coords", buffer);
+  client.publish("fromESP32/rover_coords", buffer, false);
   */
   // Sends test message every 2 seconds
   /*
@@ -342,7 +342,7 @@ void loop() {
     genCoordMsg(buffer);
     Serial.print("Sending message: ");
     Serial.println(buffer);
-    client.publish("fromESP32/rover_coords", buffer);
+    client.publish("fromESP32/rover_coords", buffer, false);
     rover.coords.first = (rover.coords.first + 1)%1000;
     rover.coords.second = (rover.coords.second + 1)%1000;
     rover.angle = (rover.angle + 1)%360;
