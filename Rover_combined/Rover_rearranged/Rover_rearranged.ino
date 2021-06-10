@@ -80,6 +80,9 @@ unsigned int com_count=0;   // a variables to count the interrupts. Used for pro
 char received_char = 'S';
 boolean new_data = false;
 char change_char;
+char mode = 'M';
+char dir = 'S';
+std::pair<int,int> destination = {0,0};
 
 //************************** Rover Constants / Variables ************************//
   //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
@@ -204,10 +207,6 @@ void goRight();
 void goBackwards();
 void goForwards();
 
-//***********************Receiving data part ****************//
-  void rec_one_char();
-  void show_new_data();
-
 //*************************** Setup ****************************//
 
 void setup() {
@@ -273,9 +272,45 @@ void setup() {
 void loop() {
   
   // main code here runs repeatedly:
+//******************** Communication part: ****************
+if (Serial1.available()) {
+  received_char = Serial1.read();
+  // Updates mode (C = coordinate, E = controlled by ESP)
+  if (received_char == 'C' || received_char == 'E') {
+    mode = received_char;
+  }
+  // If in controlled mode, updates direction
+  if (mode == 'E') {
+    dir = received_char;
+  }
+  // If in coordinate mode, updates destination
+  if (mode == 'C' && received_char == '<') {
+    while (Serial1.available() && received_char != '>') {
+      received_char = Serial1.read();
+      char bufX[6];
+      char bufY[6];
+      int i = 0;
+      while (Serial1.available() && received_char != ',') {
+        bufX[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufX[i] = '\0';
+      String x(bufX);
+      destination.first = x.toInt();
+      
+      if Serial1.available()) received_char = Serial1.read();
+      i = 0;
+      while (Serial1.available() && received_char != '>') {
+        bufY[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufY[i] = '\0';
+      String y(bufY);
+      destination.second = y.toInt();
+    }
+  }
+}
 
-rec_one_char();
-show_new_data();
 //******************* Camera loop part: ********************//
 
 #if 0
@@ -393,8 +428,8 @@ Serial.println("dy (mm) = "+String(dy_mm));
 
 bool haschanged = false;
 
-if (received_char != change_char){
-  change_char = received_char;    // keeps track of the current command
+if (dir != change_char){
+  change_char = dir;    // keeps track of the current command
   haschanged = true; 
   }
 if (haschanged){
@@ -402,6 +437,7 @@ if (haschanged){
     //add anglechanged to ur angle facing
     current_angle = anglechanged + current_angle;
     Serial.println("current_angle has changed to " + String(current_angle));
+    Serial1.print("{" + String(current_angle) + "}"); // Sends info back to ESP
   }
   else if (anglechanged == 0 && sumchanged != 0 ){
     //sumchanged multiplied by cos(current angle) + i sin(current angle) 
@@ -411,37 +447,38 @@ if (haschanged){
     Serial.println("current_x = "+ String(current_x));
     Serial.println("current_y = "+ String(current_y));
     Serial.println("x and y have changed to " + String(current_x) + " " + String(current_y));
+    Serial1.print("<" + String(current_x) + "," + String(current_y) + ">"); // Sends info back to ESP
     sumchanged = 0;
     anglechanged = 0;
     }
   // M: current_x and current_y coordinates must be provided
  }
 
- //if(received_char == 'M'){
+ if(mode == 'E'){
  
-  if(received_char == 'F' && haschanged == false){
+  if(dir == 'F'){
     DIRRstate = LOW;   //goes forwards
     DIRLstate = HIGH;
     
-    Serial.println(received_char);
+    Serial.println(dir);
     sumchanged = sumchanged + dy_mm;
     anglechanged = 0;
     //accumulate the distance
     Serial.println("sumchanged Forwards"+ String(sumchanged));
     }
-  else if(received_char == 'B' && haschanged == false){
+  else if(dir == 'B'){
     DIRRstate = HIGH;   //goes backwards
     DIRLstate = LOW;
     
-    Serial.println(received_char);
+    Serial.println(dir);
     sumchanged = sumchanged + dy_mm;      // need negative?
     anglechanged = 0;
     Serial.println("sumchanged Backwards"+ String(sumchanged));
     }
-  else if(received_char == 'L' && haschanged == false){
+  else if(dir == 'L'){
     DIRRstate = LOW;   // turns left - rotates anticlockwise
     DIRLstate = LOW;
-    Serial.println(received_char);
+    Serial.println(dir);
     
     O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
@@ -450,10 +487,10 @@ if (haschanged){
     Serial.println("alpha in Left rotation"+ String(alpha));
     Serial.println("anglechanged in Left rotation"+ String(anglechanged));
     }
-  else if(received_char == 'R' && haschanged == false){
+  else if(received_char == 'R'){
     DIRRstate = HIGH;   // turns right - rotates clockwise
     DIRLstate = HIGH;
-    Serial.println(received_char);
+    Serial.println(dir);
     
     O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
@@ -462,12 +499,12 @@ if (haschanged){
     Serial.println("alpha in Right rotation"+ String(alpha));
     Serial.println("anglechanged in Right rotation"+ String(anglechanged));
     }
-  else if(received_char == 'S'){
+  else if(dir == 'S'){
     pwm_modulate(0);
     //stop_Rover();
     anglechanged = 0;
     sumchanged = 0;
-    Serial.println(received_char);
+    Serial.println(dir);
     Serial.println("current_x in S = "+ String(current_x));
     Serial.println("current_y in S = "+ String(current_y));
     Serial.println("current_angle in S = "+ String(current_angle));
@@ -476,7 +513,7 @@ if (haschanged){
     pwm_modulate(0);
     //stop_Rover();
     Serial.println("default stop");
-    Serial.println(received_char);} // by default stop 
+    Serial.println(dir);} // by default stop 
 
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate); 
@@ -486,11 +523,12 @@ if (haschanged){
 // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
 
 
-/*  if(received_char == 'C'){
-
+if(mode == 'C'){
+  // targetx = destination.first
+  // targety = destination.second
       // 1st received int = target_x
       // 2nd received int = target_y
-*/ 
+ 
 
 /*
   // Coordinates are provided by the ESP32 from Command
@@ -1075,21 +1113,5 @@ float toDegrees(float angleRadians){
  
 
 
-//***** ESP32 related functions***********//
-void rec_one_char() {
-  if(Serial1.available()){
-    received_char = Serial1.read();
-    new_data = true;
-  }
-}
-
-void show_new_data() {
-  if(new_data == true) {
-    Serial.print("An ");
-    Serial.print((byte)received_char);
-    Serial.println("has arrived");
-    new_data = false;
-  }
-}
 
 /*end of the program.*/
