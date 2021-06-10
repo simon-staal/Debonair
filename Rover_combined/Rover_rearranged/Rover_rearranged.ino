@@ -4,6 +4,7 @@
 #include "SPI.h"
 
 
+
 INA219_WE ina219; // this is the instantiation of the library for the current sensor
 
 // these pins may be different on different boards
@@ -82,7 +83,8 @@ boolean new_data = false;
 char change_char;
 char mode = 'M';
 char dir = 'S';
-std::pair<int,int> destination = {0,0};
+int destinationX = 0;
+int destinationY = 0;
 
 //************************** Rover Constants / Variables ************************//
   //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
@@ -296,9 +298,9 @@ if (Serial1.available()) {
       }
       bufX[i] = '\0';
       String x(bufX);
-      destination.first = x.toInt();
+      destinationX = x.toInt();
       
-      if Serial1.available()) received_char = Serial1.read();
+      if (Serial1.available()) received_char = Serial1.read();
       i = 0;
       while (Serial1.available() && received_char != '>') {
         bufY[i++] = received_char;
@@ -306,7 +308,7 @@ if (Serial1.available()) {
       }
       bufY[i] = '\0';
       String y(bufY);
-      destination.second = y.toInt();
+      destinationY = y.toInt();
     }
   }
 }
@@ -517,18 +519,18 @@ if (haschanged){
 
  digitalWrite(DIRR, DIRRstate);
  digitalWrite(DIRL, DIRLstate); 
- //} MODE BRACKET
+ } //MODE BRACKET
 
 //**************************************************************************
 // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
 
 
-if(mode == 'C'){
-  // targetx = destination.first
-  // targety = destination.second
+/*if(mode == 'C'){
+  // targetx = destinationX
+  // targety = destinationY
       // 1st received int = target_x
       // 2nd received int = target_y
- 
+ /*
 
 /*
   // Coordinates are provided by the ESP32 from Command
