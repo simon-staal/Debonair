@@ -150,12 +150,12 @@ void setup() {
 
 // This function is called whenever we receive a message to a topic we are subscribed to
 void callback(char* topic, byte* message, unsigned int length) {
+  // For debugging, comment this out in production
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
   Serial.print(". Message: ");
   String messageTemp;
   
-  // For debugging, comment this out in production
   for (int i = 0; i < length; i++) {
     Serial.print((char)message[i]);
     messageTemp += (char)message[i];
@@ -166,17 +166,51 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   // If a message is received on the topic esp32/output, you check if the message is either "on" or "off". 
   // Changes the output state according to the message
-  if (String(topic) == "toESP32/dir" && rover.mode == 'M') {
+  if (String(topic) == "toESP32/dir" && rover.mode == 'M') { // Single char
     rover.dir = (char)message[0];
     Serial.print("Sending direction ");
     Serial.println(rover.dir);
     Serial2.print(rover.dir);
   }
-  else if (String(topic) == "toESP32/mode") {
+  else if (String(topic) == "toESP32/mode") { // Single char
     rover.mode = (char)message[0];
     Serial.print("Sending mode ");
     Serial.println(rover.mode);
     Serial2.print(rover.mode);
+  }
+  // Receives messages of the form "<x_coord,y_coord>"
+  // Also not sure if storing the destination coords is necessary, doing it for now
+  else if (String(topic) == "toESP32/coord" && rover.mode == 'C') {
+    String toDrive;
+    toDrive += (char)message[0]; // Adds '<'
+    char bufX[6];
+    int i = 1;
+    while((char)message[i] != ',') {
+      bufX[i] = message[i];
+      toDrive += (char)message[i++];
+    }
+    toDrive += (char)message[i]; // Adds ','
+    bufX[i++] = '\0';
+    String x(bufX);
+    dest.first = x.toInt();
+    char bufY[6];
+    int j = 0;
+    while((char)message[i] != '>') {
+      bufY[j++] = message[i];
+      toDrive += (char)message[i++];
+    }
+    toDrive += (char)message[i]; // Adds '>'
+    Serial2.print(toDrive); // Sends "<x_coord,y_coord>" to drive
+    bufY[j++] = '\0';
+    String y(bufY);
+    dest.second = y.toInt();
+    // Debugging
+    Serial.print("Sending: ");
+    Serial.println(toDrive);
+    Serial.print("x coord: ");
+    Serial.print(dest.first);
+    Serial.print(", y coord: ");
+    Serial.println(dest.second);
   }
   else if (String(topic) == "toESP32/output") {
     Serial.print("Changing output to ");

@@ -270,9 +270,7 @@ app.post("/coords", (req,res) => {
     }
     // res.set('Content-Type', 'text/plain');
     console.log(JSON.stringify(receivedCoord));
-	// Not sure about this yet
-    publish('toESP32/x_coord',receivedCoord.coordinateX);
-    publish('toESP32/y_coord',receivedCoord.coordinateY);
+    publish('toESP32/coord',`<${receivedCoord.coordinateX},${receivedCoord.coordinateY}>`);
     res.send(receivedCoord);
 });
 
