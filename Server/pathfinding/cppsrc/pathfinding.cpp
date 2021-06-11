@@ -50,7 +50,7 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
   }
 
   // Processing output
-  std::string processed_path = "{\"path\":[";
+  std::string processed_path = "{\"points\":[";
   for (unsigned i = 0; i < path.size(); i++) {
     std::string intermed_dest = "{";
     intermed_dest += ("\"x\":"+std::to_string(path[i].first));

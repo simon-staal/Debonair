@@ -12,7 +12,8 @@ const MongoClient = require('mongodb').MongoClient
 // TO USE: Pathfinder.genPath("rover_posX,rover_posY","dest_posX,dest_posY","{obstacle1_posx,obstacle1_posY}{obstacle2_posX,obstacle2_posY}{etc}")
 const Pathfinder = require('./pathfinding/pathfinding'); 
 
-// Testing
+// Testing 
+/*
 let i = 0;
 let total = 0;
 for (i; i < 10000; i++) {
@@ -22,6 +23,7 @@ for (i; i < 10000; i++) {
 	total += (end-start);
 }
 console.log("Average time for 10000 iterations: "+(total/i)+"ms");
+*/
 // ---------------- Admin shit -------------------
 // Setting up communication
 const app = new express();
@@ -41,6 +43,8 @@ const SSL_options = {
 };
 
 app.use(cors()); // Enables CORS (required to work with browsers)
+
+let path; // Holds path for the rover
 
 // ------------------------ Database stuff ----------------------
 
@@ -217,6 +221,13 @@ client.on('message', (topic, message, packet) => {
 		rover.lastUpdate = time.getTime();
 		//console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
 	}
+	if (topic === "fromESP32/nextpoint") {
+		if (path.points) {
+			let point = path.points.shift(); // Extracts first element (next point)
+			console.log("Sending point: "+JSON.stringify(point));
+			publish('toESP32/coord',`<${point.x},${point.y}>`);
+		}
+	}
 });
 
 // You can call this function to publish to things
@@ -273,7 +284,6 @@ app.get("/reset", (req,res) => {
 })
 
 // Sends desired coordinates to rover 
-// WILL NEED TO UPDATE WITH PATHFINDING
 app.post("/coords", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
     
@@ -281,10 +291,16 @@ app.post("/coords", (req,res) => {
         'coordinateX': req.body.coordinateX,
         'coordinateY': req.body.coordinateY
     }
-    // res.set('Content-Type', 'text/plain');
-    console.log(JSON.stringify(receivedCoord));
-    publish('toESP32/coord',`<${receivedCoord.coordinateX},${receivedCoord.coordinateY}>`);
-    res.send(receivedCoord);
+	let obstacles_string = ""
+	for ( let i in obstacles ) {
+		if (obstacles[i].x) obstacles_string += `{${obstacles[i].x},${obstacles[i].y}}`;
+	}
+	path = JSON.parse(Pathfinder.genPath(`${rover.x},${rover.y}`,`${req.body.coordinateX},${req.body.coordinateY}`,obstacles_string));
+    console.log(JSON.stringify(path));
+	res.send(path);
+	let point = path.points.shift();
+	console.log("Sending point: "+JSON.stringify(point));
+    publish('toESP32/coord',`<${point.x},${point.y}>`);
 });
 
 // Sends directions to rover
