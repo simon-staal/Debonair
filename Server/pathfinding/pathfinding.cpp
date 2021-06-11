@@ -111,16 +111,16 @@ std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range
   return obsInTheWay;
 }
 
-std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range, std::pair<int,int> y_range)
+pair<int,int> avoid(pair<int,int> obstacle, pair<int,int> x_range, pair<int,int> y_range)
 {
   float ang = atan2((y_range.second - y_range.first), (x_range.second - x_range.first));
-  std::pair<int,int> newDest;
+  pair<int,int> newDest;
   if(y_range.second > 0){ //differentiates between destinations above and below origin
     if(x_range.second > 0){ // differentiates between destinations left or right of origin (top right quadrant here)
       int x_pos = x_range.first + (obstacle.second - y_range.first)/tan(ang);
       if(obstacle.first < x_pos){ //if obstacle is left of path
-        newDest.first = x_pos + clearance;
-        if(x_pos - obstacle.first > clearance){ // if distance in x coordinates is more than 100 just adjust y coordinate by 100
+        newDest.first = x_pos + clearance*(ang/(M_PI/2));
+        if(newDest.first - obstacle.first > clearance){ // if distance in x coordinates is more than 100 just adjust y coordinate by 100
           newDest.second = obstacle.second - clearance;
         }
         else{ // if x clearance is less than 100, ensure y distance is enough so that closest rover travels is 100 using pythagoras
@@ -129,8 +129,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
         }
       }
       else{ //if obstacle is right of path
-        newDest.first = x_pos - clearance;
-        if(obstacle.first - x_pos > clearance){
+        newDest.first = x_pos - clearance*(ang/(M_PI/2));
+        if(obstacle.first - newDest.first > clearance){
           newDest.second = obstacle.second + clearance;
         }
         else{
@@ -142,8 +142,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
       else{ //top left quadrant here
         int x_pos = x_range.second - (obstacle.second - y_range.first)/tan(ang);
         if(obstacle.first < x_pos){ //obstacle on left of path
-          newDest.first = x_pos + clearance;
-          if(x_pos - obstacle.first > clearance){
+          newDest.first = x_pos + clearance*(ang/(M_PI/2));
+          if(newDest.first - obstacle.first > clearance){
           newDest.second = obstacle.second + clearance;
           }
           else{
@@ -152,8 +152,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
           }
         }
         else{ //obstacle on right of path
-          newDest.first = x_pos - clearance;
-          if(obstacle.first - x_pos > clearance){
+          newDest.first = x_pos - clearance*(ang/(M_PI/2));
+          if(obstacle.first - newDest.first > clearance){
             newDest.second = obstacle.second - clearance;
           }
           else{
@@ -167,8 +167,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
       if(x_range.second > 0){ // bottom right quadrant here
         int x_pos = x_range.first + abs((obstacle.second - y_range.second))/tan(ang);
         if(obstacle.first < x_pos){ //obstacle on right of path
-          newDest.first = x_pos + clearance;
-          if(x_pos - obstacle.first > clearance){
+          newDest.first = x_pos + clearance*(ang/(M_PI/2));
+          if(newDest.first - obstacle.first > clearance){
             newDest.second = obstacle.second + clearance;
           }
           else{
@@ -177,8 +177,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
           }
         }
         else{ //obstacle on left of path
-          newDest.first = x_pos - clearance;
-          if(obstacle.first - x_pos > clearance){
+          newDest.first = x_pos - clearance*(ang/(M_PI/2));
+          if(obstacle.first - newDest.first > clearance){
             newDest.second = obstacle.second - clearance;
           }
           else{
@@ -190,8 +190,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
       else{ //bottom left quadrant here
         int x_pos = x_range.second - abs((obstacle.second - y_range.second))/tan(ang);
           if(obstacle.first < x_pos){ //obstacle on right of path
-            newDest.first = x_pos + clearance;
-            if(x_pos - obstacle.first > clearance){
+            newDest.first = x_pos + clearance*(ang/(M_PI/2));
+            if(newDest.first - obstacle.first > clearance){
               newDest.second = obstacle.second - clearance;
             }
             else{
@@ -200,8 +200,8 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
             }
           }
           else{ //obstacle on right of path
-            newDest.first = x_pos - clearance;
-            if(obstacle.first - x_pos > clearance){
+            newDest.first = x_pos - clearance*(ang/(M_PI/2));
+            if(obstacle.first - newDest.first > clearance){
               newDest.second = obstacle.second + clearance;
             }
             else{

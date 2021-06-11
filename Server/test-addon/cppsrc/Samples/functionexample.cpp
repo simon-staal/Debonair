@@ -1,9 +1,10 @@
-#include "pathfinding.h"
+#include "functionexample.h"
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <cmath>
-#include <bits/stdc++.h>
+#include <string>
+//#include <bits/stdc++.h>
 
 std::string functionexample::hello(){
     return "Hello World";
@@ -35,6 +36,35 @@ Napi::Number functionexample::AddWrapped(const Napi::CallbackInfo &info) {
     return Napi::Number::New(env, returnValue);
 }
 
+std::string functionexample::test(std::string pos, std::string dest, std::string obs) {
+  return ("Position: "+pos+", Destination: "+dest+", Obstacles: "+obs);
+}
+
+Napi::String functionexample::TestWrapped(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 3) {
+    Napi::Error::New(env, "Insufficient arguments (expected 3)").ThrowAsJavaScriptException();
+  }
+
+  std::string pos = (std::string) info[0].ToString();
+  std::string dest = (std::string) info[1].ToString();
+  std::string obs = (std::string) info[2].ToString();
+
+  std::string path = functionexample::test(pos, dest, obs);
+
+  return Napi::String::New(env, path);
+}
+
+Napi::Object functionexample::Init(Napi::Env env, Napi::Object exports)
+{
+    exports.Set("hello", Napi::Function::New(env, functionexample::HelloWrapped));
+    exports.Set("add", Napi::Function::New(env, functionexample::AddWrapped));
+    exports.Set("test", Napi::Function::New(env, functionexample::TestWrapped));
+
+    return exports;
+}
+
+/*
 std::pair<int,int> genIntermed(std::vector<std::pair<int,int>> &obstacles, std::pair<int, int> dest, std::pair<int, int> pos);
 std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range, std::vector<std::pair<int,int>> &obstacles, int clearance);
 std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range, std::pair<int,int> y_range, int clearance);
@@ -228,12 +258,5 @@ std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range
     }
     return newDest;
 }
+*/
 
-
-Napi::Object functionexample::Init(Napi::Env env, Napi::Object exports)
-{
-    exports.Set("hello", Napi::Function::New(env, functionexample::HelloWrapped));
-    exports.Set("add", Napi::Function::New(env, functionexample::AddWrapped));
-
-    return exports;
-}
