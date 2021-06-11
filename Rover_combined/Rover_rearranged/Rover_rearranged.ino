@@ -4,6 +4,7 @@
 #include "SPI.h"
 
 
+
 INA219_WE ina219; // this is the instantiation of the library for the current sensor
 
 // these pins may be different on different boards
@@ -53,10 +54,10 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-//float vref = 2.5; // value chosen by me
+float vref = 2.5; // value chosen by me
 
 float open_loop, closed_loop; // Duty Cycles
-float vpd,vref,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
+float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
 unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
 
 float ev=0,cv=0,ei=0,oc=0; //internal signals
@@ -79,27 +80,34 @@ unsigned int com_count=0;   // a variables to count the interrupts. Used for pro
 //**************************Communication variables ****************//
 char received_char = 'S';
 boolean new_data = false;
+char change_char = 'S';
+char mode = 'M';
+char dir = 'S';
+int destinationX = 0;
+int destinationY = 0;
 
 //************************** Rover Constants / Variables ************************//
   //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
-  const float pi = 3.14159;
-  float r = 140.0;
-  float C = 2*pi*r;
-  float arc_length;
-  float increment;
-  float x1 = 0;
-  float y1 = 0;
+const float pi = 3.14159;
+float r = 140.0;
+float C = 2*pi*r;
+float arc_length;
+float increment;
+float x1 = 0;
+float y1 = 0;
 
 //*********************** Angle variable *****************************//
-  bool angle_flag = false;
-  bool target_flag = false;
-  float O_to_coord_measured;
-  float O_to_coord;
-  float angle = 0;
-  float beta = 0;
-  int coord_after_rotation;
-  float dummy_angle=0;
-  
+bool angle_flag = false;
+bool target_flag = false;
+float O_to_coord_measured;
+float O_to_coord;
+float angle = 0;
+float beta = 0;
+int coord_after_rotation;
+float dummy_angle=0;
+
+
+float alpha = 0;
 //************************** Motor Constants **************************//
    
 int DIRRstate = LOW;              //initializing direction states
@@ -127,21 +135,25 @@ volatile byte movementflag=0;
 volatile int xydat[2];
 int tdistance = 0;
 
-
+float dx_mm = 0;
+float dy_mm = 0;
 //***************************Globals*******************************
 bool halted = 0;                  // in simple coordinate mode with timed 90°
 bool done = 0;
 bool finished_turning=false;
 unsigned long haltTime;
+
 bool rover_stopped;
 bool reached_x_position=0;
 bool ydone1=0;
 bool xdone=0;
 int y_after_rotation;
-bool stopped_rover = false;
 
-float anglechanged = 0;
-float sumchanged = 0;
+bool stopped_rover = false;
+bool destination_reached; // in COORDINATE mode
+
+long anglechanged = 0;
+long sumchanged = 0;
 float target;
 float sensor;
 float sum_dist = 0;
@@ -149,10 +161,16 @@ float current_angle = 0;
 int current_x = 0;
 int current_y = 0;
 
+float coord_anglechanged = 0;
+float coord_sumchanged = 0;
+float alphaSummed = 0;
+float angle_now = 0;
+int x_now = 0;
+int y_now = 0;
 
-//bool angle_flag = true;
+float measuredDistance = 0;
+float alpha2 = 0;
 
-bool destination_reached; // in COORDINATE mode
 //************************ Function declarations *********************//
 int convTwosComp(int b);
 void mousecam_reset();
@@ -188,11 +206,8 @@ void compensate_x(float);
 float toDegrees(float angleRadians);
 void goLeft();
 void goRight();
-void goBacwards();
+void goBackwards();
 void goForwards();
-//***********************Receiving data part ****************//
-  void rec_one_char();
-  void show_new_data();
 
 //*************************** Setup ****************************//
 
@@ -259,9 +274,45 @@ void setup() {
 void loop() {
   
   // main code here runs repeatedly:
+//******************** Communication part: ****************
+if (Serial1.available()) {
+  received_char = Serial1.read();
+  // Updates mode (C = coordinate, E = controlled by ESP)
+  if (received_char == 'C' || received_char == 'E') {
+    mode = received_char;
+  }
+  // If in controlled mode, updates direction
+  if (mode == 'E') {
+    dir = received_char;
+  }
+  // If in coordinate mode, updates destination
+  if (mode == 'C' && received_char == '<') {
+    while (Serial1.available() && received_char != '>') {
+      received_char = Serial1.read();
+      char bufX[6];
+      char bufY[6];
+      int i = 0;
+      while (Serial1.available() && received_char != ',') {
+        bufX[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufX[i] = '\0';
+      String x(bufX);
+      destinationX = x.toInt();
+      
+      if (Serial1.available()) received_char = Serial1.read();
+      i = 0;
+      while (Serial1.available() && received_char != '>') {
+        bufY[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufY[i] = '\0';
+      String y(bufY);
+      destinationY = y.toInt();
+    }
+  }
+}
 
-rec_one_char();
-show_new_data();
 //******************* Camera loop part: ********************//
 
 #if 0
@@ -320,8 +371,8 @@ total_x = (float)(total_x1/157.0) * 10; //Conversion from counts per inch to mm 
 total_y = (float)(total_y1/157.0) * 10; //Conversion from counts per inch to mm (400 counts per inch)
 
 //defined by me
-float dx_mm = (float)(distance_x/157.0) * 10;
-float dy_mm = (float)(distance_y/157.0) * 10;
+ dx_mm = (float)(distance_x/157.0) * 10;
+ dy_mm = (float)(distance_y/157.0) * 10;
 
 Serial.print('\n');
 Serial.println("dx = "+String(distance_x));
@@ -372,77 +423,133 @@ Serial.println("dy (mm) = "+String(dy_mm));
   
   unsigned long now = millis();
 
-// REMOTE CONTROLLER MODE: DIRECT INPUT FROM USER
+// REMOTE CONTROLLER MODE: DIRECT INPUT FROM USER 
+// AND
+// EXPLORE MODE - like REMOTE CONTROLLER BUT THE COMMANDS COME FROM VISION
 //make a register that only changes if the received character becomes different (call it change_char)
+
 bool haschanged = false;
-if (received_char != change_char){
-  change_char = received_char;
+
+if (dir != change_char){
+  change_char = dir;    // keeps track of the current command
   haschanged = true; 
   }
- if (haschanged){
+if (haschanged){
   if (sumchanged == 0 && anglechanged != 0){
     //add anglechanged to ur angle facing
     current_angle = anglechanged + current_angle;
-    Serial.println("angle has changed to " + String(current_angle));
+    Serial.println("current_angle has changed to " + String(current_angle));
+    Serial1.print("{" + String(current_angle) + "}"); // Sends info back to ESP
   }
-  else if (anglechanged == 0 && sumchanged != 0 )
+  else if (anglechanged == 0 && sumchanged != 0 ){
     //sumchanged multiplied by cos(current angle) + i sin(current angle) 
-    //cos is y axis sin is x axis
+    //cos is y axis sin is x axisSerial.println("current_x = "+ String(current_x));
     current_y = sumchanged * cos(current_angle);
     current_x = sumchanged * sin(current_angle);
+    Serial.println("current_x = "+ String(current_x));
+    Serial.println("current_y = "+ String(current_y));
     Serial.println("x and y have changed to " + String(current_x) + " " + String(current_y));
+    Serial1.print("<" + String(current_x) + "," + String(current_y) + ">"); // Sends info back to ESP
     sumchanged = 0;
     anglechanged = 0;
-  // M: current_x and current_y coordinates must be provided
- 
- //if(received_char == 'M'){
- 
-  if(received_char == 'F' && haschanged == false){
-    goForwards();
-    Serial.println(received_char);
-    sumchanged = sumchanged + dy_mm;
-    anglechanged = 0;
-    //accumulate the distance}
-    
-  else if(received_char == 'B' && haschanged == false){
-    goBackwards();
-    Serial.println(received_char);
-    sumchanged = sumchanged + dy_mm;      // need negative?
-    anglechanged = 0;
-    } 
-    
-  else if(received_char == 'L' && haschanged == false){
-    goLeft();
-    float O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-    float alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
-    anglechanged = (anglechanged + alpha);
-    Serial.println(received_char);
-    sumchanged = 0;
-    } 
-    
-  else if(received_char == 'R' && haschanged == false){
-    goRight();
-    float O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-    alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
-    anglechanged = (anglechanged + alpha);
-    Serial.println(received_char);
-    sumchanged = 0;
     }
+  // M: current_x and current_y coordinates must be provided
+ }
+
+ if(mode == 'E'){
+ 
+  if(dir == 'F'){
+    DIRRstate = LOW;   //goes forwards
+    DIRLstate = HIGH;
     
-  else if(received_char == 'S'){
-    //pwm_modulate(0);
-    stop_Rover();
-    anglechanged = 0;
-    sumchanged = 0;
-    Serial.println(received_char);} // stops
-/*    
-  else if(received_char == 'N'){      //rotate 90°
+    Serial.println(dir);
+    sumchanged += dy_mm;
+    //anglechanged = 0;
+    //accumulate the distance
+    Serial.println("sumchanged Forwards"+ String(sumchanged));
+    }
+  else if(dir == 'B'){
+    DIRRstate = HIGH;   //goes backwards
+    DIRLstate = LOW;
+    
+    Serial.println(dir);
+    sumchanged += dy_mm;      // need negative?
+    //anglechanged = 0;
+    Serial.println("sumchanged Backwards"+ String(sumchanged));
+    }
+  else if(dir == 'L'){
+    DIRRstate = LOW;   // turns left - rotates anticlockwise
+    DIRLstate = LOW;
+    Serial.println(dir);
+    
     O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
-    alphaSummed = (alphaSummed + alpha);
-    beta = 90; // given by Control
+    anglechanged = (anglechanged + alpha);
+    //sumchanged = 0;
+    Serial.println("alpha in Left rotation"+ String(alpha));
+    Serial.println("anglechanged in Left rotation"+ String(anglechanged));
+    }
+  else if(received_char == 'R'){
+    DIRRstate = HIGH;   // turns right - rotates clockwise
+    DIRLstate = HIGH;
+    Serial.println(dir);
     
-    if(angle_flag == true){
+    O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+    alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
+    anglechanged = (anglechanged + alpha);
+    //sumchanged = 0;
+    Serial.println("alpha in Right rotation"+ String(alpha));
+    Serial.println("anglechanged in Right rotation"+ String(anglechanged));
+    }
+  else if(dir == 'S'){
+    pwm_modulate(0);
+    //stop_Rover();
+    //anglechanged = 0;
+    //sumchanged = 0;
+    Serial.println(dir);
+    Serial.println("current_x in S = "+ String(current_x));
+    Serial.println("current_y in S = "+ String(current_y));
+    Serial.println("current_angle in S = "+ String(current_angle));
+    } // stops
+  else{
+    pwm_modulate(0);
+    //stop_Rover();
+    Serial.println("default stop");
+    Serial.println(dir);} // by default stop 
+
+ digitalWrite(DIRR, DIRRstate);
+ digitalWrite(DIRL, DIRLstate); 
+ } //MODE BRACKET
+
+//**************************************************************************
+// COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
+
+
+/*if(mode == 'C'){
+  // targetx = destinationX
+  // targety = destinationY
+      // 1st received int = target_x
+      // 2nd received int = target_y
+ /*
+
+/*
+  // Coordinates are provided by the ESP32 from Command
+  // here they are just manually set - for now
+  int target_y = 100;
+  int target_x = 100;
+
+// i receive an angle from control and rotate to that angle
+
+    O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
+    measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+    alpha2 = toDegrees(asin(measuredDistance/(2*r))) * 4 ; 
+    alphaSummed = (alphaSummed + alpha2);
+    angle = alphaSummed;
+    beta = 90; // given by Control  
+
+   // beta = 90 //- toDegrees((acos(target_x/O_to_coord))) + (current_angle); // I need the complementary angle.
+
+  if(angle_flag == true && target_flag == true){
      stop_Rover();
      alphaSummed = 0;
      stopped_rover = true;
@@ -455,98 +562,48 @@ if (received_char != change_char){
     //send dummy_angle to Control
      
      stop_Rover(); Serial.println("FINISHED ROTATING");
-     angle_flag = true;}
-     
-    if(((-alphaSummed+beta) >= 2)&& angle_flag == false){
-     Serial.println("inside the rotation loop ");
-     Serial.println("total_y = " + String(total_y));
-
-    // current_x and current_y must be provided
+     angle_flag = true;
+    }
     
-     if((target_x > current_x)){   
+  if(((-alphaSummed+beta) >= 2)&& angle_flag == false && target_flag == false){
+     Serial.println("inside the rotation loop ");
+     Serial.println("total_y = " + String(total_y)); 
+        
+     if((target_x > x_now)){   
         Serial.println("target_x has a greater x coord. than the current x coord.");
       // pwm_modulate(0.25);
-         goRight();    //rotate clockwise
-    }else if((target_x < current_x)){
+         goRight();    
+    }else if((target_x < x_now)){
         Serial.println("target_x has a smaller x coord. than the current x coord.");
         //pwm_modulate(0.25);
-        goLeft();   // rotate anticlockwise
-    }else if ((target_x == current_x)){
+        goLeft();   
+    }else if ((target_x == x_now)){
       //do not rotate - no angle difference between current coordinates and destination coordinates
       Serial.println("target_x has the same x coord. than the current x coord.");
-      goForwards();}
-  }
-  
-  else{
-    //pwm_modulate(0);
-    stop_Rover();
-    Serial.println("default stop");
-    Serial.println(received_char);} // by default stop 
+      goForwards();
+      sumdist = sumdist + dy_mm;
+      }
+      
+ if(angle_flag == true && stopped_rover== false){
+     go_forwards(target_y,total_y - coord_after_rotation);
+     sumdist = sumdist + dy_mm;
+
+     Serial.println("sumdist = " + String(sumdist));
+     Serial.println("coord_after_rotation in angle_flag loop = " + String(coord_after_rotation));
+     Serial.println("Going forwards to the destination!");
+     Serial.println("total_y - coord_after_rotation = " + String(total_y - coord_after_rotation));
+     Serial.println("target_y - coord_after_rotation = " + String(target_y - coord_after_rotation));
+     Serial.println("abs distanza = " + String(abs((total_y - coord_after_rotation) - (target_y))));
  }
+}
 */
-
-// COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
+//********************************************************
+   
 /*
-  O_to_coord_measured = sqrt((dy_mm * dy_mm) + (dx_mm * dx_mm));
-
-  sum_dist = sum_dist + O_to_coord_measured;
-  float current_ang = (sum_dist / 968)* 360;
-  Serial.print("total dist: ");
-  Serial.println(sum_dist);
-  Serial.println("total angle: " + String(current_ang));
-  float target_angle = 180;
-  //put a target angle called target_angle which can be from 0 to 360 degrees
-  //a flag should be set to true when rotating assume flag is called angle_flag
-  if(angle_flag && (current_ang > target_angle)){
-
-    angle_flag = false;
-    sum_dist = 0;
-    //go_forwards(200, total_y);
-      digitalWrite(DIRR, DIRRstate);
-      digitalWrite(DIRL, DIRLstate);
-    Serial.print("done rotating");
-    stop_Rover();
-    }    
-    else if (angle_flag){
-    Serial.print("Start rotation");
-    DIRRstate = HIGH;
-    DIRLstate = HIGH;
-         digitalWrite(DIRR, DIRRstate);
-         digitalWrite(DIRL, DIRLstate);
-    }
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*  if(received_char == 'C'){
-
-      // 1st received int = target_x
-      // 2nd received int = target_y
-*/ 
-
-  // Coordinates are provided by the ESP32 from Command
-  // here they are just manually set - for now
-  int target_y = 100;
-  int target_x = 100;
-
-  go_forwards(target_y, total_y);
-/*
-  O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
-  O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+  //O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
+  measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
   
-  alpha = toDegrees(asin(O_to_coord_measured/(2*r)))*4 ; // angle of each distance increment measured by the sensor
+  alpha = toDegrees(asin(measuredDistance/(2*r)))*4 ; // angle of each distance increment measured by the sensor
   alphaSummed = (alphaSummed + alpha); // tot angle measured by sensor from 0°
   angle = alphaSummed; // angle between 2 set of coordinates
   Serial.println("dummy_angle ° = " + String(dummy_angle));
@@ -701,17 +758,6 @@ if (received_char != change_char){
 
 // EXPLORE MODE 
   // like REMOTE CONTROLLER BUT THE COMMANDS COME FROM VISION
-  // receives range of ints. Rotate Rover slowly until the int=0 (probs will need a range for this)
-  // if int<0 rotate right
-  // if int>0 rotate left
-  // when the int=0 , Rover moves forwards (for how much? bool? or fixed distance?)
-
-/*  if(received_char == 'E'){
-
-    //EXPLORE
-    
-    }
-*/
    
  }
 
@@ -843,8 +889,9 @@ void sampling(){
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
-  vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
+  //vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
+  sensorValue2 = vref *(1023.0/ 4.096);
   vpd = sensorValue3 * (4.096 / 1023.0); // Convert the Vpd sensor reading to volts
 
  /* The inductor current is in mA from the sensor so we need to convert to amps.
@@ -1068,21 +1115,5 @@ float toDegrees(float angleRadians){
  
 
 
-//***** ESP32 related functions***********//
-void rec_one_char() {
-  if(Serial1.available()){
-    received_char = Serial1.read();
-    new_data = true;
-  }
-}
-
-void show_new_data() {
-  if(new_data == true) {
-    Serial.print("An ");
-    Serial.print((byte)received_char);
-    Serial.println("has arrived");
-    new_data = false;
-  }
-}
 
 /*end of the program.*/
