@@ -57,7 +57,7 @@ const AntSwitch = withStyles((theme) => ({
 
 function Map(){
 
-    if(useLocation().pathname=="/controller"){
+    if(useLocation().pathname==="/controller"){
         document.getElementById('pinkball').style.display="block";
         document.getElementById('blueball').style.display="block";
         document.getElementById('greenball').style.display="block";
@@ -65,6 +65,11 @@ function Map(){
         document.getElementById('start').style.display="block";
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
+        document.getElementById('msg').style.display="block";
+        document.getElementById('pinkballcoord').style.display="block";
+        document.getElementById('greenballcoord').style.display="block";
+        document.getElementById('orangeballcoord').style.display="block";
+        document.getElementById('blueballcoord').style.display="block";
         
       }
     const position=MousePosition();

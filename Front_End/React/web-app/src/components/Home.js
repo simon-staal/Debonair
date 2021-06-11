@@ -11,6 +11,8 @@ import grid from "./grid.png";
 import ground from "./background.jpg";
 import { useLocation } from 'react-router-dom';
 import './Home.css';
+import LineTo from 'react-lineto';
+import dot from './dot.png';
 
 const AntSwitch = withStyles((theme) => ({
     root: {
@@ -68,7 +70,7 @@ const useStyles = makeStyles((theme)=>({
 
 function Home(){
 
-    if(useLocation().pathname=="/coords"){
+    if(useLocation().pathname==="/coords"){
         document.getElementById('pinkball').style.display="block";
         document.getElementById('blueball').style.display="block";
         document.getElementById('greenball').style.display="block";
@@ -76,6 +78,11 @@ function Home(){
         document.getElementById('start').style.display="block";
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
+        document.getElementById('msg').style.display="block";
+        document.getElementById('pinkballcoord').style.display="block";
+        document.getElementById('greenballcoord').style.display="block";
+        document.getElementById('orangeballcoord').style.display="block";
+        document.getElementById('blueballcoord').style.display="block";
       }
 
     const classes = useStyles();
@@ -91,14 +98,29 @@ function Home(){
         setInputFields(values);
         console.log(values);
     }
+    
+   
 
     const handleSubmit=(event)=>{
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify(inputFields[0]));
         axios.post('https://debonair.duckdns.org:8443/coords', inputFields[0])
             .then(response=>{
-                //setInputFields(response.coordinates)
                 console.log("Received message: " + JSON.stringify(response.data));
+                //points is array of coordinates x and y for optimal path
+                for( var i in response.data.points){
+                    var dots = document.createElement('dots');
+                    dots.src={dot};
+
+                    var y=410-response.data.points[i].y*300/1000;
+                    y=Math.floor(y);
+                    var x=820+response.data.points[i].x*300/1000;
+                    x=Math.floor(x);
+                    
+                    dots.style.left= x + "px"; //x axis update
+                    dots.style.top= y + "px";  
+                    document.appendChild(dots);
+                }   
             })
             .catch(err => {
                 console.log("Received error: " + err);
@@ -145,7 +167,7 @@ function Home(){
         }
     }
     return(
-        <div>
+        <div id="surface">
             <img src={grid} alt="map" className="map"/>
             <img src={ground} alt="mars" className="mars"/>
             <h1 className="header"> Ground Discovery </h1>
@@ -191,7 +213,7 @@ function Home(){
                 </Button>
             </form>
             
-            <h6 className="title"> Rover Explore </h6>
+            <h6 className="h62"> Rover Explore </h6>
             <Typography component="div" className={classes.typography1}>
             <Grid component="label" container alignItems="center" spacing={1}>
              <Grid item>Off</Grid>
