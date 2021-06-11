@@ -20,7 +20,7 @@ int main() {
   pair<int, int> dest;
   cout << "Enter dest" << endl;
   cin >> dest.first >> dest.second;
-  vector<pair<int,int>> obstacles = {{1000,1450}, {2230,3100}, {2700,3600}, {3100,4450}, {3320,4550}}; //assumption that this has already been filled with pairs corresponding to object coordinates
+  vector<pair<int,int>> obstacles = {{1000,1450}, {2230,3100}, {2700,3600}, {3000,4450}, {3350,4550}}; //assumption that this has already been filled with pairs corresponding to object coordinates
   vector<pair<int,int>> path; //coordinates for the path the rover should take to avoid obstacles
   pair<int,int> intermed = genIntermed(obstacles, dest);
   path.push_back(intermed);
