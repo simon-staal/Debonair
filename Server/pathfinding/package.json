@@ -1,0 +1,19 @@
+{
+  "name": "pathfinding",
+  "version": "1.0.0",
+  "description": "Pathfinding JS module",
+  "main": "pathfinding.js",
+  "gypfile": true,
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "clean": "node-gyp clean"
+  },
+  "author": "Simon Staal",
+  "license": "ISC",
+  "devDependencies": {
+    "node-gyp": "^8.1.0"
+  },
+  "dependencies": {
+    "node-addon-api": "^3.2.1"
+  }
+}

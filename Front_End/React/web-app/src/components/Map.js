@@ -12,6 +12,7 @@ import {makeStyles } from '@material-ui/core/styles';
 import { withStyles } from '@material-ui/core/styles';
 import { useLocation } from 'react-router-dom';
 import MousePosition from './position.js';
+import circle from './circle.png';
 
 
 const AntSwitch = withStyles((theme) => ({
@@ -50,7 +51,7 @@ const AntSwitch = withStyles((theme) => ({
 
   const useStyles = makeStyles((theme)=>({
     typography1:{
-        marginLeft:10,
+        marginLeft:12,
         marginTop:10,
     },
 }));
@@ -167,6 +168,7 @@ function Map(){
             });
         }
     }
+
     const classes = useStyles();
     const [control, setControl] = useState(true);
     const RemoteControl=(event)=>{
@@ -188,10 +190,28 @@ function Map(){
     }
     //hold down the button 
 
-   
+    const sendDest=(event)=>{
+        event.preventDefault();
+        let params={
+            X: x_real,
+            Y: y_real
+        }
+        console.log("Message sent: " + JSON.stringify(params));
+        axios.post('https://debonair.duckdns.org:8443/click', params)
+            .then(response=>{
+                console.log(JSON.stringify(response.data));
+            })
+            .catch(err => {
+                console.log("Received error: " + err);
+            })
+           }
+    
+    var x_real = Math.round((position.x-850)/300*1000);
+    var y_real = -Math.round((position.y-445)/300*1000);
+
     return(
         <nav className="div">
-            <img src={grid} alt="map" className="grid"/>
+            <img src={grid} alt="map" className="grid" onClick={sendDest}/>
             <img src={ground} alt="ground" className="ground"/>
             <h1 className="header"> Remote Control </h1> 
             <Typography component="div" className={classes.typography1}>
@@ -216,12 +236,12 @@ function Map(){
             <button className="rightrotate" onMouseDown={handleClick4} onMouseUp={handleClick4} >
            <RotateRightIcon/>
             </button>
-
-            <h6 style={{marginLeft: "10px", marginTop: "150px", position:"absolute"}}>
+            <img src={circle} alt="circle" style={{marginLeft:"163px", marginTop:"31px", width:"175px", height:"175px"}}/>
+            <h6 style={{marginLeft: "10px", marginTop: "100px", position:"absolute"}}>
                 Click on position
             </h6>
-            <div style={{marginLeft: "10px", marginTop: "170px", position: "absolute"}} > 
-            {Math.round((position.x-850)/300*1000)}:{-Math.round((position.y-445)/300*1000)}</div>
+            <div style={{marginLeft: "10px", marginTop: "130px", position: "absolute"}} > 
+            {x_real}:{y_real}</div>
             </div>
          </nav>
     );

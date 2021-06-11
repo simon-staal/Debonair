@@ -1,45 +1,96 @@
+#include "pathfinding.h"
 #include <iostream>
 #include <vector>
-#include <utility>
+#include <climits>
 #include <cmath>
-#include <bits/stdc++.h>
+#include <string>
 
-using namespace std;
+// Intermediary Processsing functions for pathfinding
+std::pair<int,int> genIntermed(std::vector<std::pair<int,int>> &obstacles, std::pair<int, int> dest, std::pair<int, int> pos);
+std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range, std::vector<std::pair<int,int>> &obstacles, int clearance);
+std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range, std::pair<int,int> y_range, int clearance);
 
-pair<int,int> genIntermed(vector<pair<int,int>> &obstacles, pair<int, int> dest, pair<int, int> pos = {0,0});
-vector<int> inTheWay(pair<int,int> x_range, pair<int,int> y_range, vector<pair<int,int>> &obstacles);
-pair<int,int> avoid(pair<int,int> obstacle, pair<int,int> x_range, pair<int,int> y_range);
-int clearance = 100;
+// Path generation function in C++
+std::string pathfinding::genPath(std::string pos, std::string dest, std::string obs) {
+  // Processing inputs
+  int comma = pos.find(',');
+  std::string posX = pos.substr(0,comma); // extract x position
+  std::string posY = pos.substr(comma+1); // extract y position
+  std::pair<int,int> position = {std::stoi(posX), std::stoi(posY)}; // generates pair position
+  comma = dest.find(',');
+  std::string destX = dest.substr(0,comma);
+  std::string destY = dest.substr(comma+1);
+  std::pair<int,int> destination = {std::stoi(destX), std::stoi(destY)}; // generates pair destination
 
-int main() {
+  std::vector<std::pair<int,int>> obstacles;
+  bool newPair = 0;
+  bool second = 0;
+  std::string x, y;
+  for(unsigned i = 0; i < obs.size(); i++) { // Extracts obstacles
+    if(obs[i] == '{') newPair = 1;
+    else if(obs[i] == ',') second = 1;
+    else if (obs[i] == '}') {
+      obstacles.push_back({std::stoi(x),std::stoi(y)});
+      newPair = 0;
+      second = 0;
+      x.clear();
+      y.clear();
+    }
+    else if(newPair && !second) x.push_back(obs[i]);
+    else if(newPair && second) y.push_back(obs[i]);
+  }
 
-
-  pair<int, int> pos = {0,0};
-  // cout << "Enter position" << endl;
-  // cin >> pos.first >> pos.second;
-  pair<int, int> dest;
-  cout << "Enter dest" << endl;
-  cin >> dest.first >> dest.second;
-  vector<pair<int,int>> obstacles = {{1000,1450}, {2230,3100}, {2700,3600}, {3000,4450}, {3350,4550}}; //assumption that this has already been filled with pairs corresponding to object coordinates
-  vector<pair<int,int>> path; //coordinates for the path the rover should take to avoid obstacles
-  pair<int,int> intermed = genIntermed(obstacles, dest);
+  // Generate path
+  std::vector<std::pair<int,int>> path; //coordinates for the path the rover should take to avoid obstacles
+  std::pair<int,int> intermed = genIntermed(obstacles, destination, position);
   path.push_back(intermed);
-  while(intermed != dest){
-    intermed = genIntermed(obstacles,dest,intermed);
+  while(intermed != destination){
+    intermed = genIntermed(obstacles,destination,intermed);
     path.push_back(intermed);
-
-  }
-  cout << "New path" << endl;
-  for(int i = 0; i < path.size(); i++){
-    cout << path[i].first << "," << path[i].second << endl;
   }
 
+  // Processing output
+  std::string processed_path = "{\"path\":[";
+  for (unsigned i = 0; i < path.size(); i++) {
+    std::string intermed_dest = "{";
+    intermed_dest += ("\"x\":"+std::to_string(path[i].first));
+    intermed_dest += (",\"y\":"+std::to_string(path[i].second)+"}");
+    if (i != path.size()-1 ) intermed_dest += ",";
+    processed_path += intermed_dest;
+  }
+  processed_path += "]}";
+  return (processed_path);
 }
 
-pair<int,int> genIntermed(vector<pair<int,int>> &obstacles, pair<int, int> dest, pair<int, int> pos)
+// Napi wrapper function to interface between node.js environment and C++ code, designates entry point
+Napi::String pathfinding::GenPathWrapped(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 3) {
+    Napi::Error::New(env, "Insufficient arguments (expected 3)").ThrowAsJavaScriptException();
+  }
+
+  std::string pos = (std::string) info[0].ToString();
+  std::string dest = (std::string) info[1].ToString();
+  std::string obs = (std::string) info[2].ToString();
+
+  std::string path = pathfinding::genPath(pos, dest, obs);
+
+  return Napi::String::New(env, path);
+}
+
+// Necessary function, used to set export key with wrapped function
+Napi::Object pathfinding::Init(Napi::Env env, Napi::Object exports)
 {
-  pair<int,int> y_range;
-  pair<int,int> x_range;
+  exports.Set("genPath", Napi::Function::New(env, pathfinding::GenPathWrapped));
+
+  return exports;
+}
+
+std::pair<int,int> genIntermed(std::vector<std::pair<int,int>> &obstacles, std::pair<int, int> dest, std::pair<int, int> pos)
+{
+  int clearance = 100;
+  std::pair<int,int> y_range;
+  std::pair<int,int> x_range;
 
   if(pos.first < dest.first){
     x_range.first = pos.first;
@@ -58,11 +109,11 @@ pair<int,int> genIntermed(vector<pair<int,int>> &obstacles, pair<int, int> dest,
     y_range.second = pos.second;
   }
 
-  vector<int> obsRef = inTheWay(x_range, y_range, obstacles);
+  std::vector<int> obsRef = inTheWay(x_range, y_range, obstacles, clearance);
 
   int closest = -1;
   int minDistance = INT_MAX;
-  for(int i = 0; i < obsRef.size(); i++){
+  for(unsigned i = 0; i < obsRef.size(); i++){
     int dist = sqrt(pow(obstacles[obsRef[i]].first - pos.first,2) + pow(obstacles[obsRef[i]].second - pos.second, 2));
     if(dist < minDistance){
       closest = obsRef[i];
@@ -71,16 +122,16 @@ pair<int,int> genIntermed(vector<pair<int,int>> &obstacles, pair<int, int> dest,
 
     }
   }
-  pair<int,int> intermed = (closest == -1) ? dest : avoid(obstacles[closest], x_range, y_range);
+  std::pair<int,int> intermed = (closest == -1) ? dest : avoid(obstacles[closest], x_range, y_range, clearance);
   return intermed;
 }
 
-vector<int> inTheWay(pair<int,int> x_range, pair<int,int> y_range, vector<pair<int,int>> &obstacles)
+std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range, std::vector<std::pair<int,int>> &obstacles, int clearance)
 {
-  vector<int> obsInTheWay;
+  std::vector<int> obsInTheWay;
   float ang = atan2((y_range.second - y_range.first), (x_range.second - x_range.first));
   //cout << ang << endl;
-  for(int i = 0; i < obstacles.size(); i++){
+  for(unsigned i = 0; i < obstacles.size(); i++){
     int y_val;
     if(obstacles[i].first > x_range.first-clearance && obstacles[i].first < x_range.second+clearance){
       if(x_range.second > 0){ //differentiates between destination on right or left of origin (assumption rover starts at origin)
@@ -110,10 +161,10 @@ vector<int> inTheWay(pair<int,int> x_range, pair<int,int> y_range, vector<pair<i
   return obsInTheWay;
 }
 
-pair<int,int> avoid(pair<int,int> obstacle, pair<int,int> x_range, pair<int,int> y_range)
+std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range, std::pair<int,int> y_range, int clearance)
 {
   float ang = atan2((y_range.second - y_range.first), (x_range.second - x_range.first));
-  pair<int,int> newDest;
+  std::pair<int,int> newDest;
   if(y_range.second > 0){ //differentiates between destinations above and below origin
     if(x_range.second > 0){ // differentiates between destinations left or right of origin (top right quadrant here)
       int x_pos = x_range.first + (obstacle.second - y_range.first)/tan(ang);
@@ -212,3 +263,5 @@ pair<int,int> avoid(pair<int,int> obstacle, pair<int,int> x_range, pair<int,int>
     }
     return newDest;
 }
+
+
