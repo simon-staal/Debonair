@@ -26,7 +26,7 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
   bool newPair = 0;
   bool second = 0;
   std::string x, y;
-  for(int i = 0; i < obs.size(); i++) { // Extracts obstacles
+  for(unsigned i = 0; i < obs.size(); i++) { // Extracts obstacles
     if(obs[i] == '{') newPair = 1;
     else if(obs[i] == ',') second = 1;
     else if (obs[i] == '}') {
@@ -51,7 +51,7 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
 
   // Processing output
   std::string processed_path = "{\"path\":[";
-  for (int i = 0; i < path.size(); i++) {
+  for (unsigned i = 0; i < path.size(); i++) {
     std::string intermed_dest = "{";
     intermed_dest += ("\"x\":"+std::to_string(path[i].first));
     intermed_dest += (",\"y\":"+std::to_string(path[i].second)+"}");
@@ -113,7 +113,7 @@ std::pair<int,int> genIntermed(std::vector<std::pair<int,int>> &obstacles, std::
 
   int closest = -1;
   int minDistance = INT_MAX;
-  for(int i = 0; i < obsRef.size(); i++){
+  for(unsigned i = 0; i < obsRef.size(); i++){
     int dist = sqrt(pow(obstacles[obsRef[i]].first - pos.first,2) + pow(obstacles[obsRef[i]].second - pos.second, 2));
     if(dist < minDistance){
       closest = obsRef[i];
@@ -131,7 +131,7 @@ std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range
   std::vector<int> obsInTheWay;
   float ang = atan2((y_range.second - y_range.first), (x_range.second - x_range.first));
   //cout << ang << endl;
-  for(int i = 0; i < obstacles.size(); i++){
+  for(unsigned i = 0; i < obstacles.size(); i++){
     int y_val;
     if(obstacles[i].first > x_range.first-clearance && obstacles[i].first < x_range.second+clearance){
       if(x_range.second > 0){ //differentiates between destination on right or left of origin (assumption rover starts at origin)
