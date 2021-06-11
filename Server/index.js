@@ -295,7 +295,8 @@ app.post("/coords", (req,res) => {
 	for ( let i in obstacles ) {
 		if (obstacles[i].x) obstacles_string += `{${obstacles[i].x},${obstacles[i].y}}`;
 	}
-	path = JSON.parse(Pathfinder.genPath(`${rover.x},${rover.y}`,`${req.body.coordinateX},${req.body.coordinateY}`,obstacles_string));
+	console.log(`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`)
+	path = JSON.parse(Pathfinder.genPath(`${rover.x},${rover.y}`,`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`,obstacles_string));
     console.log(JSON.stringify(path));
 	res.send(path);
 	let point = path.points.shift();

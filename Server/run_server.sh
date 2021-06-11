@@ -76,7 +76,7 @@ ssh -A -i ${KEY} ubuntu@${IP} << EOF
 
   echo "$SEP"
   echo "Launching REST web service"
-  screen -d -m -S rest bash -c 'cd ~/Y2_Project/Server && sudo node index.js'
+  screen -d -m -S rest bash -c 'cd ~/Y2_Project/Server && npm start'
   echo "$SEP"
 
   echo "Launching REACT web app"
