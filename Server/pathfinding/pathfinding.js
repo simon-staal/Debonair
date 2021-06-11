@@ -11,5 +11,11 @@ for(i; i < 10000; i++) {
 }
 
 console.log("Time taken (avg of 10000 runs): "+(total/i)+"ms");
+
+let path = JSON.parse(Pathfinding.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}"));
+for(i in path) {
+    console.log(path[i]);
+}
 */
+
 module.exports = Pathfinding;

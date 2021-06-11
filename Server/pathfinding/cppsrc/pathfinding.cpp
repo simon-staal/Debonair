@@ -50,11 +50,16 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
   }
 
   // Processing output
-  std::string processed_path;
+  std::string processed_path = "{\"path\":[";
   for (int i = 0; i < path.size(); i++) {
-    processed_path += ("Destination "+std::to_string(i+1)+": "+std::to_string(path[i].first)+","+std::to_string(path[i].second)+"\n");
+    std::string intermed_dest = "{";
+    intermed_dest += ("\"x\":"+std::to_string(path[i].first));
+    intermed_dest += (",\"y\":"+std::to_string(path[i].second)+"}");
+    if (i != path.size()-1 ) intermed_dest += ",";
+    processed_path += intermed_dest;
   }
-  return ("Generated path: "+processed_path);
+  processed_path += "]}";
+  return (processed_path);
 }
 
 // Napi wrapper function to interface between node.js environment and C++ code, designates entry point

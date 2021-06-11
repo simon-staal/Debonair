@@ -9,14 +9,15 @@ const fs = require('fs')
 // Database
 const MongoClient = require('mongodb').MongoClient
 // Pathfinding
-const Pathfinder = require('./pathfinding/pathfinding');
+// TO USE: Pathfinder.genPath("rover_posX,rover_posY","dest_posX,dest_posY","{obstacle1_posx,obstacle1_posY}{obstacle2_posX,obstacle2_posY}{etc}")
+const Pathfinder = require('./pathfinding/pathfinding'); 
 
 // Testing
 let i = 0;
 let total = 0;
 for (i; i < 10000; i++) {
 	let start = Date.now();
-	let path = Pathfinder.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}");
+	let path = JSON.parse(Pathfinder.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}"));
 	let end = Date.now();
 	total += (end-start);
 }
