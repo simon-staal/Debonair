@@ -7,8 +7,8 @@
     "example": "examples"
   },
   "scripts": {
-    "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "sudo node index.js",
+    "build": "cd pathfinding && npm run build"
   },
   "author": "Simon Staal",
   "license": "ISC",
