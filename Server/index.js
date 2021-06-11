@@ -8,6 +8,11 @@ const https = require('https');
 const fs = require('fs')
 // Database
 const MongoClient = require('mongodb').MongoClient
+// Pathfinding
+const Pathfinder = require('./pathfinding/pathfinding');
+
+// Testing
+console.log(Pathfinder.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}"));
 
 // ---------------- Admin shit -------------------
 // Setting up communication
