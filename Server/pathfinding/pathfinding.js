@@ -1,5 +1,6 @@
 const Pathfinding = require('./build/Release/pathfinding.node');
-console.log('addon',Pathfinding);
+console.log('Pathfinding module loaded:',Pathfinding);
+/*
 let i = 0;
 let total = 0;
 for(i; i < 10000; i++) {
@@ -10,4 +11,5 @@ for(i; i < 10000; i++) {
 }
 
 console.log("Time taken (avg of 10000 runs): "+(total/i)+"ms");
+*/
 module.exports = Pathfinding;

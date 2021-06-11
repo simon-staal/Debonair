@@ -12,8 +12,15 @@ const MongoClient = require('mongodb').MongoClient
 const Pathfinder = require('./pathfinding/pathfinding');
 
 // Testing
-console.log(Pathfinder.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}"));
-
+let i = 0;
+let total = 0;
+for (i; i < 10000; i++) {
+	let start = Date.now();
+	let path = Pathfinder.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}");
+	let end = Date.now();
+	total += (end-start);
+}
+console.log("Average time for 10000 iterations: "+(total/i)+"ms");
 // ---------------- Admin shit -------------------
 // Setting up communication
 const app = new express();
