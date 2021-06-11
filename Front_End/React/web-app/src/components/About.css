@@ -1,0 +1,88 @@
+.header1 {
+  position: absolute;
+  color: #0a0a47;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: white;
+  font-size: 120px;
+  margin-left: 30px;
+  margin-top: 10px;
+  margin-bottom: 30px;
+  font-family: "Audiowide", sans-serif;
+}
+
+.content {
+  background: white;
+  margin-top: -100px;
+  position: absolute;
+  width: 100%;
+}
+
+.content2 {
+  background: url("rover.jpg");
+  background-repeat: no-repeat;
+  background-size: 100% 1000px;
+  position: absolute;
+  margin-top: 210px;
+  width: 100%;
+  padding: 30px;
+}
+
+.content3 {
+  background: white;
+  position: absolute;
+  margin-top: 750px;
+  width: 100%;
+  padding: 30px;
+}
+
+.title {
+  font-family: "Audiowide", sans-serif;
+  text-align: center;
+}
+
+.title2 {
+  font-family: "Audiowide", sans-serif;
+  text-align: center;
+  color: white;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.title3 {
+  font-family: "Audiowide", sans-serif;
+  text-align: center;
+  color: black;
+}
+
+.text {
+  font-family: "Lucida Console", "Courier New", monospace;
+  text-align: center;
+}
+
+.text1 {
+  color: white;
+  text-align: center;
+  font-family: "Lucida Console", "Courier New", monospace;
+  -webkit-text-stroke-width: 0.2px;
+  -webkit-text-stroke-color: black;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+}
+
+.text2 {
+  font-family: "Lucida Console", "Courier New", monospace;
+  text-align: center;
+}
+
+.list {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.font {
+  font-weight: bold;
+  font-size: 18px;
+}

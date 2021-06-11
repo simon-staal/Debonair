@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import grid from '../images/grid.png';
 
 const MousePosition=()=>{
 

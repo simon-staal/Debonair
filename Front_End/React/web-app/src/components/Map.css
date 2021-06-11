@@ -1,7 +1,7 @@
 .leftrotate {
   font-size: 28px;
-  margin-top: 50px;
-  margin-left: 25px;
+  margin-top: 100px;
+  margin-left: 181px;
   background-color: white;
   border: none;
   display: flex;
@@ -24,8 +24,8 @@
 
 .uparrow {
   font-size: 45px;
-  margin-top: 7px;
-  margin-left: 65px;
+  margin-top: 50px;
+  margin-left: 230px;
   background-color: white;
   border: none;
   display: flex;
@@ -51,8 +51,8 @@
 .downarrow {
   font-size: 45px;
   position: fixed;
-  margin-top: 90px;
-  margin-left: 65px;
+  margin-top: 145px;
+  margin-left: 230px;
   background-color: white;
   border: none;
   display: flex;
@@ -78,8 +78,8 @@
 .rightrotate {
   font-size: 45px;
   position: fixed;
-  margin-top: 50px;
-  margin-left: 105px;
+  margin-top: 100px;
+  margin-left: 279px;
   background-color: white;
   border: none;
   display: flex;
@@ -107,6 +107,7 @@
   width: 600px;
   height: 600px;
   margin-left: 550px;
+  margin-top: 57px;
   z-index: 1;
 }
 
@@ -115,9 +116,15 @@
   width: 600px;
   height: 600px;
   margin-left: 550px;
+  margin-top: 57px;
 }
 
 .header {
   margin-left: 10px;
+  margin-top: 10px;
+}
+
+.div {
+  padding-bottom: 70px;
   margin-top: 10px;
 }

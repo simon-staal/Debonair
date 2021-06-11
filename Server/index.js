@@ -41,6 +41,8 @@ const SSL_options = {
 
 app.use(cors()); // Enables CORS (required to work with browsers)
 
+// ------------------------ Database stuff ----------------------
+
 // Data storage stuff (database + rover info)
 const db_uri = "mongodb+srv://s_staal:LNFfaKDXPekXvb76@cluster0.wmggl.mongodb.net/Debonair?retryWrites=true&w=majority";
 const db_client = new MongoClient(db_uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -183,7 +185,7 @@ const pubOptions={
 
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
-	if (topic === "fromeESP32/status") {
+	if (topic === "fromESP32/status") {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
@@ -280,9 +282,7 @@ app.post("/coords", (req,res) => {
     }
     // res.set('Content-Type', 'text/plain');
     console.log(JSON.stringify(receivedCoord));
-	// Not sure about this yet
-    publish('toESP32/x_coord',receivedCoord.coordinateX);
-    publish('toESP32/y_coord',receivedCoord.coordinateY);
+    publish('toESP32/coord',`<${receivedCoord.coordinateX},${receivedCoord.coordinateY}>`);
     res.send(receivedCoord);
 });
 
@@ -292,6 +292,11 @@ app.post("/move", (req,res) => {
     publish('toESP32/dir', req.body.direction)
     res.send("Received direction " + req.body.direction);
 });
+
+app.post("/mode", (req, res) => {
+	publish('toESP32/mode', req.body.mode);
+	res.send("Updated mode " + req.body.mode);
+})
 
 // Incorrect route
 app.use((req, res, next) => {

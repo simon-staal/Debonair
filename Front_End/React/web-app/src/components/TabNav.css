@@ -18,7 +18,7 @@ i {
 }
 
 .navbar-mainbg {
-  background-color: rgb(12, 12, 88);
+  background-color: #0a0a47;
   padding: 0px;
 }
 #navbarSupportedContent {
@@ -102,7 +102,7 @@ i {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background-color: rgb(12, 12, 88);
+  background-color: #0a0a47;
 }
 .hori-selector .right:before {
   bottom: 0;
@@ -142,4 +142,9 @@ i {
     bottom: -25px;
     left: -25px;
   }
+}
+
+.logo {
+  width: 150px;
+  height: 45px;
 }
