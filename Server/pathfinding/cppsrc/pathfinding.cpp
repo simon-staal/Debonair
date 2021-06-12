@@ -67,7 +67,7 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
     if (path.size() > 8) { // Gives up
       printf("Pathfinding Error: Couldn't find path\n");
       path.clear();
-      path.push_back({position.first, position.second}); 
+      path.push_back({position.first, position.second});
       break;
     }
     intermed = genIntermed(obstacles,destination,intermed);
@@ -155,138 +155,172 @@ std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range
 {
   std::vector<int> obsInTheWay;
   float ang = atan2((y_range.second - y_range.first), (x_range.second - x_range.first));
-  //cout << ang << endl;
+  //std::cout << ang << std::endl;
   for(unsigned i = 0; i < obstacles.size(); i++){
     int y_val;
+    int y_clear;
     if(obstacles[i].first > x_range.first-clearance && obstacles[i].first < x_range.second+clearance){
-      if(x_range.second > 0){ //differentiates between destination on right or left of origin (assumption rover starts at origin)
-        if(y_range.second > 0){ // differentiates between destination above or below origin (same assumption ^^)
-          y_val = y_range.first + (obstacles[i].first - x_range.first)*tan(ang); //top right quadrant
+
+      if(x_range.first == 0 && x_range.second == 0){ //if dest on x axis
+        y_val = obstacles[i].second;
+      }
+      else{
+        if(x_range.second > 0){ //differentiates between destination on right or left of origin (assumption rover starts at origin)
+          if(y_range.second > 0){ // differentiates between destination above or below origin (same assumption ^^)
+            y_val = y_range.first + (obstacles[i].first - x_range.first)*tan(ang); //top right quadrant
+          }
+          else{ //bottom right quadrant
+            y_val = y_range.second - (obstacles[i].first - x_range.first)*tan(ang);
+          }
         }
-        else{ //bottom right quadrant
-          y_val = y_range.second - (obstacles[i].first - x_range.first)*tan(ang);
+        else{ // addresses destinations on left of origin
+          if(y_range.second > 0){ //top left quadrant
+            y_val = y_range.first + (abs(obstacles[i].first - x_range.second))*tan(ang);
+          }
+          else{ //bottom left quadrant
+            y_val = y_range.second - (abs(obstacles[i].first - x_range.second))*tan(ang);
+          }
         }
       }
-      else{ // addresses destinations on left of origin
-        if(y_range.second > 0){ //top left quadrant
-          y_val = y_range.first + (abs(obstacles[i].first - x_range.second))*tan(ang);
-        }
-        else{ //bottom left quadrant
-          y_val = y_range.second - (abs(obstacles[i].first - x_range.second))*tan(ang);
-        }
+      //std::cout << y_val << "," << i << std::endl;
+      if((x_range.first == 0 && x_range.second == 0) || (obstacles[i].second == y_range.second || obstacles[i].second == y_range.first) && (x_range.first == 0 || x_range.second == 0) || (obstacles[i].first == x_range.second || obstacles[i].first == x_range.first) && (y_range.first == 0 || y_range.second == 0)){ //clearance when dest is on one of axes
+        y_clear = 10;
       }
-      //cout << y_val << "," << i << endl;
-      int y_clear = (clearance/cos(ang));
-      //cout << y_clear << endl;
+      else{
+        y_clear = (clearance/cos(ang));
+      }
+      //std::cout << y_clear << std::endl;
       if(obstacles[i].second > y_val-y_clear && obstacles[i].second < y_val+y_clear){
         obsInTheWay.push_back(i);
       }
     }
+    //std::cout<< obsInTheWay.size() << std::endl;
   }
   return obsInTheWay;
 }
+
 
 std::pair<int,int> avoid(std::pair<int,int> obstacle, std::pair<int,int> x_range, std::pair<int,int> y_range, int clearance)
 {
   float ang = atan2((y_range.second - y_range.first), (x_range.second - x_range.first));
   std::pair<int,int> newDest;
-  if(y_range.second > 0){ //differentiates between destinations above and below origin
-    if(x_range.second > 0){ // differentiates between destinations left or right of origin (top right quadrant here)
-      int x_pos = x_range.first + (obstacle.second - y_range.first)/tan(ang);
-      if(obstacle.first < x_pos){ //if obstacle is left of path
-        newDest.first = x_pos + clearance*(ang/(M_PI/2));
-        if(newDest.first - obstacle.first > clearance){ // if distance in x coordinates is more than 100 just adjust y coordinate by 100
-          newDest.second = obstacle.second - clearance;
-        }
-        else{ // if x clearance is less than 100, ensure y distance is enough so that closest rover travels is 100 using pythagoras
-          int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
-          newDest.second = obstacle.second - y;
-        }
-      }
-      else{ //if obstacle is right of path
-        newDest.first = x_pos - clearance*(ang/(M_PI/2));
-        if(obstacle.first - newDest.first > clearance){
-          newDest.second = obstacle.second + clearance;
-        }
-        else{
-          int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
-          newDest.second = obstacle.second + y;
-        }
-      }
+  if(x_range.first == 0 && x_range.second == 0){ //if dest is on y axis
+    int x_pos = 0;
+    newDest.second = obstacle.second;
+    if(obstacle.first < x_pos){ //if on left of y axis
+      newDest.first = obstacle.first + clearance;
     }
-      else{ //top left quadrant here
-        int x_pos = x_range.second - (obstacle.second - y_range.first)/tan(ang);
-        if(obstacle.first < x_pos){ //obstacle on left of path
+    else{ //if on right of y axis
+      newDest.first = obstacle.first - clearance;
+    }
+  }
+  else if(y_range.first == 0 && y_range.second == 0){ //if dest is on x axis
+    newDest.first = obstacle.first;
+    if(obstacle.second < 0){ //below x axis
+      newDest.second = obstacle.second + clearance;
+    }
+    else{
+      newDest.second = obstacle.second - clearance;
+    }
+  }
+  else{
+    if(y_range.second > 0){ //differentiates between destinations above and below origin
+      if(x_range.second > 0){ // differentiates between destinations left or right of origin (top right quadrant here)
+        int x_pos = x_range.first + (obstacle.second - y_range.first)/tan(ang);
+        if(obstacle.first < x_pos){ //if obstacle is left of path
           newDest.first = x_pos + clearance*(ang/(M_PI/2));
-          if(newDest.first - obstacle.first > clearance){
-          newDest.second = obstacle.second + clearance;
-          }
-          else{
-            int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
-            newDest.second = obstacle.second + y;
-          }
-        }
-        else{ //obstacle on right of path
-          newDest.first = x_pos - clearance*(ang/(M_PI/2));
-          if(obstacle.first - newDest.first > clearance){
+          if(newDest.first - obstacle.first > clearance){ // if distance in x coordinates is more than 100 just adjust y coordinate by 100
             newDest.second = obstacle.second - clearance;
           }
-          else{
-            int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
+          else{ // if x clearance is less than 100, ensure y distance is enough so that closest rover travels is 100 using pythagoras
+            int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
             newDest.second = obstacle.second - y;
           }
         }
-      }
-    }
-    else{ // destinations below origin addressed here
-      if(x_range.second > 0){ // bottom right quadrant here
-        int x_pos = x_range.first + abs((obstacle.second - y_range.second))/tan(ang);
-        if(obstacle.first < x_pos){ //obstacle on right of path
-          newDest.first = x_pos + clearance*(ang/(M_PI/2));
-          if(newDest.first - obstacle.first > clearance){
+        else{ //if obstacle is right of path
+          newDest.first = x_pos - clearance*(ang/(M_PI/2));
+          if(obstacle.first - newDest.first > clearance){
             newDest.second = obstacle.second + clearance;
           }
           else{
-            int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
+            int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
             newDest.second = obstacle.second + y;
           }
         }
-        else{ //obstacle on left of path
-          newDest.first = x_pos - clearance*(ang/(M_PI/2));
-          if(obstacle.first - newDest.first > clearance){
-            newDest.second = obstacle.second - clearance;
-          }
-          else{
-            int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
-            newDest.second = obstacle.second - y;
-          }
-        }
       }
-      else{ //bottom left quadrant here
-        int x_pos = x_range.second - abs((obstacle.second - y_range.second))/tan(ang);
-          if(obstacle.first < x_pos){ //obstacle on right of path
+        else{ //top left quadrant here
+          int x_pos = x_range.second - (obstacle.second - y_range.first)/tan(ang);
+          if(obstacle.first < x_pos){ //obstacle on left of path
             newDest.first = x_pos + clearance*(ang/(M_PI/2));
             if(newDest.first - obstacle.first > clearance){
-              newDest.second = obstacle.second - clearance;
+              newDest.second = obstacle.second + clearance;
             }
             else{
               int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
-              newDest.second = obstacle.second - y;
+              newDest.second = obstacle.second + y;
             }
           }
           else{ //obstacle on right of path
             newDest.first = x_pos - clearance*(ang/(M_PI/2));
             if(obstacle.first - newDest.first > clearance){
-              newDest.second = obstacle.second + clearance;
+              newDest.second = obstacle.second - clearance;
             }
             else{
               int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
-              newDest.second = obstacle.second + y;
+              newDest.second = obstacle.second - y;
             }
           }
         }
-    }
-    return newDest;
+      }
+      else{ // destinations below origin addressed here
+        if(x_range.second > 0){ // bottom right quadrant here
+          int x_pos = x_range.first + abs((obstacle.second - y_range.second))/tan(ang);
+          if(obstacle.first < x_pos){ //obstacle on right of path
+            newDest.first = x_pos + clearance*(ang/(M_PI/2));
+            if(newDest.first - obstacle.first > clearance){
+              newDest.second = obstacle.second + clearance;
+            }
+            else{
+              int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
+              newDest.second = obstacle.second + y;
+            }
+          }
+          else{ //obstacle on left of path
+            newDest.first = x_pos - clearance*(ang/(M_PI/2));
+            if(obstacle.first - newDest.first > clearance){
+              newDest.second = obstacle.second - clearance;
+            }
+            else{
+              int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
+              newDest.second = obstacle.second - y;
+            }
+          }
+        }
+        else{ //bottom left quadrant here
+          int x_pos = x_range.second - abs((obstacle.second - y_range.second))/tan(ang);
+            if(obstacle.first < x_pos){ //obstacle on right of path
+              newDest.first = x_pos + clearance*(ang/(M_PI/2));
+              if(newDest.first - obstacle.first > clearance){
+                newDest.second = obstacle.second - clearance;
+              }
+              else{
+                int y = sqrt(pow(clearance,2) - pow((x_pos - obstacle.first),2));
+                newDest.second = obstacle.second - y;
+              }
+            }
+            else{ //obstacle on right of path
+              newDest.first = x_pos - clearance*(ang/(M_PI/2));
+              if(obstacle.first - newDest.first > clearance){
+                newDest.second = obstacle.second + clearance;
+              }
+              else{
+                int y = sqrt(pow(clearance,2) - pow((obstacle.first - x_pos),2));
+                newDest.second = obstacle.second + y;
+              }
+            }
+          }
+      }
+  }
+  //std::cout << newDest.first << "," << newDest.second << std::endl;
+  return newDest;
 }
-
-
