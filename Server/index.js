@@ -292,14 +292,20 @@ app.post("/coords", (req,res) => {
         'coordinateX': req.body.coordinateX,
         'coordinateY': req.body.coordinateY
     }
+	if (!rover.x) {
+		rover.x = 0;
+		rover.y = 0;
+	}
 	let obstacles_string = ""
 	for ( let i in obstacles ) {
 		if (obstacles[i].x) obstacles_string += `{${obstacles[i].x},${obstacles[i].y}}`;
 	}
+	//console.log(`${rover.x},${rover.y}`);
 	//console.log(`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`)
+	//obstacles_string = "{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}";
 	//console.log("Obstacles: "+obstacles_string);
 	path = JSON.parse(Pathfinder.genPath(`${rover.x},${rover.y}`,`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`,obstacles_string));
-    console.log(JSON.stringify(path));
+    	console.log(JSON.stringify(path));
 	res.send(path);
 	let point = path.points.shift();
 	console.log("Sending point: "+JSON.stringify(point));
