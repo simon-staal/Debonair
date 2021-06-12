@@ -444,7 +444,7 @@ Serial.println("dy (mm) = "+String(dy_mm));
 // EXPLORE MODE - like REMOTE CONTROLLER BUT THE COMMANDS COME FROM VISION
 //make a register that only changes if the received character becomes different (call it change_char)
 
-
+Serial.println("mode = "+ String(mode));
  if(mode == 'M'){
  
   if(dir == 'F'){
@@ -517,7 +517,9 @@ Serial.println("dy (mm) = "+String(dy_mm));
 if(mode == 'C'){
    int target_x = destinationX;
    int target_y = destinationY;
- 
+
+ Serial.println("target_x = " + String(target_x));
+ Serial.println("target_x = " + String(target_x));
   // Coordinates are provided by the ESP32 from Command
   // here they are just manually set - for now
   //int target_y = 100;
@@ -539,7 +541,7 @@ if(mode == 'C'){
       }
 
 
-  if(angle_flag == true && halted){//&& target_flag == true){   // if both the right angle and right distance have been achieved 
+  if(angle_flag == true && halted){ //&& target_flag == true){   // if both the right angle and right distance have been achieved 
      stop_Rover();
      //pwm_modulate(0);
      alphaSummed = 0;
@@ -550,7 +552,8 @@ if(mode == 'C'){
      previous_O_to_coord = O_to_coord;
      // total_y = 0;
      // total_x = 0;
-
+    // target_x = 0;
+     //target_y = 0;
      // tell Control that destination is reached
      
      Serial.println("Rover has reached the Destination coordinates YAY!");
@@ -666,8 +669,8 @@ if(mode == 'C'){
 
  
 
- digitalWrite(DIRR, DIRRstate);
- digitalWrite(DIRL, DIRLstate);
+// digitalWrite(DIRR, DIRRstate);
+// digitalWrite(DIRL, DIRLstate);
 }
 
 //********************************************************
@@ -869,7 +872,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  sensorValue2 = analogRead(A2); //sample Vref
+  //sensorValue2 = analogRead(A2); //sample Vref
  // sensorValue2 = vref *(1023.0/ 4.096);  
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -878,7 +881,7 @@ void sampling(){
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
-  //sensorValue2 = 500;
+  sensorValue2 = 500;
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
@@ -983,7 +986,7 @@ void F_B_PIcontroller(int sensor_total_y, int target){
   error_y = sensor_total_y - target;
   cDistance = pidDistance(error_y);
   // pwm_modulate(1);
-  reached_destination = false;
+//  reached_destination = false;
   Serial.println("error_y = " + String(error_y));
   Serial.println("cDistance = " + String(cDistance));
   
@@ -1004,25 +1007,58 @@ void F_B_PIcontroller(int sensor_total_y, int target){
   if(error_y >= -2 && error_y <= 2){
     stop_Rover();
     Serial.println("Reached Distance with PI");
-    reached_destination = true;
+//    reached_destination = true;
     }
   }
 
-void Turn_PIcontroller(float desired_angle, float measuring_angle){
-  error_angle = desired_angle - measuring_angle;
+void TurnLeft_PIcontroller(float desired_angle){
+  error_angle = desired_angle - anglechanged;
   cDistance = pidDistance(error_angle);
-
-   if(error_angle < -2){
-    goForwards();
-    }
-  if(error_angle > 2){
-    goBackwards();
-    }
-  if(error_angle >= -1 && error_y <= 1){
-    stop_Rover();
-    Serial.println("Reached Angle with PI");
-    }
+  reached_angle = false;
+  O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+  alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
+  anglechanged = (anglechanged + alpha);
   
+  Serial.println("error_angle" + String(error_angle));
+  Serial.println(" anglechanged = "+ String (anglechanged));
+  Serial.println(" O_to_coord_measured = "+ String (O_to_coord_measured));
+  pwm_modulate(abs(cDistance)*0.01+0.39);
+  //pwm_modulate(0.5);
+  Serial.println("Inside the rotation PI");
+  //pwm_modulate(abs(cDistance)*0.01+0.4);
+   if(error_angle < -10.5){
+    pwm_modulate(0.3);
+    //goRight();
+    stop_Rover();
+    Serial.println("stopped because angle has been reached");
+    }
+  if(error_angle > 10.5 && error_angle < desired_angle){
+    //pwm_modulate(0.5);
+    goLeft();
+    Serial.println("Rotation left >10.5");
+    }else{Serial.println("something is wrong");
+    }
+  if(error_angle >= -10.5 && error_angle <= 0){
+    //pwm_modulate(0.4);
+    goRight;
+    Serial.println("Rotation right >-10.5 && <0");
+    }
+  if(error_angle > 0 && error_angle < 10.5){
+    //pwm_modulate(0.4);
+    goLeft;
+    Serial.println("Rotation left >0 && <10.5");    
+    }
+  if(error_angle >= -1 && error_angle <= 1){
+    stop_Rover();
+    Serial.println("reached_angle = " +String(reached_angle));
+    Serial.println("Reached Angle with PI");
+    reached_angle = true;
+    angle_PI = anglechanged;
+    Serial.println("final obtained with PI" + String(angle_PI));
+    //anglechanged=0;
+    //O_to_coord_measured = 0;
+    
+    }
   }
 
 
