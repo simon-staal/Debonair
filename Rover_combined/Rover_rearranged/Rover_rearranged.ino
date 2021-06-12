@@ -13,7 +13,7 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define PIN_MISO      12
 #define PIN_MOSI      11
 #define PIN_SCK       13
-
+ 
 #define PIN_MOUSECAM_RESET     8
 #define PIN_MOUSECAM_CS        7
 
@@ -184,6 +184,8 @@ float measuredDistance = 0;
 float Distance = 0;
 float alpha2 = 0;
 float previous_O_to_coord = 0;
+bool reached_angle = 0;
+bool new_coordinates = 1;
 //************************ Function declarations *********************//
 int convTwosComp(int b);
 void mousecam_reset();
@@ -406,11 +408,10 @@ Serial.println("dy (mm) = "+String(dy_mm));
   #endif
 
 //************************** Motor Loop part: ****************************//
+if (loopTrigger) { // This loop is triggered, it wont run unless there is an interrupt
 
-  if(loopTrigger) { // This loop is triggered, it wont run unless there is an interrupt
-    
     digitalWrite(13, HIGH);   // set pin 13. Pin13 shows the time consumed by each control cycle. It's used for debugging.
-    
+
     // Sample all of the measurements and check which control mode we are in
     sampling();
     CL_mode = digitalRead(3); // input from the OL_CL switch
@@ -446,6 +447,8 @@ Serial.println("dy (mm) = "+String(dy_mm));
 
 Serial.println("mode = "+ String(mode));
  if(mode == 'M'){
+   digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+   digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
  
   if(dir == 'F'){
     DIRRstate = LOW;   //goes forwards
@@ -512,18 +515,30 @@ Serial.println("mode = "+ String(mode));
 
 //**************************************************************************
 // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
-
+int target_x = 0;
+int target_y = 0;
 
 if(mode == 'C'){
-   int target_x = destinationX;
-   int target_y = destinationY;
-
+ Serial.println("new_coordinates = " + String(new_coordinates));
+  if(new_coordinates == true){
+   target_x = destinationX;
+   target_y = destinationY;
+   new_coordinates = false;
+   Serial.println("New Coordinates set");
+   Serial.println("new_coordinates = " + String(new_coordinates));
+   }
+stop_Rover();
+//delay (1000);
  Serial.println("target_x = " + String(target_x));
- Serial.println("target_x = " + String(target_x));
+ Serial.println("target_y = " + String(target_y));
   // Coordinates are provided by the ESP32 from Command
   // here they are just manually set - for now
+  
   //int target_y = 100;
-  //int target_x = 100;
+  //int target_x = 200;
+
+  if(target_y == 0 && target_x == 0){
+      stop_Rover();}
 
     O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
     Distance = sqrt(pow(target_y-y_now,2) + pow(target_x-x_now,2));
@@ -532,6 +547,10 @@ if(mode == 'C'){
     alphaSummed = (alphaSummed + alpha2);
     angle = alphaSummed;
 
+
+    Serial.println("O_to_coord = " + String(O_to_coord));
+    Serial.println("x_now = " + String(x_now));
+    Serial.println("y_now = " + String(y_now));
 
     if(x_now == 0 && y_now == 0){
       beta = 90 - toDegrees((acos(target_x/O_to_coord))); // I need the complementary angle.
@@ -546,14 +565,20 @@ if(mode == 'C'){
      //pwm_modulate(0);
      alphaSummed = 0;
      stopped_rover = true;
-     x_now = target_x; //saving coordinates before receiving a new pair of coordinates
-     y_now = target_y;
+     //x_now = target_x; //saving coordinates before receiving a new pair of coordinates
+     //y_now = target_y;
+     x_now = O_to_coord_measured*sin(dummy_angle);
+     y_now = O_to_coord_measured*cos(dummy_angle);
      angle_now = dummy_angle;  //saving dummy_angle before computing new one
      previous_O_to_coord = O_to_coord;
      // total_y = 0;
      // total_x = 0;
-    // target_x = 0;
+     //target_x = 0;
      //target_y = 0;
+     new_coordinates = true;
+     angle_flag = false;
+     halted = false;
+     
      // tell Control that destination is reached
      
      Serial.println("Rover has reached the Destination coordinates YAY!");
@@ -637,6 +662,7 @@ if(mode == 'C'){
         //do not rotate - no angle difference between current coordinates and destination coordinates
         Serial.println("target_x has the same x coord. than the current x coord.");
         goForwards();
+        Serial.println("HIIIIIIIIIIIII");
         sumdist = sumdist + dy_mm;
       }else{
         Serial.println("Invalid coordinate has been provided given the path finding algorithm");
@@ -656,18 +682,7 @@ if(mode == 'C'){
      Serial.println("total_y - coord_after_rotation = " + String(total_y - coord_after_rotation));
      Serial.println("(total_y - coord_after_rotation) - (Distance) = " + String((total_y - coord_after_rotation) - (Distance)));
  }
-//  if((abs(-Distance + (total_y - coord_after_rotation)) <= 5) && angle_flag == true){
-//      target_flag = true;
-//      //x_now = target_x;  // x coordinate value sent to Control - keeps track of Rover position
-//      //y_now = target_y;  // y coordinate value sent to Control - keeps track of Rover position
-//      //angle_now = dummy_angle; // angle of the Rover when destination is reached
-//      alphaSummed = 0;
-//      //// stop_Rover();
-//      
-//      Serial.println("Rover has obtained current_x and current_y");
-//    }
 
- 
 
 // digitalWrite(DIRR, DIRRstate);
 // digitalWrite(DIRL, DIRLstate);
@@ -872,7 +887,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  //sensorValue2 = analogRead(A2); //sample Vref
+  sensorValue2 = analogRead(A2); //sample Vref
  // sensorValue2 = vref *(1023.0/ 4.096);  
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -881,7 +896,7 @@ void sampling(){
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
-  sensorValue2 = 500;
+  //sensorValue2 = 500;
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
@@ -1053,8 +1068,8 @@ void TurnLeft_PIcontroller(float desired_angle){
     Serial.println("reached_angle = " +String(reached_angle));
     Serial.println("Reached Angle with PI");
     reached_angle = true;
-    angle_PI = anglechanged;
-    Serial.println("final obtained with PI" + String(angle_PI));
+//    angle_PI = anglechanged;
+//    Serial.println("final obtained with PI" + String(angle_PI));
     //anglechanged=0;
     //O_to_coord_measured = 0;
     
