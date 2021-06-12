@@ -45,6 +45,12 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
   std::pair<int,int> intermed = genIntermed(obstacles, destination, position);
   path.push_back(intermed);
   while(intermed != destination){
+    if (path.size() > 8) { // Gives up
+      printf("Couldn't find path\n");
+      path.clear();
+      path.push_back({position.first, position.second}); 
+      break;
+    }
     intermed = genIntermed(obstacles,destination,intermed);
     path.push_back(intermed);
   }

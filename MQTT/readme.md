@@ -83,7 +83,7 @@ We can therefore update the publishing rights to the toESP32 and fromESP32 topic
 -------------------------
 I am making the following 2 users to limit access to the topics above (storing the users and passwords here cause plain text password storage is the one). I might keep them here permanently as security is more for the purposes of the assessment, it's not like anyone is actually gonna try and hijack our stuff. Obviously if I needed to be serious about security measures I wouldn't leave these here.
 - esp32:#8HAGxb3*V%+CD8^
-`mosquitto_pub -h localhost -t "fromESP32/test" -m "<message>" -u "esp32" -P "#8HAGxb3*V%+CD8^"`
+i.e. mosquitto_pub -h localhost -t "fromESP32/test" -m "<message>" -u "esp32" -P "#8HAGxb3*V%+CD8^"
 - webapp:=ZCJ=4uzfZZZ#36f
 
 The rights of these users allows them to use **toESP32** and **fromESP32** as described above.
