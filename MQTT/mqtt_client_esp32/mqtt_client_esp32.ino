@@ -355,7 +355,7 @@ void loop() {
 
 }
 
-void genCoordMsg(char *buf)
+void genCoordMsg(char *buf) 
 {
     int cur = 0;
     char x[6] = "{\"x\":";

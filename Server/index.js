@@ -82,6 +82,10 @@ const obstacles = {
 	"orange":{
 		"x":null,
 		"y":null
+	},
+	"black":{
+		"x":null,
+		"y":null
 	}
 };
 
@@ -103,7 +107,8 @@ db_client.connect((err) => {
 		{ colour: 'pink', x: null, y: null },
 		{ colour: 'green', x: null, y: null },
 		{ colour: 'blue', x: null, y: null },
-		{ colour: 'orange', x: null, y: null}
+		{ colour: 'orange', x: null, y: null},
+		{ colour: 'black', x: null, y: null}
 	];
 	obstacles.insertMany(initObs, (err, res) => {
 		if (err) {
@@ -145,6 +150,8 @@ function getObsColour(col) {
 			return "blue";
 		case 4:
 			return "orange";
+		case 5:
+			return "black";
 		default:
 			console.log("Invalid obstacle colour received from ESP32");
 			return "INVALID";
@@ -196,7 +203,7 @@ client.on('message', (topic, message, packet) => {
 	}
 	if (topic === "fromESP32/obstacle") {
 		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
-		// Colour_code: pink=1, green=2, blue=3, orange=4
+		// Colour_code: pink=1, green=2, blue=3, orange=4, black=5
 		let msg = JSON.parse(message.toString());
 		let obsColour = getObsColour(msg.c);
 		let query = { colour: obsColour };
