@@ -16,12 +16,25 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
   int comma = pos.find(',');
   std::string posX = pos.substr(0,comma); // extract x position
   std::string posY = pos.substr(comma+1); // extract y position
-  std::pair<int,int> position = {std::stoi(posX), std::stoi(posY)}; // generates pair position
+  std::pair<int,int> position;
+  try {
+    position = {std::stoi(posX), std::stoi(posY)}; // generates pair position
+  }
+  catch(std::exception &err) {
+    printf("Pathfinding Error: Invalid position input, could not parse\n");
+    return "";
+  }
   comma = dest.find(',');
   std::string destX = dest.substr(0,comma);
   std::string destY = dest.substr(comma+1);
-  std::pair<int,int> destination = {std::stoi(destX), std::stoi(destY)}; // generates pair destination
-
+  std::pair<int,int> destination;
+  try {
+    destination = {std::stoi(destX), std::stoi(destY)}; // generates pair destination
+  }
+  catch(std::exception &err) {
+    printf("Pathfinding Error: Invalid destination input, could not parse\n");
+    return "";
+  }
   std::vector<std::pair<int,int>> obstacles;
   bool newPair = 0;
   bool second = 0;
@@ -30,7 +43,13 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
     if(obs[i] == '{') newPair = 1;
     else if(obs[i] == ',') second = 1;
     else if (obs[i] == '}') {
-      obstacles.push_back({std::stoi(x),std::stoi(y)});
+      try {
+        obstacles.push_back({std::stoi(x),std::stoi(y)});
+      }
+      catch(std::exception &err) {
+        printf("Pathfinding Error: Invalid obstacle input, could not parse\n");
+        return "";
+      }
       newPair = 0;
       second = 0;
       x.clear();
@@ -46,7 +65,7 @@ std::string pathfinding::genPath(std::string pos, std::string dest, std::string 
   path.push_back(intermed);
   while(intermed != destination){
     if (path.size() > 8) { // Gives up
-      printf("Couldn't find path\n");
+      printf("Pathfinding Error: Couldn't find path\n");
       path.clear();
       path.push_back({position.first, position.second}); 
       break;
