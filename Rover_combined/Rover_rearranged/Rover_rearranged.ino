@@ -79,7 +79,7 @@ unsigned int com_count=0;   // a variables to count the interrupts. Used for pro
 
 //************************* PI variables **************************//
 
-float kpDistance = 1, kiDistance = 1; // coefficient of PI controller
+float kpDistance = 0.25, kiDistance = 0.58; // coefficient of PI controller
 float u0Distance, u1Distance, delta_uDistance, e0Distance, e1Distance, e2Distance;
 float cDistance;
 float error_y;
@@ -718,11 +718,6 @@ if(mode == 'C'){
       turn_90left(haltTime);}
    }
   */
- 
-//} // curly bracket of the if received_char== 'C'
-
-// EXPLORE MODE 
-  // like REMOTE CONTROLLER BUT THE COMMANDS COME FROM VISION
 
 if (dir != change_char){
   change_char = dir;    // keeps track of the current command
@@ -883,6 +878,7 @@ void sampling(){
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
+  //sensorValue2 = 500;
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
@@ -965,6 +961,7 @@ float pidi(float pid_input){
   return u0i;
 }
 
+//PI controller for the Distance
 float pidDistance(float pidDistance_input){
 
   float e_integration;
@@ -986,16 +983,28 @@ void F_B_PIcontroller(int sensor_total_y, int target){
   error_y = sensor_total_y - target;
   cDistance = pidDistance(error_y);
   // pwm_modulate(1);
-
-  if(error_y < -1){
+  reached_destination = false;
+  Serial.println("error_y = " + String(error_y));
+  Serial.println("cDistance = " + String(cDistance));
+  
+  if(error_y < -10){
     goForwards();
     }
-  if(error_y > 1){
+  if(error_y > 10){
     goBackwards();
     }
-  if(error_y >= -1 && error_y <= 1){
+  if(error_y >= -10 && error_y <= 0){
+    pwm_modulate(0.3);
+    goForwards;
+    }
+  if(error_y > 0 && error_y < 10){
+    pwm_modulate(0.3);
+    goBackwards;
+    }
+  if(error_y >= -2 && error_y <= 2){
     stop_Rover();
     Serial.println("Reached Distance with PI");
+    reached_destination = true;
     }
   }
 
