@@ -9,6 +9,7 @@ function About(){
         document.getElementById('blueball').style.display="none";
         document.getElementById('greenball').style.display="none";
         document.getElementById('orangeball').style.display="none";
+        document.getElementById('blackball').style.display="none";
         document.getElementById('start').style.display="none";
         document.getElementById('reset').style.display="none";
         document.getElementById('i1').style.display="none";
@@ -17,6 +18,7 @@ function About(){
         document.getElementById('greenballcoord').style.display="none";
         document.getElementById('orangeballcoord').style.display="none";
         document.getElementById('blueballcoord').style.display="none";
+        document.getElementById('blackballcoord').style.display="none";
       }
 
     return(

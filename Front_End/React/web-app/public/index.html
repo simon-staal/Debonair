@@ -64,6 +64,8 @@ var bluex =null;
 var bluey = null;
 var orangex=null;
 var orangey=null;
+var blackx=null;
+var blacky=null;
 var success;
 
 function reset1(){
@@ -82,11 +84,14 @@ document.getElementById('blueball').style.top= "295px";
 document.getElementById('blueball').style.left= "1163px";
 document.getElementById('orangeball').style.top= "345px";
 document.getElementById('orangeball').style.left= "1167px";
+document.getElementById('blackball').style.top= "378px";
+document.getElementById('blackball').style.left= "1153px";
 document.getElementById("msg").innerHTML="";
 document.getElementById("pinkballcoord").innerHTML="";
 document.getElementById("greenballcoord").innerHTML="";
 document.getElementById("blueballcoord").innerHTML="";
 document.getElementById("orangeballcoord").innerHTML="";
+document.getElementById("blackballcoord").innerHTML="";
 var pinkx =null;
 var pinky =null;
 var greenx =null;
@@ -95,6 +100,8 @@ var bluex =null;
 var bluey = null;
 var orangex=null;
 var orangey=null;
+var blackx=null;
+var blacky=null;
 }
 
 
@@ -138,9 +145,12 @@ function dispball(){
     bluey_res = response.data.blue[1];
     orangex_res = response.data.orange[0];
     orangey_res = response.data.orange[1];
+    blackx_res = response.data.black[0];
+    blacky_res = response.data.black[1];
     console.log(JSON.stringify(response.data));
   })
   .then(()=>{
+  
     if(pinkx !== pinkx_res ){
     pinkx=pinkx_res;
     pinky=pinky_res;
@@ -170,6 +180,13 @@ function dispball(){
     document.getElementById('orangeball').style.top= 426-orangey*300/1000 + "px";    
     document.getElementById("orangeballcoord").innerHTML="{OrangeBall} X: " + orangex + " Y : " + orangey // displays to user coordinates of the orange obstacle
   }
+  if(blackx !== blackx_res){
+    blackx=blackx_res;
+    blacky=blacky_res;
+    document.getElementById('blackball').style.left= 818+blackx*300/1000 + "px"; //updates position of orange ball
+    document.getElementById('blackball').style.top= 413-blacky*300/1000 + "px";    
+    document.getElementById("blackballcoord").innerHTML="{BlackBall} X: " + blackx + " Y : " + blacky // displays to user coordinates of the orange obstacle
+  }
   })
   //axios with flag and if flag triggered, request ball position
   // check if x is equal to the original x => if different update position, else do nothing.  
@@ -197,11 +214,14 @@ my_time=setTimeout('timer()',100);
     <div id='greenballcoord' style="position:absolute; margin-left:20px;margin-top:110px;"></div>
     <div id='blueballcoord' style="position:absolute; margin-left:20px;margin-top:140px;"></div>
     <div id='orangeballcoord' style="position:absolute; margin-left:20px;margin-top:170px;"></div>
+    <div id='blackballcoord' style="position:absolute; margin-left:20px;margin-top:200px;"></div>
+    
    
     <img src=./images/pinkball.png  id=pinkball style="position: absolute; width:30px;height:30px; top:200px; left:1170px; z-index: 1;">
     <img src=./images/greenball.png  id=greenball style="position: absolute; width:30px;height:30px; top:250px; left:1170px; z-index: 1;">
     <img src=./images/blueball.png  id=blueball style="position: absolute; width:45px;height:35px; top:295px; left:1163px; z-index: 1;">
     <img src=./images/orangeball.png  id=orangeball style="position: absolute; width:36px;height:36px; top:345px; left:1167px; z-index: 1;">
+    <img src=./images/blackball.png  id=blackball style="position: absolute; width:65px;height:65px; top:378px; left:1153px; z-index: 1;">
     
 
 

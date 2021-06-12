@@ -63,6 +63,7 @@ function Map(){
         document.getElementById('blueball').style.display="block";
         document.getElementById('greenball').style.display="block";
         document.getElementById('orangeball').style.display="block";
+        document.getElementById('blackball').style.display="block";
         document.getElementById('start').style.display="block";
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
@@ -71,6 +72,7 @@ function Map(){
         document.getElementById('greenballcoord').style.display="block";
         document.getElementById('orangeballcoord').style.display="block";
         document.getElementById('blueballcoord').style.display="block";
+        document.getElementById('blackballcoord').style.display="block";
         
       }
     const position=MousePosition();
@@ -197,7 +199,7 @@ function Map(){
             Y: y_real
         }
         console.log("Message sent: " + JSON.stringify(params));
-        axios.post('https://debonair.duckdns.org:8443/click', params)
+        axios.post('https://debonair.duckdns.org:8443/coords', params)
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -206,9 +208,9 @@ function Map(){
             })
            }
     
-    var x_real = Math.round((position.x-850)/300*1000);
-    var y_real = -Math.round((position.y-445)/300*1000);
-
+     var x_real = Math.round((position.x-850)/300*1000);
+     var y_real = -Math.round((position.y-445)/300*1000);
+    
     return(
         <nav className="div">
             <img src={grid} alt="map" className="grid" onClick={sendDest}/>
@@ -241,7 +243,8 @@ function Map(){
                 Click on position
             </h6>
             <div style={{marginLeft: "10px", marginTop: "130px", position: "absolute"}} > 
-            {x_real}:{y_real}</div>
+            {x_real}:{y_real};
+            </div>
             </div>
          </nav>
     );

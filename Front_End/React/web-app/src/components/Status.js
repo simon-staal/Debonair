@@ -22,6 +22,7 @@ function Status(){
         document.getElementById('blueball').style.display="block";
         document.getElementById('greenball').style.display="block";
         document.getElementById('orangeball').style.display="block";
+        document.getElementById('blackball').style.display="block";
         document.getElementById('start').style.display="block";
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
@@ -30,6 +31,7 @@ function Status(){
         document.getElementById('greenballcoord').style.display="block";
         document.getElementById('orangeballcoord').style.display="block";
         document.getElementById('blueballcoord').style.display="block";
+        document.getElementById('blackballcoord').style.display="block";
      }
       
     var battery;
