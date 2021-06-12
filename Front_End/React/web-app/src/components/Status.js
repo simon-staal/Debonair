@@ -81,11 +81,11 @@ function Status(){
  
     })
     }
-    var my_time;
+    
     function timer(){
         reset();
         getBattery();
-        my_time=setTimeout('timer()',100);
+        var my_time1=setTimeout('timer()',100);
         }
     
     
