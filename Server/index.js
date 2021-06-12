@@ -313,11 +313,21 @@ app.post("/coords", (req,res) => {
 	//obstacles_string = "{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}";
 	//console.log("Obstacles: "+obstacles_string);
 	path = JSON.parse(Pathfinder.genPath(`${rover.x},${rover.y}`,`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`,obstacles_string));
-    	console.log(JSON.stringify(path));
-	res.send(path);
-	let point = path.points.shift();
-	console.log("Sending point: "+JSON.stringify(point));
-    publish('toESP32/coord',`<${point.x},${point.y}>`);
+    if (path) {
+		console.log(JSON.stringify(path));
+		res.send(path);
+		let point = path.points.shift();
+		console.log("Sending point: "+JSON.stringify(point));
+		publish('toESP32/coord',`<${point.x},${point.y}>`);
+	}
+	else {
+		console.log("Empty path")
+		path = {
+			"points": []
+		}
+		res.send(path)
+	}
+	
 });
 
 // Sends directions to rover
