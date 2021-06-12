@@ -94,6 +94,7 @@ char dir = 'S';
 int destinationX = 0;
 int destinationY = 0;
 bool haschanged = false;
+char buf[18]; //message to be sent to ESP32
 
 //************************** Rover Constants / Variables ************************//
   //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
@@ -226,6 +227,8 @@ void goForwards();
 float pidDistance(float pidDistance_input);
 void F_B_PIcontroller(int sensor_total_y, int target);
 void Turn_PIcontroller(float desired_angle, float measuring_angle);
+void sendcoords(char *buf);
+void sendflag();
 
 //*************************** Setup ****************************//
 
@@ -465,7 +468,7 @@ Serial.println("mode = "+ String(mode));
     DIRLstate = LOW;
     
     Serial.println(dir);
-    sumchanged += dy_mm;      // need negative?
+    sumchanged -= dy_mm;      // changed to subtraction cause Backwards
     //anglechanged = 0;
     Serial.println("sumchanged Backwards"+ String(sumchanged));
     }
@@ -478,6 +481,9 @@ Serial.println("mode = "+ String(mode));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
     anglechanged = (anglechanged + alpha);
     //sumchanged = 0;
+
+    // send angle to Control
+    
     Serial.println("alpha in Left rotation"+ String(alpha));
     Serial.println("anglechanged in Left rotation"+ String(anglechanged));
     }
@@ -490,6 +496,9 @@ Serial.println("mode = "+ String(mode));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
     anglechanged = (anglechanged + alpha);
     //sumchanged = 0;
+
+    // send angle to Control
+    
     Serial.println("alpha in Right rotation"+ String(alpha));
     Serial.println("anglechanged in Right rotation"+ String(anglechanged));
     }
@@ -579,7 +588,7 @@ stop_Rover();
      angle_flag = false;
      halted = false;
      
-     // tell Control that destination is reached
+     // tell Control that destination is reached -> code lower down
      
      Serial.println("Rover has reached the Destination coordinates YAY!");
      Serial.println("x_now = " + String(x_now));
@@ -591,7 +600,7 @@ stop_Rover();
      dummy_angle = angle; // angle of the Rover when destination is reached
      Serial.println("dummy_angle = " + String(dummy_angle));
      
-    //SEND dummy_angle TO ESP32 - Control
+    //SEND dummy_angle TO ESP32 - Control -> code lower down
      
      stop_Rover(); Serial.println("FINISHED ROTATING");
      angle_flag = true;
@@ -753,7 +762,10 @@ if (counter < 0 ){
     Serial.println("current_angle has changed to " + String(toDegrees(current_angle)));
     Serial1.print("{" + String(current_angle) + "}"); // Sends info back to ESP
     Serial.println("x and y have changed to " + String(current_x) + " " + String(current_y));
-    Serial1.print("<" + String(current_x) + "," + String(current_y) + ">"); // Sends info back to ESP
+    Serial1.print("<" + String(current_x) + "," + String(current_y) + ">"); 
+    
+    // Sends info back to ESP
+    
     sumchanged = 0;
     anglechanged = 0;
     counter = 0;
@@ -1221,8 +1233,42 @@ float toDegrees(float angleRadians){
     digitalWrite(DIRL, DIRLstate);   
     }
 
- 
+void sendcoords(char *buf){
 
+  buf[0] = '<';
+  int cur = 1;
+  char num[6];
+  sprintf(num, "%d", rover.coords.first);
+  int cnt = 0;
+  while(num[cnt]){
+    buf[cur++] = num[cnt++];
+  }
+  buf[cur++] = ',';
+  sprintf(num, "%d", rover.coords.second);
+  cnt = 0;
+  while(num[cnt]){
+    buf[cur++] = num[cnt++];
+  }
+  buf[cur++] = ',';
+  sprintf(num, "%d", rover.angle);
+  cnt = 0;
+  while(num[cnt]){
+    buf[cur++] = num[cnt++];
+  }
 
+  buf[cur++] = '>';
+  buf[cur] = '\0';
+
+  for(int i = 0; buf[i] != '\0'; i++){
+
+    Serial1.print() = buf[i];
+
+  }
+}
+
+void sendflag(){
+
+  Serial1.print() = 'P';
+}
 
 /*end of the program.*/
