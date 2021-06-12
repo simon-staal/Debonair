@@ -528,6 +528,8 @@ int target_x = 0;
 int target_y = 0;
 
 if(mode == 'C'){
+  new_coordinates = 1;
+  stop_Rover();
  Serial.println("new_coordinates = " + String(new_coordinates));
   if(new_coordinates == true){
    target_x = destinationX;
@@ -536,7 +538,6 @@ if(mode == 'C'){
    Serial.println("New Coordinates set");
    Serial.println("new_coordinates = " + String(new_coordinates));
    }
-stop_Rover();
 //delay (1000);
  Serial.println("target_x = " + String(target_x));
  Serial.println("target_y = " + String(target_y));
@@ -557,7 +558,7 @@ stop_Rover();
     angle = alphaSummed;
 
 
-    Serial.println("O_to_coord = " + String(O_to_coord));
+    Serial.println("Distance = " + String(Distance));
     Serial.println("x_now = " + String(x_now));
     Serial.println("y_now = " + String(y_now));
 
@@ -580,10 +581,14 @@ stop_Rover();
      y_now = O_to_coord_measured*cos(dummy_angle);
      angle_now = dummy_angle;  //saving dummy_angle before computing new one
      previous_O_to_coord = O_to_coord;
-     // total_y = 0;
-     // total_x = 0;
+     // total_y = y_now;
+     // total_x = x_now;
      //target_x = 0;
      //target_y = 0;
+     
+    //SEND angle_now, x_now ang y_now TO ESP32 - Control 
+     sendcoords(buf);     
+     
      new_coordinates = true;
      angle_flag = false;
      halted = false;
@@ -599,8 +604,6 @@ stop_Rover();
      coord_after_rotation = total_y;
      dummy_angle = angle; // angle of the Rover when destination is reached
      Serial.println("dummy_angle = " + String(dummy_angle));
-     
-    //SEND dummy_angle TO ESP32 - Control -> code lower down
      
      stop_Rover(); Serial.println("FINISHED ROTATING");
      angle_flag = true;
@@ -764,7 +767,9 @@ if (counter < 0 ){
     Serial.println("x and y have changed to " + String(current_x) + " " + String(current_y));
     Serial1.print("<" + String(current_x) + "," + String(current_y) + ">"); 
     
+    
     // Sends info back to ESP
+    //sendcoords();
     
     sumchanged = 0;
     anglechanged = 0;
@@ -1183,9 +1188,9 @@ void angle_90_timedRight(unsigned long startTime){
     return;
  }
 
-void angle_90_timedLeft(){
+void angle_90_timedLeft(unsigned long startTime){
   unsigned long now = millis();
-  if(now < 4500){
+  if(now - startTime < 4500){
       goLeft();
   }else{
     stop_Rover();}
@@ -1234,23 +1239,23 @@ float toDegrees(float angleRadians){
     }
 
 void sendcoords(char *buf){
-
+  
   buf[0] = '<';
   int cur = 1;
   char num[6];
-  sprintf(num, "%d", rover.coords.first);
+  sprintf(num, "%d", x_now);
   int cnt = 0;
   while(num[cnt]){
     buf[cur++] = num[cnt++];
   }
   buf[cur++] = ',';
-  sprintf(num, "%d", rover.coords.second);
+  sprintf(num, "%d", y_now);
   cnt = 0;
   while(num[cnt]){
     buf[cur++] = num[cnt++];
   }
   buf[cur++] = ',';
-  sprintf(num, "%d", rover.angle);
+  sprintf(num, "%d", angle_now);
   cnt = 0;
   while(num[cnt]){
     buf[cur++] = num[cnt++];
@@ -1261,14 +1266,14 @@ void sendcoords(char *buf){
 
   for(int i = 0; buf[i] != '\0'; i++){
 
-    Serial1.print() = buf[i];
+   // Serial1.print() = buf[i];
 
   }
 }
 
 void sendflag(){
 
-  Serial1.print() = 'P';
+//  Serial1.print() = 'P';
 }
 
 /*end of the program.*/
