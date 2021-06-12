@@ -183,7 +183,7 @@ std::vector<int> inTheWay(std::pair<int,int> x_range, std::pair<int,int> y_range
         }
       }
       //std::cout << y_val << "," << i << std::endl;
-      if((x_range.first == 0 && x_range.second == 0) || (obstacles[i].second == y_range.second || obstacles[i].second == y_range.first) && (x_range.first == 0 || x_range.second == 0) || (obstacles[i].first == x_range.second || obstacles[i].first == x_range.first) && (y_range.first == 0 || y_range.second == 0)){ //clearance when dest is on one of axes
+      if((x_range.first == 0 && x_range.second == 0) || ((obstacles[i].second == y_range.second || obstacles[i].second == y_range.first) && (x_range.first == 0 || x_range.second == 0)) || ((obstacles[i].first == x_range.second || obstacles[i].first == x_range.first) && (y_range.first == 0 || y_range.second == 0))){ //clearance when dest is on one of axes
         y_clear = 10;
       }
       else{
