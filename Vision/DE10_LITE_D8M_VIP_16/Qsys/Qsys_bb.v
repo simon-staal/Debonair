@@ -15,8 +15,6 @@ module Qsys (
 	clk_sdram_clk,
 	clk_vga_clk,
 	d8m_xclkin_clk,
-	eee_imgproc_0_conduit_mode_new_signal,
-	eee_imgproc_0_conduit_outbuffer_new_signal,
 	i2c_opencores_camera_export_scl_pad_io,
 	i2c_opencores_camera_export_sda_pad_io,
 	i2c_opencores_mipi_export_scl_pad_io,
@@ -42,7 +40,10 @@ module Qsys (
 	terasic_camera_0_conduit_end_D,
 	terasic_camera_0_conduit_end_FVAL,
 	terasic_camera_0_conduit_end_LVAL,
-	terasic_camera_0_conduit_end_PIXCLK);	
+	terasic_camera_0_conduit_end_PIXCLK,
+	eee_imgproc_0_conduit_mode_new_signal,
+	eee_imgproc_0_conduit_outbuffer_1_outbuffer,
+	eee_imgproc_0_conduit_outbuffer_1_received_data_spi);	
 
 	input		alt_vip_itc_0_clocked_video_vid_clk;
 	output	[23:0]	alt_vip_itc_0_clocked_video_vid_data;
@@ -59,8 +60,6 @@ module Qsys (
 	output		clk_sdram_clk;
 	output		clk_vga_clk;
 	output		d8m_xclkin_clk;
-	input		eee_imgproc_0_conduit_mode_new_signal;
-	output	[63:0]	eee_imgproc_0_conduit_outbuffer_new_signal;
 	inout		i2c_opencores_camera_export_scl_pad_io;
 	inout		i2c_opencores_camera_export_sda_pad_io;
 	inout		i2c_opencores_mipi_export_scl_pad_io;
@@ -87,4 +86,7 @@ module Qsys (
 	input		terasic_camera_0_conduit_end_FVAL;
 	input		terasic_camera_0_conduit_end_LVAL;
 	input		terasic_camera_0_conduit_end_PIXCLK;
+	input		eee_imgproc_0_conduit_mode_new_signal;
+	output	[15:0]	eee_imgproc_0_conduit_outbuffer_1_outbuffer;
+	input	[15:0]	eee_imgproc_0_conduit_outbuffer_1_received_data_spi;
 endmodule

@@ -270,8 +270,8 @@ Qsys u0 (
 		.altpll_0_phasedone_conduit_export         (),         					//       altpll_0_phasedone_conduit.export		
 		
 		.eee_imgproc_0_conduit_mode_new_signal     (SW[0]),
-		.eee_imgproc_0_conduit_outbuffer_1_new_signal (outbuffer),
-		.eee_imgproc_0_conduit_outbuffer_1_new_signal_1 (byte_data_received) //                    
+		.eee_imgproc_0_conduit_outbuffer_1_outbuffer (outbuffer),
+		.eee_imgproc_0_conduit_outbuffer_1_received_data_spi (byte_data_received) //                    
 		//uart_0_external_connection_rxd             (ARDUINO_IO[11]),             //       uart_0_external_connection.rxd
 		//.uart_0_external_connection_txd             (ARDUINO_IO[10]) 
 		//.spi_0_external_MISO                        (ARDUINO_IO[2]),                        //                   spi_0_external.MISO
