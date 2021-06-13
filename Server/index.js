@@ -166,6 +166,7 @@ let start;
 let end;
 let total = 0;
 let i = 0;
+let vals = [];
 // Runs on connection to the broker
 client.on("connect", () => {
 	console.log("connected " + client.connected);
@@ -197,10 +198,14 @@ client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/test") {
 		end = Date.now();
 		total += (end-start);
+		vals.push(end-start);
 		i += 1;
 		console.log("Time taken = " + (end-start) + "ms");
-		if (i === 100) {
+		if (i === 500) {
 			console.log("Average for " + i +"iterations = " + (total/i) + "ms");
+			let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+			var encodedUri = encodeURI(csvContent);
+			window.open(encodedUri);
 		}
 	}
 	if (topic === "fromESP32/status") {
