@@ -506,6 +506,8 @@ void loop() {
     // Sends info back to ESP
     unsigned long now = millis();
     if (now - lastMsg > 200) { // Sends info every 200 ms
+      Serial.println("Last message: " + String(lastMsg));
+      Serial.println("Current time: " + String(now));
       lastMsg = now;
       sendcoords(current_x, current_y, toDegrees(current_angle)); // Sends info to ESP
     } 
@@ -1152,7 +1154,7 @@ void sendcoords(int x_coord_send, int y_coord_send, float angle_send){
   toESP += String(angle_send);
   toESP += '>';
   Serial1.print(toESP);
-  Serial.print("Sending: "+toESP);
+  Serial.println("Sending: "+toESP);
 }
 
 void sendflag(){
