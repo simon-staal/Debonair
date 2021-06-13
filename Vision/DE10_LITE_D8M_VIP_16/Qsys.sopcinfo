@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="Qsys" kind="Qsys" version="1.0" fabric="QSYS">
  <!-- Format version 16.1 196 (Future versions may contain additional information.) -->
- <!-- 2021.06.05.22:43:53 -->
+ <!-- 2021.06.13.15:09:29 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1622929433</value>
+  <value>1623593369</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -970,13 +970,13 @@ parameters are a RESULT of the module parameters. -->
     <name>outbuffer</name>
     <direction>Output</direction>
     <width>16</width>
-    <role>new_signal</role>
+    <role>outbuffer</role>
    </port>
    <port>
     <name>received_data_spi</name>
     <direction>Input</direction>
     <width>16</width>
-    <role>new_signal_1</role>
+    <role>received_data_spi</role>
    </port>
   </interface>
  </module>
@@ -17624,7 +17624,7 @@ the requested settings for a module instance. -->
   </assignment>
   <assignment>
    <name>embeddedsw.CMacro.TIMESTAMP</name>
-   <value>1622929433</value>
+   <value>1623593369</value>
   </assignment>
   <assignment>
    <name>embeddedsw.dts.compatible</name>
@@ -17644,7 +17644,7 @@ the requested settings for a module instance. -->
   </assignment>
   <assignment>
    <name>embeddedsw.dts.params.timestamp</name>
-   <value>1622929433</value>
+   <value>1623593369</value>
   </assignment>
   <assignment>
    <name>embeddedsw.dts.vendor</name>
@@ -17660,7 +17660,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="timestamp">
    <type>int</type>
-   <value>1622929433</value>
+   <value>1623593369</value>
    <derived>true</derived>
    <enabled>false</enabled>
    <visible>false</visible>

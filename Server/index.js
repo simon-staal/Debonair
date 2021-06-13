@@ -8,7 +8,23 @@ const https = require('https');
 const fs = require('fs')
 // Database
 const MongoClient = require('mongodb').MongoClient
+// Pathfinding
+// TO USE: Pathfinder.genPath("rover_posX,rover_posY","dest_posX,dest_posY","{obstacle1_posx,obstacle1_posY}{obstacle2_posX,obstacle2_posY}{etc}")
+const Pathfinder = require('./pathfinding/pathfinding'); 
 
+// Testing 
+/*
+let i = 0;
+let total = 0;
+for (i; i < 10000; i++) {
+	let start = Date.now();
+	let path = JSON.parse(Pathfinder.genPath("0,0","3500,5000","{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}"));
+	let end = Date.now();
+	total += (end-start);
+}
+console.log("Average time for 10000 iterations: "+(total/i)+"ms");
+//process.kill(process.pid, 'SIGTERM');
+*/
 // ---------------- Admin shit -------------------
 // Setting up communication
 const app = new express();
@@ -28,6 +44,8 @@ const SSL_options = {
 };
 
 app.use(cors()); // Enables CORS (required to work with browsers)
+
+let path; // Holds path for the rover
 
 // ------------------------ Database stuff ----------------------
 /*
@@ -64,6 +82,10 @@ const obstacles = {
 	"orange":{
 		"x":null,
 		"y":null
+	},
+	"black":{
+		"x":null,
+		"y":null
 	}
 };
 
@@ -85,7 +107,8 @@ db_client.connect((err) => {
 		{ colour: 'pink', x: null, y: null },
 		{ colour: 'green', x: null, y: null },
 		{ colour: 'blue', x: null, y: null },
-		{ colour: 'orange', x: null, y: null}
+		{ colour: 'orange', x: null, y: null},
+		{ colour: 'black', x: null, y: null}
 	];
 	obstacles.insertMany(initObs, (err, res) => {
 		if (err) {
@@ -127,6 +150,8 @@ function getObsColour(col) {
 			return "blue";
 		case 4:
 			return "orange";
+		case 5:
+			return "black";
 		default:
 			console.log("Invalid obstacle colour received from ESP32");
 			return "INVALID";
@@ -195,6 +220,7 @@ let i = 0; // number of trials
 let vals = [];
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
+<<<<<<< HEAD
 	if (topic === "fromESP32/test") {
 		end = Date.now();
 		total += (end-start);
@@ -210,12 +236,14 @@ client.on('message', (topic, message, packet) => {
 			});
 		}
 	}
+=======
+>>>>>>> 70be104d1d810fa434d466e0a06e9ae6ac94f506
 	if (topic === "fromESP32/status") {
 		rover.status = message.toString();
 	}
 	if (topic === "fromESP32/obstacle") {
 		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
-		// Colour_code: pink=1, green=2, blue=3, orange=4
+		// Colour_code: pink=1, green=2, blue=3, orange=4, black=5
 		let msg = JSON.parse(message.toString());
 		let obsColour = getObsColour(msg.c);
 		let query = { colour: obsColour };
@@ -240,6 +268,13 @@ client.on('message', (topic, message, packet) => {
 		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
 		//console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
+	}
+	if (topic === "fromESP32/nextpoint") {
+		if (path.points) {
+			let point = path.points.shift(); // Extracts first element (next point)
+			console.log("Sending point: "+JSON.stringify(point));
+			publish('toESP32/coord',`<${point.x},${point.y}>`);
+		}
 	}
 });
 
@@ -269,7 +304,8 @@ app.get("/obstacles", (req,res) => {
 		'pink': [obstacles.pink.x, obstacles.pink.y], //pink XY coords
 		'green': [obstacles.green.x, obstacles.green.y], //green XY coords
 		'blue': [obstacles.blue.x, obstacles.blue.y], //blue XY coords
-		'orange': [obstacles.orange.x, obstacles.orange.y] //orange XY coords
+		'orange': [obstacles.orange.x, obstacles.orange.y], //orange XY coords
+		'black': [obstacles.black.x, obstacles.black.y]
 	};
 	//console.log(JSON.stringify(response));
 	res.send(response);
@@ -290,7 +326,6 @@ app.get("/reset", (req,res) => {
 })
 
 // Sends desired coordinates to rover 
-// WILL NEED TO UPDATE WITH PATHFINDING
 app.post("/coords", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
     
@@ -298,10 +333,35 @@ app.post("/coords", (req,res) => {
         'coordinateX': req.body.coordinateX,
         'coordinateY': req.body.coordinateY
     }
-    // res.set('Content-Type', 'text/plain');
-    console.log(JSON.stringify(receivedCoord));
-    publish('toESP32/coord',`<${receivedCoord.coordinateX},${receivedCoord.coordinateY}>`);
-    res.send(receivedCoord);
+	if (!rover.x) {
+		rover.x = 0;
+		rover.y = 0;
+	}
+	let obstacles_string = ""
+	for ( let i in obstacles ) {
+		if (obstacles[i].x) obstacles_string += `{${obstacles[i].x},${obstacles[i].y}}`;
+	}
+	//console.log(`${rover.x},${rover.y}`);
+	//console.log(`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`)
+	//obstacles_string = "{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}";
+	//console.log("Obstacles: "+obstacles_string);
+	path_res = Pathfinder.genPath(`${rover.x},${rover.y}`,`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`,obstacles_string);
+    if (path_res) {
+		path = JSON.parse(path_res);
+		console.log(JSON.stringify(path));
+		res.send(path);
+		let point = path.points.shift();
+		console.log("Sending point: "+JSON.stringify(point));
+		publish('toESP32/coord',`<${point.x},${point.y}>`);
+	}
+	else {
+		console.log("Empty path")
+		path = {
+			"points": []
+		}
+		res.send(path)
+	}
+	
 });
 
 // Sends directions to rover

@@ -4,6 +4,7 @@
 #include "SPI.h"
 
 
+
 INA219_WE ina219; // this is the instantiation of the library for the current sensor
 
 // these pins may be different on different boards
@@ -12,7 +13,7 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define PIN_MISO      12
 #define PIN_MOSI      11
 #define PIN_SCK       13
-
+ 
 #define PIN_MOUSECAM_RESET     8
 #define PIN_MOUSECAM_CS        7
 
@@ -53,10 +54,10 @@ INA219_WE ina219; // this is the instantiation of the library for the current se
 #define ADNS3080_SROM_LOAD             0x60
 #define ADNS3080_PRODUCT_ID_VAL        0x17
 
-//float vref = 2.5; // value chosen by me
+float vref; //= 1.5; // value chosen by me
 
 float open_loop, closed_loop; // Duty Cycles
-float vpd,vref,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
+float vpd,vb,iL,dutyref,current_mA; // Measurement Variables // removed vref from this list
 unsigned int sensorValue0,sensorValue1,sensorValue2,sensorValue3;  // ADC sample values declaration
 
 float ev=0,cv=0,ei=0,oc=0; //internal signals
@@ -76,30 +77,48 @@ boolean CL_mode = 0;
 unsigned int loopTrigger;
 unsigned int com_count=0;   // a variables to count the interrupts. Used for program debugging.
 
+//************************* PI variables **************************//
+
+float kpDistance = 0.25, kiDistance = 0.58; // coefficient of PI controller
+float u0Distance, u1Distance, delta_uDistance, e0Distance, e1Distance, e2Distance;
+float cDistance;
+float error_y;
+float error_angle;
+
 //**************************Communication variables ****************//
 char received_char = 'S';
 boolean new_data = false;
+char change_char = 'S';
+char mode = 'M';
+char dir = 'S';
+int destinationX = 0;
+int destinationY = 0;
+bool haschanged = false;
+char buf[18]; //message to be sent to ESP32
 
 //************************** Rover Constants / Variables ************************//
   //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
-  const float pi = 3.14159;
-  float r = 140.0;
-  float C = 2*pi*r;
-  float arc_length;
-  float increment;
-  float x1 = 0;
-  float y1 = 0;
+const float pi = 3.14159;
+float r = 140.0;
+float C = 2*pi*r;
+float arc_length;
+float increment;
+float x1 = 0;
+float y1 = 0;
 
 //*********************** Angle variable *****************************//
-  bool angle_flag = false;
-  bool target_flag = false;
-  float O_to_coord_measured;
-  float O_to_coord;
-  float angle = 0;
-  float beta = 0;
-  int coord_after_rotation;
-  float dummy_angle=0;
-  
+bool angle_flag = false;
+bool target_flag = false;
+float O_to_coord_measured;
+float O_to_coord;
+float angle = 0;
+float beta = 0;
+float gamma = 0;
+int coord_after_rotation;
+float dummy_angle=0;
+
+
+float alpha = 0;
 //************************** Motor Constants **************************//
    
 int DIRRstate = LOW;              //initializing direction states
@@ -127,21 +146,26 @@ volatile byte movementflag=0;
 volatile int xydat[2];
 int tdistance = 0;
 
-
+float dx_mm = 0;
+float dy_mm = 0;
+int counter = 0;
 //***************************Globals*******************************
 bool halted = 0;                  // in simple coordinate mode with timed 90°
 bool done = 0;
 bool finished_turning=false;
 unsigned long haltTime;
+
 bool rover_stopped;
 bool reached_x_position=0;
 bool ydone1=0;
 bool xdone=0;
 int y_after_rotation;
-bool stopped_rover = false;
 
-float anglechanged = 0;
-float sumchanged = 0;
+bool stopped_rover = false;
+bool destination_reached; // in COORDINATE mode
+
+long anglechanged = 0;
+long sumchanged = 0;
 float target;
 float sensor;
 float sum_dist = 0;
@@ -149,10 +173,21 @@ float current_angle = 0;
 int current_x = 0;
 int current_y = 0;
 
+float coord_anglechanged = 0;
+float coord_sumchanged = 0;
+float alphaSummed = 0;
+float angle_now = 0;
+int x_now = 0;
+int y_now = 0;
+long sumdist = 0;
 
-//bool angle_flag = true;
+float measuredDistance = 0;
+float Distance = 0;
+float alpha2 = 0;
+float previous_O_to_coord = 0;
+bool reached_angle = 0;
+bool new_coordinates = 1;
 
-bool destination_reached; // in COORDINATE mode
 //************************ Function declarations *********************//
 int convTwosComp(int b);
 void mousecam_reset();
@@ -188,11 +223,13 @@ void compensate_x(float);
 float toDegrees(float angleRadians);
 void goLeft();
 void goRight();
-void goBacwards();
+void goBackwards();
 void goForwards();
-//***********************Receiving data part ****************//
-  void rec_one_char();
-  void show_new_data();
+float pidDistance(float pidDistance_input);
+void F_B_PIcontroller(int sensor_total_y, int target);
+void Turn_PIcontroller(float desired_angle, float measuring_angle);
+void sendcoords(int x_coord_send, int y_coord_send, float angle_send);
+void sendflag();
 
 //*************************** Setup ****************************//
 
@@ -259,9 +296,45 @@ void setup() {
 void loop() {
   
   // main code here runs repeatedly:
+//******************** Communication part: ****************
+if (Serial1.available()) {
+  received_char = Serial1.read();
+  // Updates mode (C = coordinate, M = controlled by ESP)
+  if (received_char == 'C' || received_char == 'M') {
+    mode = received_char;
+  }
+  // If in controlled mode, updates direction
+  if (mode == 'M') {
+    dir = received_char;
+  }
+  // If in coordinate mode, updates destination
+  if (mode == 'C' && received_char == '<') {
+    while (Serial1.available() && received_char != '>') {
+      received_char = Serial1.read();
+      char bufX[6];
+      char bufY[6];
+      int i = 0;
+      while (Serial1.available() && received_char != ',') {
+        bufX[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufX[i] = '\0';
+      String x(bufX);
+      destinationX = x.toInt();
+      
+      if (Serial1.available()) received_char = Serial1.read();
+      i = 0;
+      while (Serial1.available() && received_char != '>') {
+        bufY[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufY[i] = '\0';
+      String y(bufY);
+      destinationY = y.toInt();
+    }
+  }
+}
 
-rec_one_char();
-show_new_data();
 //******************* Camera loop part: ********************//
 
 #if 0
@@ -320,8 +393,8 @@ total_x = (float)(total_x1/157.0) * 10; //Conversion from counts per inch to mm 
 total_y = (float)(total_y1/157.0) * 10; //Conversion from counts per inch to mm (400 counts per inch)
 
 //defined by me
-float dx_mm = (float)(distance_x/157.0) * 10;
-float dy_mm = (float)(distance_y/157.0) * 10;
+ dx_mm = (float)(distance_x/157.0) * 10;
+ dy_mm = (float)(distance_y/157.0) * 10;
 
 Serial.print('\n');
 Serial.println("dx = "+String(distance_x));
@@ -339,11 +412,10 @@ Serial.println("dy (mm) = "+String(dy_mm));
   #endif
 
 //************************** Motor Loop part: ****************************//
+if (loopTrigger) { // This loop is triggered, it wont run unless there is an interrupt
 
-  if(loopTrigger) { // This loop is triggered, it wont run unless there is an interrupt
-    
     digitalWrite(13, HIGH);   // set pin 13. Pin13 shows the time consumed by each control cycle. It's used for debugging.
-    
+
     // Sample all of the measurements and check which control mode we are in
     sampling();
     CL_mode = digitalRead(3); // input from the OL_CL switch
@@ -372,346 +444,297 @@ Serial.println("dy (mm) = "+String(dy_mm));
   
   unsigned long now = millis();
 
-// REMOTE CONTROLLER MODE: DIRECT INPUT FROM USER
+// REMOTE CONTROLLER MODE: DIRECT INPUT FROM USER 
+// AND
+// EXPLORE MODE - like REMOTE CONTROLLER BUT THE COMMANDS COME FROM VISION
 //make a register that only changes if the received character becomes different (call it change_char)
-bool haschanged = false;
-if (received_char != change_char){
-  change_char = received_char;
-  haschanged = true; 
-  }
- if (haschanged){
-  if (sumchanged == 0 && anglechanged != 0){
-    //add anglechanged to ur angle facing
-    current_angle = anglechanged + current_angle;
-    Serial.println("angle has changed to " + String(current_angle));
-  }
-  else if (anglechanged == 0 && sumchanged != 0 )
-    //sumchanged multiplied by cos(current angle) + i sin(current angle) 
-    //cos is y axis sin is x axis
-    current_y = sumchanged * cos(current_angle);
-    current_x = sumchanged * sin(current_angle);
-    Serial.println("x and y have changed to " + String(current_x) + " " + String(current_y));
-    sumchanged = 0;
-    anglechanged = 0;
-  // M: current_x and current_y coordinates must be provided
+
+Serial.println("mode = "+ String(mode));
+ if(mode == 'M'){
+   digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+   digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
  
- //if(received_char == 'M'){
- 
-  if(received_char == 'F' && haschanged == false){
-    goForwards();
-    Serial.println(received_char);
-    sumchanged = sumchanged + dy_mm;
-    anglechanged = 0;
-    //accumulate the distance}
+  if(dir == 'F'){
+    DIRRstate = LOW;   //goes forwards
+    DIRLstate = HIGH;
     
-  else if(received_char == 'B' && haschanged == false){
-    goBackwards();
-    Serial.println(received_char);
-    sumchanged = sumchanged + dy_mm;      // need negative?
-    anglechanged = 0;
-    } 
-    
-  else if(received_char == 'L' && haschanged == false){
-    goLeft();
-    float O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-    float alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
-    anglechanged = (anglechanged + alpha);
-    Serial.println(received_char);
-    sumchanged = 0;
-    } 
-    
-  else if(received_char == 'R' && haschanged == false){
-    goRight();
-    float O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-    alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
-    anglechanged = (anglechanged + alpha);
-    Serial.println(received_char);
-    sumchanged = 0;
+    Serial.println(dir);
+    sumchanged += dy_mm;
+    //anglechanged = 0;
+    //accumulate the distance
+    Serial.println("sumchanged Forwards"+ String(sumchanged));
     }
+  else if(dir == 'B'){
+    DIRRstate = HIGH;   //goes backwards
+    DIRLstate = LOW;
     
-  else if(received_char == 'S'){
-    //pwm_modulate(0);
-    stop_Rover();
-    anglechanged = 0;
-    sumchanged = 0;
-    Serial.println(received_char);} // stops
-/*    
-  else if(received_char == 'N'){      //rotate 90°
+    Serial.println(dir);
+    sumchanged -= dy_mm;      // changed to subtraction cause Backwards
+    //anglechanged = 0;
+    Serial.println("sumchanged Backwards"+ String(sumchanged));
+    }
+  else if(dir == 'L'){
+    DIRRstate = LOW;   // turns left - rotates anticlockwise
+    DIRLstate = LOW;
+    Serial.println(dir);
+    
     O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
-    alphaSummed = (alphaSummed + alpha);
-    beta = 90; // given by Control
+    anglechanged = (anglechanged + alpha);
+    //sumchanged = 0;
+
+    // send angle to Control
     
-    if(angle_flag == true){
-     stop_Rover();
-     alphaSummed = 0;
-     stopped_rover = true;
-     Serial.println("Rover has reached the Destination YAY!");
-
-    }else if(((-alphaSummed+beta)<=2)&& (angle_flag == false)){
-     coord_after_rotation = total_y;
-     dummy_angle = angle; // angle of the Rover when destination is reached
-
-    //send dummy_angle to Control
-     
-     stop_Rover(); Serial.println("FINISHED ROTATING");
-     angle_flag = true;}
-     
-    if(((-alphaSummed+beta) >= 2)&& angle_flag == false){
-     Serial.println("inside the rotation loop ");
-     Serial.println("total_y = " + String(total_y));
-
-    // current_x and current_y must be provided
-    
-     if((target_x > current_x)){   
-        Serial.println("target_x has a greater x coord. than the current x coord.");
-      // pwm_modulate(0.25);
-         goRight();    //rotate clockwise
-    }else if((target_x < current_x)){
-        Serial.println("target_x has a smaller x coord. than the current x coord.");
-        //pwm_modulate(0.25);
-        goLeft();   // rotate anticlockwise
-    }else if ((target_x == current_x)){
-      //do not rotate - no angle difference between current coordinates and destination coordinates
-      Serial.println("target_x has the same x coord. than the current x coord.");
-      goForwards();}
-  }
-  
-  else{
-    //pwm_modulate(0);
-    stop_Rover();
-    Serial.println("default stop");
-    Serial.println(received_char);} // by default stop 
- }
-*/
-
-// COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
-/*
-  O_to_coord_measured = sqrt((dy_mm * dy_mm) + (dx_mm * dx_mm));
-
-  sum_dist = sum_dist + O_to_coord_measured;
-  float current_ang = (sum_dist / 968)* 360;
-  Serial.print("total dist: ");
-  Serial.println(sum_dist);
-  Serial.println("total angle: " + String(current_ang));
-  float target_angle = 180;
-  //put a target angle called target_angle which can be from 0 to 360 degrees
-  //a flag should be set to true when rotating assume flag is called angle_flag
-  if(angle_flag && (current_ang > target_angle)){
-
-    angle_flag = false;
-    sum_dist = 0;
-    //go_forwards(200, total_y);
-      digitalWrite(DIRR, DIRRstate);
-      digitalWrite(DIRL, DIRLstate);
-    Serial.print("done rotating");
-    stop_Rover();
-    }    
-    else if (angle_flag){
-    Serial.print("Start rotation");
-    DIRRstate = HIGH;
-    DIRLstate = HIGH;
-         digitalWrite(DIRR, DIRRstate);
-         digitalWrite(DIRL, DIRLstate);
+    Serial.println("alpha in Left rotation"+ String(alpha));
+    Serial.println("anglechanged in Left rotation"+ String(anglechanged));
     }
-*/
+  else if(received_char == 'R'){
+    DIRRstate = HIGH;   // turns right - rotates clockwise
+    DIRLstate = HIGH;
+    Serial.println(dir);
+    
+    O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+    alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
+    anglechanged = (anglechanged + alpha);
+    //sumchanged = 0;
 
+    // send angle to Control
+    
+    Serial.println("alpha in Right rotation"+ String(alpha));
+    Serial.println("anglechanged in Right rotation"+ String(anglechanged));
+    }
+  else if(dir == 'S'){
+    pwm_modulate(0);
+    //stop_Rover();
+    //anglechanged = 0;
+    //sumchanged = 0;
+    Serial.println(dir);
+    Serial.println("current_x in S = "+ String(current_x));
+    Serial.println("current_y in S = "+ String(current_y));
+    Serial.println("current_angle in S = "+ String(current_angle));
+    } // stops
+  else{
+    pwm_modulate(0);
+    //stop_Rover();
+    Serial.println("default stop");
+    Serial.println(dir);} // by default stop 
 
+ digitalWrite(DIRR, DIRRstate);
+ digitalWrite(DIRL, DIRLstate); 
+ } //MODE BRACKET
 
+//**************************************************************************
+// COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
+int target_x = 0;
+int target_y = 0;
 
-
-
-
-
-
-
-
-
-
-
-
-/*  if(received_char == 'C'){
-
-      // 1st received int = target_x
-      // 2nd received int = target_y
-*/ 
-
+if(mode == 'C'){
+  new_coordinates = 1;
+  stop_Rover();
+ Serial.println("new_coordinates = " + String(new_coordinates));
+  if(new_coordinates == true){
+   target_x = destinationX;
+   target_y = destinationY;
+   new_coordinates = false;
+   Serial.println("New Coordinates set");
+   Serial.println("new_coordinates = " + String(new_coordinates));
+   }
+//delay (1000);
+ Serial.println("target_x = " + String(target_x));
+ Serial.println("target_y = " + String(target_y));
   // Coordinates are provided by the ESP32 from Command
   // here they are just manually set - for now
-  int target_y = 100;
-  int target_x = 100;
+  
+  //int target_y = 100;
+  //int target_x = 200;
 
-  go_forwards(target_y, total_y);
-/*
-  O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
-  O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-  
-  alpha = toDegrees(asin(O_to_coord_measured/(2*r)))*4 ; // angle of each distance increment measured by the sensor
-  alphaSummed = (alphaSummed + alpha); // tot angle measured by sensor from 0°
-  angle = alphaSummed; // angle between 2 set of coordinates
-  Serial.println("dummy_angle ° = " + String(dummy_angle));
-  
- // if( (dx_mm == 0 && dy_mm == 0) || (dx_mm == 0) ){
- //  alpha = 0;}
-  
-  //desired angle computed with trigonometry based on target coordinates:
-  beta = 90 - toDegrees((acos(target_x/O_to_coord))) + (current_angle); // I need the complementary angle.
-  
-  Serial.print('\n');
-  Serial.println("O_to_coord = " + String(O_to_coord) + "mm");
-  Serial.println("O_to_coord_measured = " + String(O_to_coord_measured));
-  Serial.println("measured angle in radians of single increment = " + String((asin(O_to_coord_measured/2/r))*2));
-  Serial.println("alpha in ° = " + String(alpha));
-  Serial.println("alphaSummed in ° = " + String(alphaSummed));
-  Serial.println("current_angle in ° = " + String(current_angle));
-  Serial.println("beta in ° = " + String(beta));
-  Serial.println("dummy_angle ° = " + String(dummy_angle));
-  
-// must save the coordinates of the previous reached point
-// use flag to signal the reaching of the given coordinates
-// insert angle conditions
+  if(target_y == 0 && target_x == 0){
+      stop_Rover();}
 
-    if(angle_flag == true && target_flag == true){
+    O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
+    Distance = sqrt(pow(target_y-y_now,2) + pow(target_x-x_now,2));
+    measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+    alpha2 = toDegrees(asin(measuredDistance/(2*r))) * 4 ; 
+    alphaSummed = (alphaSummed + alpha2);
+    angle = alphaSummed;
 
+
+    Serial.println("Distance = " + String(Distance));
+    Serial.println("x_now = " + String(x_now));
+    Serial.println("y_now = " + String(y_now));
+
+    if(x_now == 0 && y_now == 0){
+      beta = 90 - toDegrees((acos(target_x/O_to_coord))); // I need the complementary angle.
+    }else{
+      gamma = acos((pow(Distance,2) + pow(previous_O_to_coord,2) - pow(O_to_coord,2))/(2 * O_to_coord * previous_O_to_coord));
+      beta = 180 - toDegrees(gamma);
+      }
+
+
+  if(angle_flag == true && halted){ //&& target_flag == true){   // if both the right angle and right distance have been achieved 
      stop_Rover();
+     //pwm_modulate(0);
      alphaSummed = 0;
      stopped_rover = true;
-     Serial.println("Rover has reached the Destination YAY!");
-  
-     Serial.println("IN RDL : total_y - coord_after_rotation = " + String(total_y - coord_after_rotation));
-     Serial.println("IN RDL : target_y - coord_after_rotation = " + String(target_y - coord_after_rotation));
+     //x_now = target_x; //saving coordinates before receiving a new pair of coordinates
+     //y_now = target_y;
+     x_now = O_to_coord_measured*sin(dummy_angle);
+     y_now = O_to_coord_measured*cos(dummy_angle);
+     angle_now = dummy_angle;  //saving dummy_angle before computing new one
+     previous_O_to_coord = O_to_coord;
+     // total_y = y_now;
+     // total_x = x_now;
+     //target_x = 0;
+     //target_y = 0;
+     
+    //SEND angle_now, x_now ang y_now TO ESP32 - Control 
+     sendcoords(x_now, y_now, angle_now);     
+     
+     new_coordinates = true;
+     angle_flag = false;
+     halted = false;
+     
+     // tell Control that destination is reached -> code lower down
+     
+     Serial.println("Rover has reached the Destination coordinates YAY!");
+     Serial.println("x_now = " + String(x_now));
+     Serial.println("y_now = " + String(y_now));
+     Serial.println("angle_now = " + String(angle_now));
 
-  //a margin of +/-2°
-    }else if(((-alphaSummed+beta)<=2)&& (angle_flag == false)){
+  }else if(((-alphaSummed + beta) <= 2)&& (angle_flag == false)){
+     coord_after_rotation = total_y;
+     dummy_angle = angle; // angle of the Rover when destination is reached
+     Serial.println("dummy_angle = " + String(dummy_angle));
+     
+     stop_Rover(); Serial.println("FINISHED ROTATING");
+     angle_flag = true;
+  }
     
-      coord_after_rotation = total_y;
-      dummy_angle = angle; // angle of the Rover when destination is reached
-      stop_Rover();
-    
-      Serial.println("FINISHED ROTATING");
-    
-      Serial.println("coord_after_rotation = " + String(coord_after_rotation));
-      Serial.println("alphaSummed-beta " + String(alphaSummed-beta));
-      Serial.println("angle_flag = " + String(angle_flag));
-      Serial.println("Angle is precisely reached = " + String(angle));
-      Serial.println("total_y - coord_after_rotation = " + String(total_y - coord_after_rotation));
-      Serial.println("target_y - coord_after_rotation = " + String(target_y - coord_after_rotation));
+  if(((-alphaSummed+beta) >= 2)&& angle_flag == false && target_flag == false){
+     Serial.println("inside the rotation loop ");
+     Serial.println("alphaSummed = " + String(alphaSummed)); 
+     Serial.println("beta = " + String(beta));
 
-      Serial.println("abs distanza = " + String(abs((total_y - coord_after_rotation) - (target_y - coord_after_rotation))));
-    
-    angle_flag = true;
-    
-    }
-    if(((-alphaSummed+beta) >= 2)&& angle_flag == false && target_flag == false){
-      Serial.println("inside the rotation loop ");
-      Serial.println("total_y = " + String(total_y));
-    
-      if((target_x > current_x)){   
+     if(x_now == 0 && y_now == 0){    //for the case when starting from origin
+      if((target_x > x_now)){   
         Serial.println("target_x has a greater x coord. than the current x coord.");
-      // pwm_modulate(0.25);
-        goRight();    //rotate clockwise
-       }
-    
-      else if((target_x < current_x)){
+        // pwm_modulate(0.25);
+        //goRight();
+        DIRRstate = HIGH;
+        DIRLstate = HIGH;   
+        digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+        digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+      }else if((target_x < x_now)){
         Serial.println("target_x has a smaller x coord. than the current x coord.");
         //pwm_modulate(0.25);
-        goLeft();   // rotate anticlockwise
+        //goLeft(); 
+        DIRRstate = LOW;
+        DIRLstate = LOW; 
+        digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+        digitalWrite(pwml, HIGH);       //setting left motor speed at maximum 
+      }else if ((target_x == x_now)){
+         //do not rotate - no angle difference between current coordinates and destination coordinates
+         Serial.println("target_x has the same x coord. than the current x coord.");
+         goForwards();
+         sumdist = sumdist + dy_mm;
        }
-      else if ((target_x == current_x)){
-      //do not rotate - no angle difference between current coordinates and destination coordinates
-      Serial.println("target_x has the same x coord. than the current x coord.");
-      goForwards();
-      }
-  }
-
-    if(angle_flag == true && stopped_rover== false){
+     }else{   // for all other coordinates in the 4 quadrants
+      if((target_x > x_now) && target_x > 0 && x_now > 0){   
+        Serial.println("target_x has a greater x coord. than the current x coord.");
+        // pwm_modulate(0.25);
+        if(target_y > y_now){
+          //goLeft();
+          DIRRstate = LOW;
+          DIRLstate = LOW;
+          digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+          digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+        }else if(target_y <= y_now){
+          //goRight();
+          DIRRstate = HIGH;
+          DIRLstate = HIGH;
+          digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+          digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+        }    
+      }else if((target_x < x_now) && target_x < 0 && x_now < 0 ){
+        Serial.println("target_x has a smaller x coord. than the current x coord.");
+        //pwm_modulate(0.25);
+        if(target_y > y_now){
+          //goRight();
+          DIRRstate = HIGH;
+          DIRLstate = HIGH;
+          digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+          digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+        }else if(target_y <= y_now){
+          //goLeft();
+          DIRRstate = LOW;
+          DIRLstate = LOW;
+          digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+          digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+        }   
+      }else if ((target_x == x_now)){
+        //do not rotate - no angle difference between current coordinates and destination coordinates
+        Serial.println("target_x has the same x coord. than the current x coord.");
+        goForwards();
+        sumdist = sumdist + dy_mm;
+      }else{
+        Serial.println("Invalid coordinate has been provided given the path finding algorithm");
+        }
+     }  
+  }  
+ if(angle_flag == true && stopped_rover== false){
+     go_forwards(Distance,total_y - coord_after_rotation);
+      digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+      digitalWrite(pwml, HIGH);       //setting left motor speed at maximum    
+     sumdist = sumdist + dy_mm;
+     target_flag = true;
+     Serial.println("sumdist = " + String(sumdist));
      Serial.println("coord_after_rotation in angle_flag loop = " + String(coord_after_rotation));
      Serial.println("Going forwards to the destination!");
+     Serial.println("Distance = " + String(Distance));
      Serial.println("total_y - coord_after_rotation = " + String(total_y - coord_after_rotation));
-     Serial.println("target_y - coord_after_rotation = " + String(target_y - coord_after_rotation));
-     target = target_y - coord_after_rotation;
-     sensor = total_y - coord_after_rotation;
-    go_forwards(target,total_y - coord_after_rotation);
-
-  Serial.println("abs distanza = " + String(abs((total_y - coord_after_rotation) - (target_y - coord_after_rotation))));
+     Serial.println("(total_y - coord_after_rotation) - (Distance) = " + String((total_y - coord_after_rotation) - (Distance)));
  }
- 
- //Serial.println("sensor = " + String(sensor));
- //Serial.println("target = " + String(target));
- 
-    if((abs(-target + (total_y - coord_after_rotation)) <= 10) && angle_flag == true){
-      target_flag = true;
-      current_x = target_x;  // x coordinate value sent to Control - keeps track of Rover position
-      current_y = target_y;  // y coordinate value sent to Control - keeps track of Rover position
-      current_angle = dummy_angle; // angle of the Rover when destination is reached
-      alphaSummed = 0;
-      //// stop_Rover();
-      Serial.println("Rover has obtained current_x and current_y");
-    }
-*/
- 
-/*
- * COORDINATE MODE WITH 90° timed FIXED ROTATIONS
-   if((ydone1==1) && (xdone==1)){
-      done = 1;
-      stop_Rover();
-      rover_stopped=1;
-      Serial.println("ROVER STOPPED");
-    }
-  if(!halted){
-    if(finished_turning==false){
-      Serial.println("going to target y");
-      go_forwards(target_y, total_y);
-      if(abs(-target_y + total_y) <= 5){
-      ydone1=1;
-      Serial.println("ydone1="); Serial.print(ydone1);
-      Serial.print("\n");}
-    } 
-    if(finished_turning==true && ydone1==1 && reached_x_position==0 && rover_stopped!=1){
-      //Serial.println(abs(target_x + total_y));
-      Serial.println("going to target x");
-      go_forwards((y_after_rotation + target_x), total_y); 
-      
-      // The sensor perceives as the y-direction wherever the front of the rover points.
-      // After the rotation has finished, to reach target_x, the y position must be taken into account 
-     if(abs(-(y_after_rotation + target_x) + total_y) <= 5){
-      Serial.println("Rover reached the x coordinate");
-      xdone=1;
-      reached_x_position=1;
-      Serial.println("xdone="); Serial.print(xdone);
-      }
-    }
+
+// digitalWrite(DIRR, DIRRstate);
+// digitalWrite(DIRL, DIRLstate);
+}
+
+//********************************************************
+
+if (dir != change_char){
+  change_char = dir;    // keeps track of the current command
+  haschanged = true; 
+  counter = 30;
   }
-  if(halted && !done)
-  {
-    if((abs(-(y_after_rotation + target_x) + total_y) <= 5) && ydone1==1){
-      xdone=1;
-      ydone1=1;
-      stop_Rover();
-      Serial.print("\n");
-      Serial.println("Reached the coordinates while rotating");
-    }else{
-      Serial.println("rotating");
-      // turn 90 to work on other direction
-      turn_90left(haltTime);}
-   }
-  */
- 
-//} // curly bracket of the if received_char== 'C'
-
-// EXPLORE MODE 
-  // like REMOTE CONTROLLER BUT THE COMMANDS COME FROM VISION
-  // receives range of ints. Rotate Rover slowly until the int=0 (probs will need a range for this)
-  // if int<0 rotate right
-  // if int>0 rotate left
-  // when the int=0 , Rover moves forwards (for how much? bool? or fixed distance?)
-
-/*  if(received_char == 'E'){
-
-    //EXPLORE
+if (counter < 0 ){
+    current_angle = anglechanged + current_angle;
+    //sumchanged multiplied by cos(current angle) + i sin(current angle) 
+    //cos is y axis sin is x axisSerial.println("current_x = "+ String(current_x));
+    current_y = current_y + sumchanged * cos(current_angle);
+    current_x = current_x + sumchanged * sin(current_angle);
+    Serial.println("current_x = "+ String(current_x));
+    Serial.println("current_y = "+ String(current_y));
+    Serial.println("current_angle has changed to " + String(toDegrees(current_angle)));
+    Serial1.print("{" + String(current_angle) + "}"); // Sends info back to ESP
+    Serial.println("x and y have changed to " + String(current_x) + " " + String(current_y));
+    Serial1.print("<" + String(current_x) + "," + String(current_y) + ">"); 
     
-    }
-*/
+    
+    // Sends info back to ESP
+    sendcoords(current_x, current_y,current_angle);
+    
+    sumchanged = 0;
+    anglechanged = 0;
+    counter = 0;
+    haschanged = false;
+ }
+ else if (dir == 'S' && haschanged == true){
+  O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+  alpha = asin(O_to_coord_measured/(2*r)) * 4 ; 
+  anglechanged = (anglechanged + alpha);
+  sumchanged += dy_mm;
+  counter--;
+  }
    
  }
 
@@ -842,9 +865,11 @@ void sampling(){
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
+  //sensorValue2 = 500;
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
+  //sensorValue2 = vref *(1023.0/ 4.096);
   vpd = sensorValue3 * (4.096 / 1023.0); // Convert the Vpd sensor reading to volts
 
  /* The inductor current is in mA from the sensor so we need to convert to amps.
@@ -923,11 +948,108 @@ float pidi(float pid_input){
   return u0i;
 }
 
+//PI controller for the Distance
+float pidDistance(float pidDistance_input){
+
+  float e_integration;
+  e0Distance = pidDistance_input;
+  e_integration = e0Distance;
+
+  delta_uDistance = kpDistance * (e0Distance - e1Distance) + kiDistance * Ts * e_integration; // incremental PI avoids integrations
+  u0Distance = u1Distance + delta_uDistance;  // this time's control output
+
+  u1Distance = u0Distance;  // update last time's control output
+  e2Distance = e1Distance;  // update last last time's error -->> not in use in this PI
+  e1Distance = e0Distance;  // update last time's error
+
+  return u0Distance;
+  
+  }
+
+void F_B_PIcontroller(int sensor_total_y, int target){
+  error_y = sensor_total_y - target;
+  cDistance = pidDistance(error_y);
+  // pwm_modulate(1);
+//  reached_destination = false;
+  Serial.println("error_y = " + String(error_y));
+  Serial.println("cDistance = " + String(cDistance));
+  
+  if(error_y < -10){
+    goForwards();
+    }
+  if(error_y > 10){
+    goBackwards();
+    }
+  if(error_y >= -10 && error_y <= 0){
+    pwm_modulate(0.3);
+    goForwards;
+    }
+  if(error_y > 0 && error_y < 10){
+    pwm_modulate(0.3);
+    goBackwards;
+    }
+  if(error_y >= -2 && error_y <= 2){
+    stop_Rover();
+    Serial.println("Reached Distance with PI");
+//    reached_destination = true;
+    }
+  }
+
+void TurnLeft_PIcontroller(float desired_angle){
+  error_angle = desired_angle - anglechanged;
+  cDistance = pidDistance(error_angle);
+  reached_angle = false;
+  O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+  alpha = toDegrees(asin(O_to_coord_measured/(2*r))) * 4 ; 
+  anglechanged = (anglechanged + alpha);
+  
+  Serial.println("error_angle" + String(error_angle));
+  Serial.println(" anglechanged = "+ String (anglechanged));
+  Serial.println(" O_to_coord_measured = "+ String (O_to_coord_measured));
+  pwm_modulate(abs(cDistance)*0.01+0.39);
+  //pwm_modulate(0.5);
+  Serial.println("Inside the rotation PI");
+  //pwm_modulate(abs(cDistance)*0.01+0.4);
+   if(error_angle < -10.5){
+    pwm_modulate(0.3);
+    //goRight();
+    stop_Rover();
+    Serial.println("stopped because angle has been reached");
+    }
+  if(error_angle > 10.5 && error_angle < desired_angle){
+    //pwm_modulate(0.5);
+    goLeft();
+    Serial.println("Rotation left >10.5");
+    }else{Serial.println("something is wrong");
+    }
+  if(error_angle >= -10.5 && error_angle <= 0){
+    //pwm_modulate(0.4);
+    goRight;
+    Serial.println("Rotation right >-10.5 && <0");
+    }
+  if(error_angle > 0 && error_angle < 10.5){
+    //pwm_modulate(0.4);
+    goLeft;
+    Serial.println("Rotation left >0 && <10.5");    
+    }
+  if(error_angle >= -1 && error_angle <= 1){
+    stop_Rover();
+    Serial.println("reached_angle = " +String(reached_angle));
+    Serial.println("Reached Angle with PI");
+    reached_angle = true;
+//    angle_PI = anglechanged;
+//    Serial.println("final obtained with PI" + String(angle_PI));
+    //anglechanged=0;
+    //O_to_coord_measured = 0;
+    
+    }
+  }
+
 
 void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
   int distance_error = sensor_forwards_distance - command_forwards_des_dist;
   halted = 0;
-  if(abs(distance_error) <  3){
+  if(abs(distance_error) < 5){
      // stop rover
      //pwm_modulate(0);
      stop_Rover();
@@ -935,6 +1057,7 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
      haltTime = millis();
      Serial.print("\n");
      Serial.print("\n");
+     Serial.println("Reached Distance with go_forwards");
      Serial.print("Halting at ");
      Serial.println(haltTime);
      return;
@@ -980,7 +1103,6 @@ void turn_90left(unsigned long haltTime){
 }
 
 // same as turn_90left
-//IMPLEMENT
 void turn_90right(unsigned long haltTime){
   unsigned long now = millis();
     if(now-haltTime < 4500){
@@ -1003,6 +1125,9 @@ void stop_Rover(){
   digitalWrite(pwmr, LOW);
   digitalWrite(pwml, LOW);
   //pwm_modulate(0);
+  
+  digitalWrite(DIRR, DIRRstate);
+  digitalWrite(DIRL, DIRLstate);
   Serial.println("Stop function activated");
 }
 
@@ -1015,9 +1140,9 @@ void angle_90_timedRight(unsigned long startTime){
     return;
  }
 
-void angle_90_timedLeft(){
+void angle_90_timedLeft(unsigned long startTime){
   unsigned long now = millis();
-  if(now < 4500){
+  if(now - startTime < 4500){
       goLeft();
   }else{
     stop_Rover();}
@@ -1065,24 +1190,46 @@ float toDegrees(float angleRadians){
     digitalWrite(DIRL, DIRLstate);   
     }
 
- 
+void sendcoords(int x_coord_send, int y_coord_send, float angle_send){
 
+  char buf[18];
+  buf[0] = '<';
+  int cur = 1;
+  char num[6];
+  String(x_coord_send).toCharArray(num,6);
+  //sprintf(num, "%d", x_coord_send);
+  int cnt = 0;
+  while(num[cnt]){
+    buf[cur++] = num[cnt++];
+  }
+  buf[cur++] = ',';
+  //sprintf(num, "%d", y_coord_send);
+  String(y_coord_send).toCharArray(num,6);
+  cnt = 0;
+  while(num[cnt]){
+    buf[cur++] = num[cnt++];
+  }
+  buf[cur++] = ',';
+  //sprintf(num, "%d", angle_send);
+  String(angle_send).toCharArray(num,6);
+  cnt = 0;
+  while(num[cnt]){
+    buf[cur++] = num[cnt++];
+  }
 
-//***** ESP32 related functions***********//
-void rec_one_char() {
-  if(Serial1.available()){
-    received_char = Serial1.read();
-    new_data = true;
+  buf[cur++] = '>';
+  buf[cur] = '\0';
+
+  for(int i = 0; buf[i] != '\0'; i++){
+
+    Serial1.println(buf[i]);
+
   }
 }
 
-void show_new_data() {
-  if(new_data == true) {
-    Serial.print("An ");
-    Serial.print((byte)received_char);
-    Serial.println("has arrived");
-    new_data = false;
-  }
+void sendflag(){
+
+  //Serial1.println('P');
 }
 
 /*end of the program.*/

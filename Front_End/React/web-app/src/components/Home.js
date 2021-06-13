@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, {useState} from 'react';
 import TextField from '@material-ui/core/TextField';
 import {makeStyles } from '@material-ui/core/styles';
 import { withStyles } from '@material-ui/core/styles';
@@ -11,6 +11,8 @@ import grid from "./grid.png";
 import ground from "./background.jpg";
 import { useLocation } from 'react-router-dom';
 import './Home.css';
+import LineTo from 'react-lineto';
+
 
 const AntSwitch = withStyles((theme) => ({
     root: {
@@ -68,14 +70,21 @@ const useStyles = makeStyles((theme)=>({
 
 function Home(){
 
-    if(useLocation().pathname=="/coords"){
+    if(useLocation().pathname==="/coords"){
         document.getElementById('pinkball').style.display="block";
         document.getElementById('blueball').style.display="block";
         document.getElementById('greenball').style.display="block";
         document.getElementById('orangeball').style.display="block";
+        document.getElementById('blackball').style.display="block";
         document.getElementById('start').style.display="block";
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
+        document.getElementById('msg').style.display="block";
+        document.getElementById('pinkballcoord').style.display="block";
+        document.getElementById('greenballcoord').style.display="block";
+        document.getElementById('orangeballcoord').style.display="block";
+        document.getElementById('blueballcoord').style.display="block";
+        document.getElementById('blackballcoord').style.display="block";
       }
 
     const classes = useStyles();
@@ -92,18 +101,34 @@ function Home(){
         console.log(values);
     }
 
+   
+
     const handleSubmit=(event)=>{
+        for(var j in 8){
+        document.getElementById(j).style.display="none"; 
+        document.getElementById(j).style.top= "420px"; 
+        document.getElementById(j).style.left="825px";
+        }
         event.preventDefault();
         console.log("Message sent: " + JSON.stringify(inputFields[0]));
         axios.post('https://debonair.duckdns.org:8443/coords', inputFields[0])
             .then(response=>{
-                //setInputFields(response.coordinates)
                 console.log("Received message: " + JSON.stringify(response.data));
+                //points is array of coordinates x and y for optimal path
+                for( var i in response.data.points){
+                    var x_disp= Math.floor(825+(response.data.points[i].x)*300/1000);
+                    var y_disp=Math.floor(420-(response.data.points[i].y)*300/1000);
+                   
+                    document.getElementById("PAF").innerHTML=  "Point "+ i + ": [" + response.data.points[i].x + ";" + response.data.points[i].y + "] " +"to get to destination <br/>"; 
+                    document.getElementById(i).style.left= x_disp + "px"; //x axis update
+                    document.getElementById(i).style.top= y_disp + "px";  
+                    document.getElementById(i).style.display="block"; 
+                    <LineTo from={i} to={i+1}/>
+               }   
             })
             .catch(err => {
                 console.log("Received error: " + err);
             })
-
     }
 
     const [checked, setChecked] = useState(true);
@@ -112,8 +137,8 @@ function Home(){
         if(checked===true){
         setChecked(!checked);
         event.preventDefault();
-        console.log("Message sent: " + JSON.stringify({ 'Mode':'C' }));
-        axios.post('https://debonair.duckdns.org:8443/mode', { 'Mode':'C' } )
+        console.log("Message sent: " + JSON.stringify({ 'mode':'C' }));
+        axios.post('https://debonair.duckdns.org:8443/mode', { 'mode':'C' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -131,8 +156,8 @@ function Home(){
         if(explore===true){
         setExplore(!explore);
         event.preventDefault();
-        console.log("Message sent: " + JSON.stringify({ 'Mode':'E' }));
-        axios.post('https://debonair.duckdns.org:8443/mode', { 'Mode':'E' } )
+        console.log("Message sent: " + JSON.stringify({ 'mode':'E' }));
+        axios.post('https://debonair.duckdns.org:8443/mode', { 'mode':'E' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -145,9 +170,11 @@ function Home(){
         }
     }
     return(
-        <div>
+        <div id="surface">
             <img src={grid} alt="map" className="map"/>
             <img src={ground} alt="mars" className="mars"/>
+            
+            
             <h1 className="header"> Ground Discovery </h1>
             <h6 className="h6"> Reach Coordinate </h6>
             <Typography component="div" className={classes.typography2}>
@@ -190,8 +217,9 @@ function Home(){
                 Submit
                 </Button>
             </form>
+            <div id="PAF" style={{marginLeft: "10px"}}></div>
             
-            <h6 className="title"> Rover Explore </h6>
+            <h6 className="h62"> Rover Explore </h6>
             <Typography component="div" className={classes.typography1}>
             <Grid component="label" container alignItems="center" spacing={1}>
              <Grid item>Off</Grid>

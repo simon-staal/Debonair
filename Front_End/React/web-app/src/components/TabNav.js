@@ -48,7 +48,7 @@ const TabNav = () => {
   <nav className="navbar navbar-expand-lg navbar-mainbg">
     
       <NavLink className="navbar-brand navbar-logo" to="/" exact>
-        <img src={logo} class="logo"></img>
+        <img src={logo} class="logo" alt="logo"></img>
       </NavLink>
       
     
