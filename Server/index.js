@@ -201,10 +201,13 @@ client.on('message', (topic, message, packet) => {
 		vals.push(end-start);
 		i += 1;
 		console.log("Time taken = " + (end-start) + "ms");
-		if (i === 20) {
+		if (i === 500) {
 			console.log("Average for " + i +"iterations = " + (total/i) + "ms");
 			console.log(vals);
 			console.log(vals.toString());
+			fs.writeFile('./results.csv',vals.toString(), err => {
+				if(err) console.log(err)
+			});
 		}
 	}
 	if (topic === "fromESP32/status") {
