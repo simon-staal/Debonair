@@ -95,6 +95,7 @@ int destinationX = 0;
 int destinationY = 0;
 bool haschanged = false;
 char buf[18]; //message to be sent to ESP32
+long lastMsg = 0;
 
 //************************** Rover Constants / Variables ************************//
   //Measured diameter of Rover complete rotation wrt pivot point positioned on wheel axis: 260 mm
@@ -442,7 +443,7 @@ if (loopTrigger) { // This loop is triggered, it wont run unless there is an int
  
   //************************** Rover Modes of Operation **************************//
   
-  unsigned long now = millis();
+  //unsigned long now = millis();
 
 // REMOTE CONTROLLER MODE: DIRECT INPUT FROM USER 
 // AND
@@ -721,7 +722,12 @@ if (counter < 0 ){
     
     
     // Sends info back to ESP
-    sendcoords(current_x, current_y,current_angle);
+    unsigned long now = millis();
+    if (now - lastMsg > 200) {
+      lastMsg = now;
+      sendcoords(current_x, current_y,current_angle);
+    }
+    
     
     sumchanged = 0;
     anglechanged = 0;

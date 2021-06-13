@@ -78,7 +78,7 @@ const char* ca_cert = \
 
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
-long lastMsg = 0;
+long lastMsg = 0; // Timer for sending coords
 char buffer[30]; // buffer for messages sent by ESP32
 
 // LED Pin
@@ -247,6 +247,49 @@ void reconnect() {
 
 void loop() {
 
+  // ************** UART STUFF *****************
+  // Receiving stuff from drive
+  if (Serial1.available()) {
+  received_char = Serial1.read();
+  // Receives packet from drive
+  if (received_char == '<') {
+    while (Serial1.available() && received_char != '>') {
+      received_char = Serial1.read();
+      char bufX[6];
+      char bufY[6];
+      char bufA[4];
+      int i = 0;
+      while (Serial1.available() && received_char != ',') {
+        bufX[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufX[i] = '\0';
+      String x(bufX);
+      rover.coords.first = x.toInt();
+      
+      if (Serial1.available()) received_char = Serial1.read(); // Consume ','
+      i = 0;
+      while (Serial1.available() && received_char != ',') {
+        bufY[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufY[i] = '\0';
+      String y(bufY);
+      rover.coords.second = y.toInt();
+
+      if (Serial1.available()) received_char = Serial1.read(); // Consume ','
+      i = 0;
+      while (Serial1.available() && received_char != '>') {
+        bufA[i++] = received_char;
+        received_char = Serial1.read();
+      }
+      bufA[i] = '\0';
+      String a(bufA);
+      rover.angle = a.toInt();
+    }
+  }
+}
+
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
   if (rover.mode == 'E') { 
@@ -330,9 +373,14 @@ void loop() {
 
   // Updates server with rover coords
   /*
-  genCoordMsg(buffer);
-  client.publish("fromESP32/rover_coords", buffer, false);
+  long now = millis();
+  if (now - lastMsg > 200) {
+    lastMsg = now;
+    genCoordMsg(buffer);
+    client.publish("fromESP32/rover_coords", buffer, false);
+  }
   */
+
   // Sends test message every 2 seconds
   /*
   long now = millis();
