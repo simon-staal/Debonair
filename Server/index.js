@@ -201,12 +201,10 @@ client.on('message', (topic, message, packet) => {
 		vals.push(end-start);
 		i += 1;
 		console.log("Time taken = " + (end-start) + "ms");
-		if (i === 500) {
+		if (i === 20) {
 			console.log("Average for " + i +"iterations = " + (total/i) + "ms");
 			console.log(vals);
-			let csvContent = "data:text/csv;charset=utf-8," + vals.map(e => e.join(",")).join("\n");
-			var encodedUri = encodeURI(csvContent);
-			window.open(encodedUri);
+			console.log(vals.toString());
 		}
 	}
 	if (topic === "fromESP32/status") {
