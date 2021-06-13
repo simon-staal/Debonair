@@ -158,7 +158,7 @@ function sendTest() {
 				start = Date.now();
 				publish('toESP32/testa','a');
 				//publish('toESP32/dir', 'a');
-    			},1000);
+    			},500);
 	}, 1000);
 }
 
@@ -203,7 +203,8 @@ client.on('message', (topic, message, packet) => {
 		console.log("Time taken = " + (end-start) + "ms");
 		if (i === 500) {
 			console.log("Average for " + i +"iterations = " + (total/i) + "ms");
-			let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+			console.log(vals);
+			let csvContent = "data:text/csv;charset=utf-8," + vals.map(e => e.join(",")).join("\n");
 			var encodedUri = encodeURI(csvContent);
 			window.open(encodedUri);
 		}
