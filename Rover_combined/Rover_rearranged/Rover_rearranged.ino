@@ -187,6 +187,7 @@ float alpha2 = 0;
 float previous_O_to_coord = 0;
 bool reached_angle = 0;
 bool new_coordinates = 1;
+
 //************************ Function declarations *********************//
 int convTwosComp(int b);
 void mousecam_reset();
@@ -227,7 +228,7 @@ void goForwards();
 float pidDistance(float pidDistance_input);
 void F_B_PIcontroller(int sensor_total_y, int target);
 void Turn_PIcontroller(float desired_angle, float measuring_angle);
-void sendcoords(char *buf);
+void sendcoords(int x_coord_send, int y_coord_send, float angle_send);
 void sendflag();
 
 //*************************** Setup ****************************//
@@ -587,7 +588,7 @@ if(mode == 'C'){
      //target_y = 0;
      
     //SEND angle_now, x_now ang y_now TO ESP32 - Control 
-     sendcoords(buf);     
+     sendcoords(x_now, y_now, angle_now);     
      
      new_coordinates = true;
      angle_flag = false;
@@ -674,7 +675,6 @@ if(mode == 'C'){
         //do not rotate - no angle difference between current coordinates and destination coordinates
         Serial.println("target_x has the same x coord. than the current x coord.");
         goForwards();
-        Serial.println("HIIIIIIIIIIIII");
         sumdist = sumdist + dy_mm;
       }else{
         Serial.println("Invalid coordinate has been provided given the path finding algorithm");
@@ -695,59 +695,11 @@ if(mode == 'C'){
      Serial.println("(total_y - coord_after_rotation) - (Distance) = " + String((total_y - coord_after_rotation) - (Distance)));
  }
 
-
 // digitalWrite(DIRR, DIRRstate);
 // digitalWrite(DIRL, DIRLstate);
 }
 
 //********************************************************
-    
-/*
- * COORDINATE MODE WITH 90° timed FIXED ROTATIONS
-   if((ydone1==1) && (xdone==1)){
-      done = 1;
-      stop_Rover();
-      rover_stopped=1;
-      Serial.println("ROVER STOPPED");
-    }
-  if(!halted){
-    if(finished_turning==false){
-      Serial.println("going to target y");
-      go_forwards(target_y, total_y);
-      if(abs(-target_y + total_y) <= 5){
-      ydone1=1;
-      Serial.println("ydone1="); Serial.print(ydone1);
-      Serial.print("\n");}
-    } 
-    if(finished_turning==true && ydone1==1 && reached_x_position==0 && rover_stopped!=1){
-      //Serial.println(abs(target_x + total_y));
-      Serial.println("going to target x");
-      go_forwards((y_after_rotation + target_x), total_y); 
-      
-      // The sensor perceives as the y-direction wherever the front of the rover points.
-      // After the rotation has finished, to reach target_x, the y position must be taken into account 
-     if(abs(-(y_after_rotation + target_x) + total_y) <= 5){
-      Serial.println("Rover reached the x coordinate");
-      xdone=1;
-      reached_x_position=1;
-      Serial.println("xdone="); Serial.print(xdone);
-      }
-    }
-  }
-  if(halted && !done)
-  {
-    if((abs(-(y_after_rotation + target_x) + total_y) <= 5) && ydone1==1){
-      xdone=1;
-      ydone1=1;
-      stop_Rover();
-      Serial.print("\n");
-      Serial.println("Reached the coordinates while rotating");
-    }else{
-      Serial.println("rotating");
-      // turn 90 to work on other direction
-      turn_90left(haltTime);}
-   }
-  */
 
 if (dir != change_char){
   change_char = dir;    // keeps track of the current command
@@ -769,7 +721,7 @@ if (counter < 0 ){
     
     
     // Sends info back to ESP
-    //sendcoords();
+    sendcoords(current_x, current_y,current_angle);
     
     sumchanged = 0;
     anglechanged = 0;
@@ -1238,24 +1190,28 @@ float toDegrees(float angleRadians){
     digitalWrite(DIRL, DIRLstate);   
     }
 
-void sendcoords(char *buf){
-  
+void sendcoords(int x_coord_send, int y_coord_send, float angle_send){
+
+  char buf[18];
   buf[0] = '<';
   int cur = 1;
   char num[6];
-  sprintf(num, "%d", x_now);
+  String(x_coord_send).toCharArray(num,6);
+  //sprintf(num, "%d", x_coord_send);
   int cnt = 0;
   while(num[cnt]){
     buf[cur++] = num[cnt++];
   }
   buf[cur++] = ',';
-  sprintf(num, "%d", y_now);
+  //sprintf(num, "%d", y_coord_send);
+  String(y_coord_send).toCharArray(num,6);
   cnt = 0;
   while(num[cnt]){
     buf[cur++] = num[cnt++];
   }
   buf[cur++] = ',';
-  sprintf(num, "%d", angle_now);
+  //sprintf(num, "%d", angle_send);
+  String(angle_send).toCharArray(num,6);
   cnt = 0;
   while(num[cnt]){
     buf[cur++] = num[cnt++];
@@ -1266,14 +1222,14 @@ void sendcoords(char *buf){
 
   for(int i = 0; buf[i] != '\0'; i++){
 
-   // Serial1.print() = buf[i];
+    Serial1.println(buf[i]);
 
   }
 }
 
 void sendflag(){
 
-//  Serial1.print() = 'P';
+  //Serial1.println('P');
 }
 
 /*end of the program.*/
