@@ -271,7 +271,8 @@ app.get("/obstacles", (req,res) => {
 		'pink': [obstacles.pink.x, obstacles.pink.y], //pink XY coords
 		'green': [obstacles.green.x, obstacles.green.y], //green XY coords
 		'blue': [obstacles.blue.x, obstacles.blue.y], //blue XY coords
-		'orange': [obstacles.orange.x, obstacles.orange.y] //orange XY coords
+		'orange': [obstacles.orange.x, obstacles.orange.y], //orange XY coords
+		'black': [obstacles.black.x, obstacles.black.y]
 	};
 	//console.log(JSON.stringify(response));
 	res.send(response);

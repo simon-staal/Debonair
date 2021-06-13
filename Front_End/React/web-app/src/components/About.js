@@ -19,6 +19,16 @@ function About(){
         document.getElementById('orangeballcoord').style.display="none";
         document.getElementById('blueballcoord').style.display="none";
         document.getElementById('blackballcoord').style.display="none";
+        document.getElementById(0).style.display="none"; 
+        document.getElementById(1).style.display="none"; 
+        document.getElementById(2).style.display="none"; 
+        document.getElementById(3).style.display="none"; 
+        document.getElementById(4).style.display="none"; 
+        document.getElementById(5).style.display="none"; 
+        document.getElementById(6).style.display="none"; 
+        document.getElementById(7).style.display="none"; 
+        document.getElementById(8).style.display="none"; 
+        
       }
 
     return(

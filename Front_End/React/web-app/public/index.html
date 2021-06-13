@@ -77,15 +77,15 @@ clearTimeout(my_time);
 document.getElementById('i1').style.left= "820px";
 document.getElementById('i1').style.top= "410px";
 document.getElementById('pinkball').style.top= "200px";
-document.getElementById('pinkball').style.left= "1170px";
+document.getElementById('pinkball').style.left= "1175px";
 document.getElementById('greenball').style.top= "250px";
-document.getElementById('greenball').style.left= "1170px";
+document.getElementById('greenball').style.left= "1175px";
 document.getElementById('blueball').style.top= "295px";
-document.getElementById('blueball').style.left= "1163px";
+document.getElementById('blueball').style.left= "1170px";
 document.getElementById('orangeball').style.top= "345px";
-document.getElementById('orangeball').style.left= "1167px";
+document.getElementById('orangeball').style.left= "1172px";
 document.getElementById('blackball').style.top= "378px";
-document.getElementById('blackball').style.left= "1153px";
+document.getElementById('blackball').style.left= "1161px";
 document.getElementById("msg").innerHTML="";
 document.getElementById("pinkballcoord").innerHTML="";
 document.getElementById("greenballcoord").innerHTML="";
@@ -132,11 +132,12 @@ document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy
 }
 
 //////////////////////
-var pinkx_res, pinky_res, greenx_res, greeny_res, bluex_res, bluey_res,orangex_res, orangey_res;
+var pinkx_res, pinky_res, greenx_res, greeny_res, bluex_res, bluey_res,orangex_res, orangey_res, blackx_res, blacky_res;
 
 function dispball(){
   axios.get('https://debonair.duckdns.org:8443/obstacles')
   .then(response=>{
+    console.log(JSON.stringify(response.data));
     pinkx_res = response.data.pink[0];
     pinky_res = response.data.pink[1];
     greenx_res = response.data.green[0];
@@ -147,46 +148,47 @@ function dispball(){
     orangey_res = response.data.orange[1];
     blackx_res = response.data.black[0];
     blacky_res = response.data.black[1];
-    console.log(JSON.stringify(response.data));
+    
   })
-  .then(()=>{
-  
+   .then(()=>{
+
     if(pinkx !== pinkx_res ){
     pinkx=pinkx_res;
     pinky=pinky_res;
-    document.getElementById('pinkball').style.left= 835+pinkx*300/1000 + "px"; //updates position of pink ball
-    document.getElementById('pinkball').style.top= 429-pinky*300/1000 + "px";    
+    document.getElementById('pinkball').style.left= 840+pinkx*300/1000 + "px"; //updates position of pink ball
+    document.getElementById('pinkball').style.top= 435-pinky*300/1000 + "px";    
     document.getElementById("pinkballcoord").innerHTML="{PinkBall} X: " + pinkx + " Y : " + pinky // displays to user coordinates of the pink obstacle
    
   }
    if(greenx !== greenx_res){
      greenx=greenx_res;
      greeny=greeny_res;
-    document.getElementById('greenball').style.left= 835+greenx*300/1000 + "px"; //updates position of green ball
-    document.getElementById('greenball').style.top= 427-greeny*300/1000 + "px";    
+    document.getElementById('greenball').style.left= 840+greenx*300/1000 + "px"; //updates position of green ball
+    document.getElementById('greenball').style.top= 435-greeny*300/1000 + "px";    
     document.getElementById("greenballcoord").innerHTML="{GreenBall} X: " + greenx + " Y : " + greeny // displays to user coordinates of the green obstacle
   }
   if(bluex !== bluex_res){
     bluex=bluex_res;
     bluey=bluey_res;
-    document.getElementById('blueball').style.left= 827+bluex*300/1000 + "px"; //updates position of blue
-    document.getElementById('blueball').style.top= 427-bluey*300/1000+ "px";    
+    document.getElementById('blueball').style.left= 835+bluex*300/1000 + "px"; //updates position of blue
+    document.getElementById('blueball').style.top= 432-bluey*300/1000+ "px";    
     document.getElementById("blueballcoord").innerHTML="{BlueBall} X: " + bluex + " Y : " + bluey // displays to user coordinates of the blue obstacle
   }
   if(orangex !== orangex_res){
     orangex=orangex_res;
     orangey=orangey_res;
-    document.getElementById('orangeball').style.left= 833+orangex*300/1000 + "px"; //updates position of orange ball
-    document.getElementById('orangeball').style.top= 426-orangey*300/1000 + "px";    
+    document.getElementById('orangeball').style.left= 838+orangex*300/1000 + "px"; //updates position of orange ball
+    document.getElementById('orangeball').style.top= 432-orangey*300/1000 + "px";    
     document.getElementById("orangeballcoord").innerHTML="{OrangeBall} X: " + orangex + " Y : " + orangey // displays to user coordinates of the orange obstacle
   }
   if(blackx !== blackx_res){
     blackx=blackx_res;
     blacky=blacky_res;
-    document.getElementById('blackball').style.left= 818+blackx*300/1000 + "px"; //updates position of orange ball
-    document.getElementById('blackball').style.top= 413-blacky*300/1000 + "px";    
+    document.getElementById('blackball').style.left= 828+blackx*300/1000 + "px"; //updates position of orange ball
+    document.getElementById('blackball').style.top= 423-blacky*300/1000 + "px";    
     document.getElementById("blackballcoord").innerHTML="{BlackBall} X: " + blackx + " Y : " + blacky // displays to user coordinates of the orange obstacle
   }
+
   })
   //axios with flag and if flag triggered, request ball position
   // check if x is equal to the original x => if different update position, else do nothing.  
@@ -217,12 +219,20 @@ my_time=setTimeout('timer()',100);
     <div id='blackballcoord' style="position:absolute; margin-left:20px;margin-top:200px;"></div>
     
    
-    <img src=./images/pinkball.png  id=pinkball style="position: absolute; width:30px;height:30px; top:200px; left:1170px; z-index: 1;">
-    <img src=./images/greenball.png  id=greenball style="position: absolute; width:30px;height:30px; top:250px; left:1170px; z-index: 1;">
-    <img src=./images/blueball.png  id=blueball style="position: absolute; width:45px;height:35px; top:295px; left:1163px; z-index: 1;">
-    <img src=./images/orangeball.png  id=orangeball style="position: absolute; width:36px;height:36px; top:345px; left:1167px; z-index: 1;">
-    <img src=./images/blackball.png  id=blackball style="position: absolute; width:65px;height:65px; top:378px; left:1153px; z-index: 1;">
-    
+    <img src=./images/pinkball.png  id=pinkball style="position: absolute; width:20px;height:20px; top:200px; left:1175px; z-index: 1;">
+    <img src=./images/greenball.png  id=greenball style="position: absolute; width:20px;height:20px; top:250px; left:1175px; z-index: 1;">
+    <img src=./images/blueball.png  id=blueball style="position: absolute; width:28px;height:23px; top:295px; left:1170px; z-index: 1;">
+    <img src=./images/orangeball.png  id=orangeball style="position: absolute; width:24px;height:24px; top:345px; left:1172px; z-index: 1;">
+    <img src=./images/blackball.png  id=blackball style="position: absolute; width:45px;height:45px; top:378px; left:1161px; z-index: 1;">
+    <div className="0"><img src=./images/dot.png alt="point"  id="0" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"> </div>
+    <div className="1"><img src=./images/dot.png alt="point"  id="1" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="2"><img src=./images/dot.png alt="point" id="2" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="3"><img src=./images/dot.png alt="point" id="3" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="4"><img src=./images/dot.png alt="point" id="4" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="5"><img src=./images/dot.png alt="point" id="5" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="6"><img src=./images/dot.png alt="point" id="6" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="7"><img src=./images/dot.png alt="point" id="7" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
+    <div className="8"><img src=./images/dot.png alt="point" id="8" style="position:absolute;display:none; width:50px; height:50px;left:825px; top:420px"/> </div>
     
     
 
