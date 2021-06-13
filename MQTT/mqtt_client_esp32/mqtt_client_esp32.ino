@@ -249,55 +249,73 @@ void loop() {
 
   // ************** UART STUFF *****************
   // Receiving stuff from drive
+  int extract = 0;
   if (Serial2.available()) {
+    char received_char = Serial2.read();
+    Serial.println(received_char);
+    if (received_char == '<') {
+      String x = Serial2.readStringUntil(',');
+      rover.coords.first = x.toInt();
+      String y = Serial2.readStringUntil(',');
+      rover.coords.second = y.toInt();
+      String a = Serial2.readStringUntil('>');
+      rover.angle = a.toInt();
+      Serial.println("Received: x = "+x+", y = "+y+", a = "+a);
+    }
+  }
+  /*
+  while (Serial2.available() && extract < 3) {
+    //Serial.println("Should receive package from drive");
     char received_char = Serial2.read();
     // Receives packet from drive
     if (received_char == '<') {
-      while (Serial2.available() && received_char != '>') {
+      Serial.println("Start of packet");
+      String x;
+      if (Serial2.available()) {
         received_char = Serial2.read();
-        char bufX[6];
-        char bufY[6];
-        char bufA[4];
-        int i = 0;
-        while (Serial2.available() && received_char != ',') {
-          bufX[i++] = received_char;
-          received_char = Serial2.read();
-        }
-        bufX[i] = '\0';
-        String x(bufX);
-        rover.coords.first = x.toInt();
-        
-        if (Serial2.available()) received_char = Serial2.read(); // Consume ','
-        i = 0;
-        while (Serial2.available() && received_char != ',') {
-          bufY[i++] = received_char;
-          received_char = Serial2.read();
-        }
-        bufY[i] = '\0';
-        String y(bufY);
-        rover.coords.second = y.toInt();
-
-        if (Serial2.available()) received_char = Serial2.read(); // Consume ','
-        i = 0;
-        while (Serial2.available() && received_char != '>') {
-          bufA[i++] = received_char;
-          received_char = Serial2.read();
-        }
-        bufA[i] = '\0';
-        String a(bufA);
-        rover.angle = a.toInt();
-
-        // Debugging
-        Serial.print("Received from drive: x=");
-        Serial.print(x);
-        Serial.print(", y=");
-        Serial.print(y);
-        Serial.print(", angle=");
-        Serial.println(a);
       }
+      else {
+        Serial.println("ERROR: COULDN'T READ X");
+      }
+      while (Serial2.available() && received_char != ',') {
+        x += received_char;
+        received_char = Serial2.read();
+      }
+      rover.coords.first = x.toInt();
+      String y;
+      if (Serial2.available()) {
+        received_char = Serial2.read();
+      }
+      else{
+        Serial.println("ERROR: COULDN'T READ Y");
+      }
+      while (Serial2.available() && received_char != ',') {
+        y += received_char;
+        received_char = Serial2.read();
+      }
+      rover.coords.second = y.toInt();
+      String angle;
+      if (Serial2.available()) {
+        received_char = Serial2.read();
+      }
+      else{
+        Serial.println("ERROR: COULDN'T READ ANGLE");
+      }
+      while (Serial2.available() && received_char != '>') {
+        angle += received_char;
+        received_char = Serial2.read();
+      }
+      rover.angle = angle.toInt();
+      // Debugging
+      Serial.print("Received from drive: x=");
+      Serial.print(x);
+      Serial.print(", y=");
+      Serial.print(y);
+      Serial.print(", angle=");
+      Serial.println(angle);
     }
   }
-
+  */
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
   if (rover.mode == 'E') { 

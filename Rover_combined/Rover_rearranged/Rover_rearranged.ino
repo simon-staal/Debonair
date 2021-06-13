@@ -1151,7 +1151,7 @@ void sendcoords(int x_coord_send, int y_coord_send, float angle_send){
   toESP += ',';
   toESP += String(y_coord_send);
   toESP += ',';
-  toESP += String(angle_send);
+  toESP += String((int)angle_send);
   toESP += '>';
   Serial1.print(toESP);
   Serial.println("Sending: "+toESP);
