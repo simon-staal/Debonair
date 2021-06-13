@@ -101,8 +101,20 @@ end
 
 
 always @(posedge clk)begin
-	if(value_spi == 100 && data_received)begin
+	if(value_spi == 1 && data_received)begin
 		red_f = 1;
+	end
+	if(value_spi == 4 && data_received)begin
+		yellow_f = 1;
+	end
+	if(value_spi == 1 && data_received)begin
+		green_f = 1;
+	end
+	if(value_spi == 1 && data_received)begin
+		blue_f = 1;
+	end
+	if(value_spi == 1 && data_received)begin
+		grey_f = 1;
 	end
 end
 
@@ -127,15 +139,27 @@ reg prev_detect_high_r, prev_high_r, prev_high_r2;
 reg prev_detect_high_y, prev_high_y, prev_high_y2;
 reg prev_detect_high_g, prev_high_g, prev_high_g2;
 reg prev_detect_high_b, prev_high_b, prev_high_b2;
+reg prev_detect_high_grey, prev_high_grey, prev_high_grey2;
+
 wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, blue_ball_detect;	
-assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 7 && hue >= 0)) && (saturation > 84 && value > 245))||
-(hue <= 7 && hue >= 0 && ((value > 229 && saturation > 17 && saturation < 155)||(value > 210 && saturation > 130)))
+assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 6 && hue >= 0)) && (saturation > 84 && value > 245))||
+(hue <= 6 && hue >= 0 && ((value > 229 && saturation > 17 && saturation < 155)||(value > 210 && saturation > 130)))
 || ((hue >= 160 && hue <= 180) && ((saturation >= 76 && value >= 249) || (saturation >= 102 && value >= 140)))
 || (((hue >= 160 && hue <= 180)||(hue >= 0 && hue <= 4)) && (saturation > 140 && saturation <= 179 && value >= 61 && value <= 89)) 
-||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 7)) && ((value >  86 && saturation > 102) || (saturation > 82 && value > 168)))); //sat > 102
+||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 6)) && ((value >  86 && saturation > 102) || (saturation > 82 && value > 168)))); //sat > 102
+
 assign orange_ball_detect = (((hue >= 16 && hue <=25) && (saturation > 133 && value > 78)) || ((hue >= 23 && hue <= 30) && ((value > 155 && saturation > 127)||(saturation >= 153 && value > 252)||(value > 42 && saturation > 247))));
-assign green_ball_detect = (((hue >= 50 && hue <= 75) && (saturation > 105 && value > 60)) || ((hue >= 50 && hue <= 75) && ( (saturation > 127 && value > 175))));
-//assign blue_ball_detect = (hue >= 75 && hue <= 91 && saturation >= 56 && saturation <= 105 && value >= 252)||
+assign green_ball_detect = (((hue >= 50 && hue <= 75) && (saturation > 105 && value >= 75)) || ((hue >= 50 && hue <= 75) && ((saturation > 127 && value > 173))));
+/*
+assign blue_ball_detect = (hue >= 75 && hue <= 95 && ((saturation >= 63 && saturation <= 112 && value >= 130)||(saturation >= 63 && saturation <= 140 && value >= 58 && value <= 125)))
+|| ((hue >= 87 && hue <= 104) && ((saturation >= 90 && saturation <= 146 && value >= 91 && value <= 170) || (saturation >= 127 && saturation <= 178 && value >= 63 && value <= 89)))
+|| ((hue >= 62 && hue <= 75 && saturation >= 40 && saturation <= 89 && value <= 102 && value >= 114));
+*/
+assign blue_ball_detect = (hue >= 75 && hue <= 95 && ((saturation >= 63 && saturation <= 112 && value >= 130)||(saturation >= 63 && saturation <= 140 && value >= 58 && value <= 135)))
+|| ((hue >= 84 && hue <= 104) && ((saturation >= 43 && saturation <= 94 && value >= 105 && value <=127) || (saturation >= 90 && saturation <= 146 && value >= 91 && value <= 170) || (saturation >= 127 && saturation <= 178 && value >= 63 && value <= 89)))
+|| ((hue >= 62 && hue <= 75 && saturation >= 40 && saturation <= 89 && value <= 102 && value >= 114));
+
+assign grey_ball_detect = (value <= 38 && x > 10 && x < IMAGE_W-10 && y > 10 && y < IMAGE_H - 10);
 //(hue >= 75 && hue <= 102 && ((saturation >= 71 && value >= 90 && value <=210 && saturation <= 178)));
 
 
@@ -160,6 +184,9 @@ initial begin
 	prev_detect_high_b <= 0;
 	prev_high_b <= 0;
 	prev_high_b2 <= 0;
+	prev_detect_high_grey <= 0;
+	prev_high_grey <= 0;
+	prev_high_grey2 <= 0;
 end
 
 always@(negedge clk) begin
@@ -176,6 +203,10 @@ always@(negedge clk) begin
 	prev_high_b2 = prev_high_b;
 	prev_high_b = prev_detect_high_b;
 	prev_detect_high_b = (blue_ball_detect);
+	prev_high_grey2 = prev_high_grey;
+	prev_high_grey = prev_detect_high_grey;
+	prev_detect_high_grey = (grey_ball_detect);
+	
 end
 
 // Highlight detected areas
@@ -185,7 +216,7 @@ assign color_high  =  (pink_ball_detect && prev_detect_high_r && prev_high_r && 
 	: ((green_ball_detect && prev_detect_high_g && prev_high_g)? {8'h04,8'hbd,8'h42} 
 	: ((orange_ball_detect && prev_detect_high_y && prev_high_y && prev_high_y2)? {8'hea,8'h9e,8'h1b} 
 	: ((blue_ball_detect && prev_detect_high_b && prev_high_b && prev_high_b2) ? {8'h0,8'h0,8'hff}
-	: ((grey_ball_detect) ? {8'h0,8'h0,8'h0}
+	: ((grey_ball_detect && prev_detect_high_grey && prev_high_grey && prev_high_grey2) ? {8'h97,8'hff,8'hff}
 	: {grey,grey,grey})) )) ;
 
 // Show bounding box
@@ -209,10 +240,15 @@ wire bb_active_b;
 assign bb_active_b = (x == left_b && left_b != IMAGE_W-11'h1) | (x == right_b && right_b != 0);
 assign new_image_b = bb_active_b ? {24'h0000ff} : new_image_g;
 
+wire [23:0] new_image_grey;
+wire bb_active_grey;
+assign bb_active_grey = (x == left_grey && left_grey != IMAGE_W-11'h1) | (x == right_grey && right_grey != 0);
+assign new_image_grey = bb_active_grey ? {24'h000000} : new_image_b;
+
 // Switch output pixels depending on mode switch
 // Don't modify the start-of-packet word - it's a packet discriptor
 // Don't modify data in non-video packets
-assign {red_out, green_out, blue_out} = (mode & ~sop & packet_video) ? new_image_b : {red,green,blue};
+assign {red_out, green_out, blue_out} = (mode & ~sop & packet_video) ? new_image_grey : {red,green,blue};
 
 //Count valid pixels to tget the image coordinates. Reset and detect packet type on Start of Packet.
 reg [10:0] x, y;
@@ -235,8 +271,8 @@ always@(posedge clk) begin
 end
 
 //Find first and last red pixels
-reg [10:0] x_min_r, x_max_r, x_min_y, x_max_y, x_min_g, x_max_g, x_min_b, x_max_b;
-wire [10:0] x_dist_r, x_dist_y, x_dist_g, x_dist_b;
+reg [10:0] x_min_r, x_max_r, x_min_y, x_max_y, x_min_g, x_max_g, x_min_b, x_max_b, x_min_grey, x_max_grey;
+wire [10:0] x_dist_r, x_dist_y, x_dist_g, x_dist_b, x_dist_grey;
 
 reg	data_drive_mux;
 
@@ -352,9 +388,40 @@ always@(posedge clk)begin
 				data_drive_mux <= 1;
 			end
 		end
+		else if ((distance_b != 0) &&((distance_b < distance_r) || (distance_r == 0)) && ((distance_b < distance_y) || (distance_y == 0)) && ((distance_b < distance_g) || (distance_g == 0)) && msg_state == 3)begin //green ball nearests
+			if(x_min_b > 320)begin //case: if x_min is greater than the middle pixel
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if(x_max_b < 320) begin//case if x_max is smaller than the middle pixel
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (distance_b > 30) begin //if the red ping pong ball is too far
+				drive_instr <= {16'b0100000000000000}; //move the drone forward
+				data_drive_mux <= 0;
+			end
+			else if (distance_b < 26) begin //if the red ping pong ball is too near
+				drive_instr <= {16'b0010000000000000}; //move the drone backward
+				data_drive_mux <= 0;
+			end
+			else if (((320-x_min_b) > (x_max_b - 320)) && (((320-x_min_b) - (x_max_b - 320)) > 100))begin //if the image is more to the left 
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (((x_max_b - 320) > (320 - x_min_b)) && (((x_max_b - 320) - (320-x_min_b)) > 100))begin //if the image is more to the right
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else begin //send distance measurement as long as it's within 20cm to 25cm
+				data_value <= {1'b1,distance_b[4:0],3'b011,7'h0}; //send the distance + ball colour
+				data_drive_mux <= 1;
+			end
+		end
+		
 		/*
 		else if ((distance_b < distance_r) && (distance_b < distance_g) && (distance_b < distance_y) && msg_state == 3) begin //blue ball nearest
-		
+		else if ((distance_g != 0) &&((distance_g < distance_r) || (distance_r == 0)) && ((distance_g < distance_y) || (distance_y == 0)) && ((distance_g < distance_b) || (distance_b == 0)) && msg_state == 3)begin
 		end
 		*/
 		
@@ -396,6 +463,10 @@ always@(posedge clk) begin
 		if (x < x_min_b) x_min_b <= x;
 		if (x > x_max_b) x_max_b <= x;
 	end
+	if ((grey_ball_detect && prev_detect_high_grey && prev_high_grey && prev_high_grey2) & in_valid) begin
+		if (x < x_min_grey) x_min_grey <= x;
+		if (x > x_max_grey) x_max_grey <= x;
+	end
 	if (sop & in_valid) begin	//Reset bounds on start of packet
 		x_min_r <= IMAGE_W-11'h1;
 		x_max_r <= 0;
@@ -405,12 +476,15 @@ always@(posedge clk) begin
 		x_max_g <= 0;
 		x_min_b <= IMAGE_W-11'h1;
 		x_max_b <= 0;
+		x_min_grey <= IMAGE_W-11'h1;
+		x_max_grey <= 0;
+		
 	end
 end
 
 //Process bounding box at the end of the frame.
 reg [1:0] msg_state;
-reg [10:0] left_r, right_r, left_y, right_y, left_g, right_g, left_b, right_b;
+reg [10:0] left_r, right_r, left_y, right_y, left_g, right_g, left_b, right_b, left_grey, right_grey;
 reg [7:0] frame_count;
 always@(posedge clk) begin
 	if (eop & in_valid & packet_video) begin  //Ignore non-video packets
@@ -424,7 +498,8 @@ always@(posedge clk) begin
 		right_g <= x_max_g;
 		left_b <= x_min_b;
 		right_b <= x_max_b;
-		
+		left_grey <= x_min_grey;
+		right_grey <= x_max_grey;
 		
 		//Start message writer FSM once every MSG_INTERVAL frames, if there is room in the FIFO
 		frame_count <= frame_count - 1;
@@ -447,7 +522,7 @@ reg msg_buf_wr;
 wire msg_buf_rd, msg_buf_flush;
 wire [7:0] msg_buf_size;
 wire msg_buf_empty;
-reg [31:0] distance_r, distance_y, distance_g, distance_b;
+reg [31:0] distance_r, distance_y, distance_g, distance_b, distance_grey;
 `define RED_BOX_MSG_ID "RBB"
 
 wire[6:0] ratio1,ratio2;
@@ -484,7 +559,12 @@ always @(posedge clk)begin
 	else begin
 		distance_b = 0;
 	end
-	
+	if (x_min_grey != IMAGE_W-11'h1 && x_max_grey != 0 && !grey_f) begin
+		distance_grey = (x_dist_grey < 97) ? ((constan * ratio1)/ratio2/x_dist_grey) / 10: ((((constan - (((x_dist_grey - 97) * 5)/16))* ratio1)/ratio2)/x_dist_grey) / 10;
+	end
+	else begin
+		distance_grey = 0;
+	end
 
 end
 //((732 * (79/20))/147) =19.66 ish 19
