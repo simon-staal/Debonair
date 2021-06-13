@@ -186,7 +186,6 @@ float Distance = 0;
 float alpha2 = 0;
 float previous_O_to_coord = 0;
 bool reached_angle = 0;
-bool new_coordinates = 1;
 
 //************************ Function declarations *********************//
 int convTwosComp(int b);
@@ -331,6 +330,7 @@ if (Serial1.available()) {
       bufY[i] = '\0';
       String y(bufY);
       destinationY = y.toInt();
+      new_coordinates = 1;
     }
   }
 }
@@ -525,77 +525,67 @@ Serial.println("mode = "+ String(mode));
 
 //**************************************************************************
 // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
-int target_x = 0;
-int target_y = 0;
 
 if(mode == 'C'){
-  new_coordinates = 1;
+  
   stop_Rover();
- Serial.println("new_coordinates = " + String(new_coordinates));
-  if(new_coordinates == true){
-   target_x = destinationX;
-   target_y = destinationY;
-   new_coordinates = false;
-   Serial.println("New Coordinates set");
-   Serial.println("new_coordinates = " + String(new_coordinates));
-   }
+ //Serial.println("new_coordinates = " + String(new_coordinates));
+ 
 //delay (1000);
- Serial.println("target_x = " + String(target_x));
- Serial.println("target_y = " + String(target_y));
+ Serial.println("destinationX = " + String(destinationX));
+ Serial.println("destinationY = " + String(destinationY));
   // Coordinates are provided by the ESP32 from Command
   // here they are just manually set - for now
   
-  //int target_y = 100;
-  //int target_x = 200;
+  //int destinationY = 100;
+  //int destinationX = 200;
 
-  if(target_y == 0 && target_x == 0){
-      stop_Rover();}
+  if(destinationY == 0 && destinationX == 0){
+      stop_Rover();
+      }
 
-    O_to_coord = sqrt(pow(target_y,2) + pow(target_x,2));
-    Distance = sqrt(pow(target_y-y_now,2) + pow(target_x-x_now,2));
+    O_to_coord = sqrt(pow(destinationY,2) + pow(destinationX,2));
+    Distance = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2));
     measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
     alpha2 = toDegrees(asin(measuredDistance/(2*r))) * 4 ; 
     alphaSummed = (alphaSummed + alpha2);
     angle = alphaSummed;
 
-
-    Serial.println("Distance = " + String(Distance));
-    Serial.println("x_now = " + String(x_now));
-    Serial.println("y_now = " + String(y_now));
-
     if(x_now == 0 && y_now == 0){
-      beta = 90 - toDegrees((acos(target_x/O_to_coord))); // I need the complementary angle.
+      beta = 90 - toDegrees((acos(destinationX/O_to_coord))); // I need the complementary angle.
     }else{
       gamma = acos((pow(Distance,2) + pow(previous_O_to_coord,2) - pow(O_to_coord,2))/(2 * O_to_coord * previous_O_to_coord));
       beta = 180 - toDegrees(gamma);
       }
 
+    Serial.println("Distance = " + String(Distance));
+    Serial.println("x_now = " + String(x_now));
+    Serial.println("y_now = " + String(y_now));
+    Serial.println("beta = " + String(beta));
+    Serial.println("alphaSummed = " + String(alphaSummed));
 
-  if(angle_flag == true && halted){ //&& target_flag == true){   // if both the right angle and right distance have been achieved 
+  if(angle_flag == true && halted){    // if both the right angle and right distance have been achieved 
      stop_Rover();
      //pwm_modulate(0);
      alphaSummed = 0;
      stopped_rover = true;
-     //x_now = target_x; //saving coordinates before receiving a new pair of coordinates
-     //y_now = target_y;
+     //x_now = destinationX; //saving coordinates before receiving a new pair of coordinates
+     //y_now = destinationY;
      x_now = O_to_coord_measured*sin(dummy_angle);
      y_now = O_to_coord_measured*cos(dummy_angle);
      angle_now = dummy_angle;  //saving dummy_angle before computing new one
      previous_O_to_coord = O_to_coord;
      // total_y = y_now;
      // total_x = x_now;
-     //target_x = 0;
-     //target_y = 0;
      
     //SEND angle_now, x_now ang y_now TO ESP32 - Control 
      sendcoords(x_now, y_now, angle_now);     
-     
-     new_coordinates = true;
+    
      angle_flag = false;
      halted = false;
-     
      // tell Control that destination is reached -> code lower down
-     
+     target_flag = false;
+     alphaSummed = 0;
      Serial.println("Rover has reached the Destination coordinates YAY!");
      Serial.println("x_now = " + String(x_now));
      Serial.println("y_now = " + String(y_now));
@@ -616,64 +606,64 @@ if(mode == 'C'){
      Serial.println("beta = " + String(beta));
 
      if(x_now == 0 && y_now == 0){    //for the case when starting from origin
-      if((target_x > x_now)){   
-        Serial.println("target_x has a greater x coord. than the current x coord.");
+      if((destinationX > x_now)){   
+        Serial.println("destinationX has a greater x coord. than the current x coord.");
         // pwm_modulate(0.25);
         //goRight();
         DIRRstate = HIGH;
         DIRLstate = HIGH;   
         digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
         digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
-      }else if((target_x < x_now)){
-        Serial.println("target_x has a smaller x coord. than the current x coord.");
+      }else if((destinationX < x_now)){
+        Serial.println("destinationX has a smaller x coord. than the current x coord.");
         //pwm_modulate(0.25);
         //goLeft(); 
         DIRRstate = LOW;
         DIRLstate = LOW; 
         digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
         digitalWrite(pwml, HIGH);       //setting left motor speed at maximum 
-      }else if ((target_x == x_now)){
+      }else if ((destinationX == x_now)){
          //do not rotate - no angle difference between current coordinates and destination coordinates
-         Serial.println("target_x has the same x coord. than the current x coord.");
+         Serial.println("destinationX has the same x coord. than the current x coord.");
          goForwards();
          sumdist = sumdist + dy_mm;
        }
      }else{   // for all other coordinates in the 4 quadrants
-      if((target_x > x_now) && target_x > 0 && x_now > 0){   
-        Serial.println("target_x has a greater x coord. than the current x coord.");
+      if((destinationX > x_now) && destinationX > 0 && x_now > 0){   
+        Serial.println("destinationX has a greater x coord. than the current x coord.");
         // pwm_modulate(0.25);
-        if(target_y > y_now){
+        if(destinationY > y_now){
           //goLeft();
           DIRRstate = LOW;
           DIRLstate = LOW;
           digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
           digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
-        }else if(target_y <= y_now){
+        }else if(destinationY <= y_now){
           //goRight();
           DIRRstate = HIGH;
           DIRLstate = HIGH;
           digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
           digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
         }    
-      }else if((target_x < x_now) && target_x < 0 && x_now < 0 ){
-        Serial.println("target_x has a smaller x coord. than the current x coord.");
+      }else if((destinationX < x_now) && destinationX < 0 && x_now < 0 ){
+        Serial.println("destinationX has a smaller x coord. than the current x coord.");
         //pwm_modulate(0.25);
-        if(target_y > y_now){
+        if(destinationY > y_now){
           //goRight();
           DIRRstate = HIGH;
           DIRLstate = HIGH;
           digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
           digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
-        }else if(target_y <= y_now){
+        }else if(destinationY <= y_now){
           //goLeft();
           DIRRstate = LOW;
           DIRLstate = LOW;
           digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
           digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
         }   
-      }else if ((target_x == x_now)){
+      }else if ((destinationX == x_now)){
         //do not rotate - no angle difference between current coordinates and destination coordinates
-        Serial.println("target_x has the same x coord. than the current x coord.");
+        Serial.println("destinationX has the same x coord. than the current x coord.");
         goForwards();
         sumdist = sumdist + dy_mm;
       }else{
@@ -721,6 +711,7 @@ if (counter < 0 ){
     
     
     // Sends info back to ESP
+    
     sendcoords(current_x, current_y,current_angle);
     
     sumchanged = 0;
@@ -1222,14 +1213,14 @@ void sendcoords(int x_coord_send, int y_coord_send, float angle_send){
 
   for(int i = 0; buf[i] != '\0'; i++){
 
-    Serial1.println(buf[i]);
+    Serial1.print(buf[i]);
 
   }
 }
 
 void sendflag(){
 
-  //Serial1.println('P');
+  Serial1.print('P');
 }
 
 /*end of the program.*/
