@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Mars from "./mars.mp4";
 import './About.css';
+import grouppic from "./grouppic.jpg";
 
 function About(){    
     if(useLocation().pathname==="/"){
@@ -59,7 +60,7 @@ function About(){
                 <br/>
                 <p className="list">
                 <span className="font">EXPLORATION MODE</span> Debonair discovers and maps its environment by locating all the obstacles <br/><br/>
-                <span className="font">COORDINATE MODE</span> The User inputs a pair of coordinates which the Rover reaches using our optimised Path Finding Algorithm [PAF]. <br/><br/>
+                <span className="font">COORDINATE MODE</span> The User inputs a pair of coordinates which the Rover reaches using our optimised Path Finding Algorithm [PFA]. <br/><br/>
                 <span className="font">REMOTE CONTROL MODE</span>  The User manually controls the movements of the Rover<br/><br/>
                 <span className="font">BATTERY DISPLAY</span> Shows the remaining battery level of the Rover <br/>
                 </p>
@@ -75,14 +76,15 @@ function About(){
                 The design and development was divided into 6 subsystems:
                 <br/><br/>
                 <p className="list">
-                [Command subsystem]: Frontend: Design of website - Yuna Valade<br/>
-                [Control subsystem]: Backend: Rover's communication between the website - Simon Staal <br/>
-                [Drive subsystem]: Rover's mobility and position control - Margherita Contri<br/>
-                [Integration subsystem]: Hardware communication and PAF - Ruwan Silva<br/>
-                [Power subsystem]: Rover's power alimentation - Yash Rajput <br/>
+                [Control subsystem]: Server infrastructure and communication with Rover - Simon Staal <br/>
                 [Vision subsystem]: Rover's recognition of obstacles -  Khayle Torres<br/>
+                [Power subsystem]: Rover's power alimentation - Yash Rajput <br/>
+                [Command subsystem]: Frontend: Design of website - Yuna Valade<br/>
+                [Drive subsystem]: Rover's mobility and position control - Margherita Contri<br/>
+                [Integration subsystem]: Hardware communication and PFA - Ruwan Silva<br/>
                 </p>
                 <br/> 
+                <img src={grouppic} style={{width:"700px", height:"400px", marginLeft:"-60px"}}/>
             </p>
             </div>            
         
