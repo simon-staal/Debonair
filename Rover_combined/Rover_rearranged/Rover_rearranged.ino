@@ -566,17 +566,19 @@ if(mode == 'C'){
     Serial.println("Distance = " + String(Distance));
     Serial.println("beta = " + String(beta));
     Serial.println("alphaSummed = " + String(alphaSummed));
+    Serial.println("HIIII x_now = " + String(x_now));
+    Serial.println("HIIII y_now = " + String(y_now));
 
   if(angle_flag == true && halted){    // if both the right angle and right distance have been achieved 
      stop_Rover();
      //pwm_modulate(0);
      alphaSummed = 0;
      stopped_rover = true;
-     //x_now = destinationX; //saving coordinates before receiving a new pair of coordinates
-     //y_now = destinationY;
+     x_now = destinationX; //saving coordinates before receiving a new pair of coordinates
+     y_now = destinationY;
      Serial.println("dummy_angle"+ String(dummy_angle));
-     x_now = measuredDistance*sin(dummy_angle);
-     y_now = measuredDistance*cos(dummy_angle);
+     //x_now = measuredDistance*sin(dummy_angle);
+     //y_now = measuredDistance*cos(dummy_angle);
      angle_now = dummy_angle;  //saving dummy_angle before computing new one
      previous_O_to_coord = O_to_coord;
      // total_y = y_now;
@@ -635,18 +637,20 @@ if(mode == 'C'){
      }else{   // for all other coordinates in the 4 quadrants
       Serial.println("pwmr in ELSE = " + String(pwmr));
       Serial.println("pwml in ELSE = " + String(pwml));
-      if((destinationX > x_now) && destinationX > 0 && x_now > 0){   
+      if((destinationX > x_now)){   
         Serial.println("ELSE destinationX has a greater x coord. than the current x coord.");
         // pwm_modulate(0.25);
         if(destinationY > y_now){
           //goLeft();
-          
+          Serial.println("HUUUUUU ");
+     
           digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
           digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
           DIRRstate = LOW;
           DIRLstate = LOW;
         }else if(destinationY <= y_now){
           //goRight();
+          Serial.println("HOOOOOOOO ");
           
           digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
           digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
