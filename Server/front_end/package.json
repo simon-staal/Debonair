@@ -1,0 +1,15 @@
+{
+  "name": "front_end",
+  "version": "1.0.0",
+  "description": "Testing front-end to REST API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Simon Staal",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "fs": "^0.0.1-security"
+  }
+}

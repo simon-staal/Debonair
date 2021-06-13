@@ -134,7 +134,7 @@ function getObsColour(col) {
 }
 
 let newObstacle = 0; // Flag indicating if we have detected a new obstacle
-*/
+
 // ------------------ MQTT client ---------------
 const clientOptions = {
 	clientId:"mqttjs01",
@@ -152,21 +152,6 @@ function publish(topic,msg,options=pubOptions){
 		}
 }
 
-function sendTest() {
-    setTimeout(() => {
-			setInterval(() => {
-				start = Date.now();
-				publish('toESP32/testa','a');
-				//publish('toESP32/dir', 'a');
-    			},500);
-	}, 1000);
-}
-
-let start;
-let end;
-let total = 0;
-let i = 0;
-let vals = [];
 // Runs on connection to the broker
 client.on("connect", () => {
 	console.log("connected " + client.connected);
@@ -193,6 +178,21 @@ const pubOptions={
 	qos:1
 };
 
+// Test function called on startup
+function sendTest() {
+    setTimeout(() => {
+			setInterval(() => {
+				start = Date.now();
+				publish('toESP32/testa','a');
+    			},500);
+	}, 1000);
+}
+
+let start;
+let end;
+let total = 0; // time per trial
+let i = 0; // number of trials
+let vals = [];
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/test") {
@@ -243,9 +243,9 @@ client.on('message', (topic, message, packet) => {
 	}
 });
 
-
+*/
 // ----------------------- HTTP Request handler ----------------------
-/*
+
 app.get("/",(req,res)=>{
     res.send('Hello from server!');
   });
@@ -315,7 +315,7 @@ app.post("/mode", (req, res) => {
 	publish('toESP32/mode', req.body.mode);
 	res.send("Updated mode " + req.body.mode);
 })
-*/
+
 // Incorrect route
 app.use((req, res, next) => {
     res.status(404).send("404: This route doesn't exist");
