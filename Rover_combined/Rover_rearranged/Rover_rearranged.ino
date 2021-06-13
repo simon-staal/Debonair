@@ -492,11 +492,14 @@ void loop() {
       current_x = current_x + dy_mm * sin(current_angle);
       Serial.println("current_x = "+ String(current_x));
       Serial.println("current_y = "+ String(current_y));
+      Serial.println("current_angle = "+ String(toDegrees(current_angle)));
     }
     else if (last_mov == 'L' || last_mov == 'R') {
       O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
       alpha = asin(O_to_coord_measured/(2*r)) * 4 ; 
       current_angle += alpha;
+      Serial.println("current_x = "+ String(current_x));
+      Serial.println("current_y = "+ String(current_y));
       Serial.println("alpha in rotation"+ String(alpha));
       Serial.println("current_angle in rotation"+ String(toDegrees(current_angle)));
     }
@@ -1140,39 +1143,16 @@ void goRight(){
   }
 
 void sendcoords(int x_coord_send, int y_coord_send, float angle_send){
-  char buf[18];
-  buf[0] = '<';
-  int cur = 1;
-  char num[6];
-  String(x_coord_send).toCharArray(num,6);
-  //sprintf(num, "%d", x_coord_send);
-  int cnt = 0;
-  while(num[cnt]){
-    buf[cur++] = num[cnt++];
-  }
-  buf[cur++] = ',';
-  //sprintf(num, "%d", y_coord_send);
-  String(y_coord_send).toCharArray(num,6);
-  cnt = 0;
-  while(num[cnt]){
-    buf[cur++] = num[cnt++];
-  }
-  buf[cur++] = ',';
-  //sprintf(num, "%d", angle_send);
-  String(angle_send).toCharArray(num,6);
-  cnt = 0;
-  while(num[cnt]){
-    buf[cur++] = num[cnt++];
-  }
-
-  buf[cur++] = '>';
-  buf[cur] = '\0';
-
-  for(int i = 0; buf[i] != '\0'; i++){
-
-    Serial1.print(buf[i]);
-
-  }
+  String toESP;
+  toESP += '<';
+  toESP += String(x_coord_send);
+  toESP += ',';
+  toESP += String(y_coord_send);
+  toESP += ',';
+  toESP += String(angle_send);
+  toESP += '>';
+  Serial1.print(toESP);
+  Serial.print("Sending: "+toESP);
 }
 
 void sendflag(){
