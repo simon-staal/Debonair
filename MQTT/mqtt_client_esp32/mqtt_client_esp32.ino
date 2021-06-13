@@ -186,11 +186,11 @@ void callback(char* topic, byte* message, unsigned int length) {
     char bufX[6];
     int i = 1;
     while((char)message[i] != ',') {
-      bufX[i] = message[i];
+      bufX[i-1] = message[i];
       toDrive += (char)message[i++];
     }
     toDrive += (char)message[i]; // Adds ','
-    bufX[i++] = '\0';
+    bufX[(i++)-1] = '\0';
     String x(bufX);
     dest.first = x.toInt();
     char bufY[6];
@@ -250,7 +250,7 @@ void loop() {
   // ************** UART STUFF *****************
   // Receiving stuff from drive
   if (Serial1.available()) {
-  received_char = Serial1.read();
+  char received_char = Serial1.read();
   // Receives packet from drive
   if (received_char == '<') {
     while (Serial1.available() && received_char != '>') {
@@ -286,6 +286,14 @@ void loop() {
       bufA[i] = '\0';
       String a(bufA);
       rover.angle = a.toInt();
+
+      // Debugging
+      Serial.print("Received from drive: x=");
+      Serial.print(x);
+      Serial.print(", y=");
+      Serial.print(y);
+      Serial.print(", angle=");
+      Serial.println(a);
     }
   }
 }
@@ -382,11 +390,11 @@ void loop() {
   */
 
   // Sends test message every 2 seconds
-  /*
+  
   long now = millis();
   if (now - lastMsg > 10000) {
     lastMsg = now;
-    
+    /*
     genCoordMsg(buffer);
     Serial.print("Sending message: ");
     Serial.println(buffer);
@@ -398,8 +406,9 @@ void loop() {
     obstacle.coords.first = (obstacle.coords.first +100)%1000;
     obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
     newObstacle = 1;
+    */
   }
-  */
+  
 
 }
 

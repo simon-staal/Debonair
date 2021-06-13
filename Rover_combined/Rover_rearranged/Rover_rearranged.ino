@@ -149,7 +149,6 @@ int tdistance = 0;
 
 float dx_mm = 0;
 float dy_mm = 0;
-int counter = 0;
 //***************************Globals*******************************
 bool halted = 0;                  // in simple coordinate mode with timed 90°
 bool done = 0;
@@ -173,6 +172,7 @@ float sum_dist = 0;
 float current_angle = 0;
 int current_x = 0;
 int current_y = 0;
+int pos_counter = 0;
 
 float coord_anglechanged = 0;
 float coord_sumchanged = 0;
@@ -708,9 +708,9 @@ if(mode == 'C'){
 if (dir != change_char){
   change_char = dir;    // keeps track of the current command
   haschanged = true; 
-  counter = 30;
+  pos_counter = 30;
   }
-if (counter < 0 ){
+if (pos_counter < 0 ){
     current_angle = anglechanged + current_angle;
     //sumchanged multiplied by cos(current angle) + i sin(current angle) 
     //cos is y axis sin is x axisSerial.println("current_x = "+ String(current_x));
@@ -736,7 +736,7 @@ if (counter < 0 ){
     
     sumchanged = 0;
     anglechanged = 0;
-    counter = 0;
+    pos_counter = 0;
     haschanged = false;
  }
  else if (dir == 'S' && haschanged == true){
@@ -744,7 +744,7 @@ if (counter < 0 ){
   alpha = asin(O_to_coord_measured/(2*r)) * 4 ; 
   anglechanged = (anglechanged + alpha);
   sumchanged += dy_mm;
-  counter--;
+  pos_counter--;
   }
    
  }
