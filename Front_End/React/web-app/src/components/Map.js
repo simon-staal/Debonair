@@ -13,6 +13,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { useLocation } from 'react-router-dom';
 import MousePosition from './position.js';
 import circle from './circle.png';
+import LineTo from 'react-lineto';
 
 
 const AntSwitch = withStyles((theme) => ({
@@ -177,8 +178,8 @@ function Map(){
         if(control===true){
         setControl(!control);
         event.preventDefault();
-        console.log("Message sent: " + JSON.stringify({ 'Mode':'M' }));
-        axios.post('https://debonair.duckdns.org:8443/mode', { 'Mode':'M' } )
+        console.log("Message sent: " + JSON.stringify({ 'mode':'M' }));
+        axios.post('https://debonair.duckdns.org:8443/mode', { 'mode':'M' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -195,13 +196,24 @@ function Map(){
     const sendDest=(event)=>{
         event.preventDefault();
         let params={
-            X: x_real,
-            Y: y_real
+            coordinateX: x_real,
+            coordinateY: y_real
         }
         console.log("Message sent: " + JSON.stringify(params));
         axios.post('https://debonair.duckdns.org:8443/coords', params)
             .then(response=>{
-                console.log(JSON.stringify(response.data));
+                console.log("Received message: " + JSON.stringify(response.data));
+                //points is array of coordinates x and y for optimal path
+                for( var i in response.data.points){
+                    var x_disp= Math.floor(825+(response.data.points[i].x)*300/1000);
+                    var y_disp=Math.floor(420-(response.data.points[i].y)*300/1000);
+                    
+                    document.getElementById("PAF").innerHTML= "Point "+ i + ": [" + response.data.points[i].x + ";" + response.data.points[i].y + "] " +"to get to destination <br/>";  
+                    document.getElementById(i).style.left= x_disp + "px"; //x axis update
+                    document.getElementById(i).style.top= y_disp + "px";  
+                    document.getElementById(i).style.display="block"; 
+                    <LineTo from={i} to={i+1}/>
+               }   
             })
             .catch(err => {
                 console.log("Received error: " + err);
@@ -245,6 +257,7 @@ function Map(){
             <div style={{marginLeft: "10px", marginTop: "130px", position: "absolute"}} > 
             {x_real}:{y_real};
             </div>
+            <div id="PAF" style={{marginLeft: "10px", marginTop: "155px", position: "absolute"}}></div>
             </div>
          </nav>
     );

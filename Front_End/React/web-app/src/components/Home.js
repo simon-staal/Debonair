@@ -12,7 +12,7 @@ import ground from "./background.jpg";
 import { useLocation } from 'react-router-dom';
 import './Home.css';
 import LineTo from 'react-lineto';
-import dot from './dot.png';
+
 
 const AntSwitch = withStyles((theme) => ({
     root: {
@@ -118,11 +118,12 @@ function Home(){
                 for( var i in response.data.points){
                     var x_disp= Math.floor(825+(response.data.points[i].x)*300/1000);
                     var y_disp=Math.floor(420-(response.data.points[i].y)*300/1000);
-                    
+                   
+                    document.getElementById("PAF").innerHTML=  "Point "+ i + ": [" + response.data.points[i].x + ";" + response.data.points[i].y + "] " +"to get to destination <br/>"; 
                     document.getElementById(i).style.left= x_disp + "px"; //x axis update
                     document.getElementById(i).style.top= y_disp + "px";  
                     document.getElementById(i).style.display="block"; 
-                    <LineTo from={i} to={i+1}></LineTo>
+                    <LineTo from={i} to={i+1}/>
                }   
             })
             .catch(err => {
@@ -136,8 +137,8 @@ function Home(){
         if(checked===true){
         setChecked(!checked);
         event.preventDefault();
-        console.log("Message sent: " + JSON.stringify({ 'Mode':'C' }));
-        axios.post('https://debonair.duckdns.org:8443/mode', { 'Mode':'C' } )
+        console.log("Message sent: " + JSON.stringify({ 'mode':'C' }));
+        axios.post('https://debonair.duckdns.org:8443/mode', { 'mode':'C' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -155,8 +156,8 @@ function Home(){
         if(explore===true){
         setExplore(!explore);
         event.preventDefault();
-        console.log("Message sent: " + JSON.stringify({ 'Mode':'E' }));
-        axios.post('https://debonair.duckdns.org:8443/mode', { 'Mode':'E' } )
+        console.log("Message sent: " + JSON.stringify({ 'mode':'E' }));
+        axios.post('https://debonair.duckdns.org:8443/mode', { 'mode':'E' } )
             .then(response=>{
                 console.log(JSON.stringify(response.data));
             })
@@ -172,15 +173,8 @@ function Home(){
         <div id="surface">
             <img src={grid} alt="map" className="map"/>
             <img src={ground} alt="mars" className="mars"/>
-            <img src={dot} alt="point" className="0" id="0" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="1" id="1" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="2" id="2" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="3" id="3" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="4" id="4" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="5" id="5" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="6" id="6" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="7" id="7" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
-            <img src={dot} alt="point" className="8" id="8" style={{position:"absolute",display:"none", width:"50px", height:"50px", left:"825px", top:"420px"}}/>
+            
+            
             <h1 className="header"> Ground Discovery </h1>
             <h6 className="h6"> Reach Coordinate </h6>
             <Typography component="div" className={classes.typography2}>
@@ -223,6 +217,7 @@ function Home(){
                 Submit
                 </Button>
             </form>
+            <div id="PAF" style={{marginLeft: "10px"}}></div>
             
             <h6 className="h62"> Rover Explore </h6>
             <Typography component="div" className={classes.typography1}>
