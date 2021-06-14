@@ -252,7 +252,6 @@ void loop() {
   int extract = 0;
   if (Serial2.available()) {
     char received_char = Serial2.read();
-    Serial.println(received_char);
     if (received_char == '<') {
       String x = Serial2.readStringUntil(',');
       rover.coords.first = x.toInt();
@@ -260,62 +259,9 @@ void loop() {
       rover.coords.second = y.toInt();
       String a = Serial2.readStringUntil('>');
       rover.angle = a.toInt();
-      Serial.println("Received: x = "+x+", y = "+y+", a = "+a);
+      // Serial.println("Received: x = "+x+", y = "+y+", a = "+a);
     }
   }
-  /*
-  while (Serial2.available() && extract < 3) {
-    //Serial.println("Should receive package from drive");
-    char received_char = Serial2.read();
-    // Receives packet from drive
-    if (received_char == '<') {
-      Serial.println("Start of packet");
-      String x;
-      if (Serial2.available()) {
-        received_char = Serial2.read();
-      }
-      else {
-        Serial.println("ERROR: COULDN'T READ X");
-      }
-      while (Serial2.available() && received_char != ',') {
-        x += received_char;
-        received_char = Serial2.read();
-      }
-      rover.coords.first = x.toInt();
-      String y;
-      if (Serial2.available()) {
-        received_char = Serial2.read();
-      }
-      else{
-        Serial.println("ERROR: COULDN'T READ Y");
-      }
-      while (Serial2.available() && received_char != ',') {
-        y += received_char;
-        received_char = Serial2.read();
-      }
-      rover.coords.second = y.toInt();
-      String angle;
-      if (Serial2.available()) {
-        received_char = Serial2.read();
-      }
-      else{
-        Serial.println("ERROR: COULDN'T READ ANGLE");
-      }
-      while (Serial2.available() && received_char != '>') {
-        angle += received_char;
-        received_char = Serial2.read();
-      }
-      rover.angle = angle.toInt();
-      // Debugging
-      Serial.print("Received from drive: x=");
-      Serial.print(x);
-      Serial.print(", y=");
-      Serial.print(y);
-      Serial.print(", angle=");
-      Serial.println(angle);
-    }
-  }
-  */
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
   if (rover.mode == 'E') { 
@@ -398,14 +344,13 @@ void loop() {
   }
 
   // Updates server with rover coords
-  /*
   long now = millis();
-  if (now - lastMsg > 200) {
+  if (now - lastMsg > 2000) {
     lastMsg = now;
     genCoordMsg(buffer);
     client.publish("fromESP32/rover_coords", buffer, false);
+    Serial.print("Sending " + String(buffer));
   }
-  */
 
   // Sends test message every 2 seconds
   

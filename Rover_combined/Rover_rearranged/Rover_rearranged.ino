@@ -91,8 +91,8 @@ boolean new_data = false;
 char last_mov = 'S'; // Tracks last movement (not stop) to deal with sensor delay
 char mode = 'M';
 char dir = 'S';
-int destinationX = 0;
-int destinationY = 0;
+int destinationX = 9999;
+int destinationY = 9999;
 long lastMsg = 0;
 
 //************************** Rover Constants / Variables ************************//
@@ -108,7 +108,6 @@ float y1 = 0;
 //*********************** Angle variable *****************************//
 bool angle_flag = false;
 bool target_flag = false;
-float O_to_coord_measured;
 float O_to_coord;
 float angle = 0;
 float beta = 0;
@@ -116,8 +115,6 @@ float gamma = 0;
 int coord_after_rotation;
 float dummy_angle=0;
 
-
-float alpha = 0;
 //************************** Motor Constants **************************//
    
 int DIRRstate = LOW;              //initializing direction states
@@ -175,13 +172,9 @@ float alphaSummed = 0;
 
 long sumdist = 0;
 
-float measuredDistance = 0;
-float Distance = 0;
-float alpha2 = 0;
-float previous_O_to_coord = 0;
 bool reached_angle = 0;
-int x_now;
-int y_now;
+int x_now = 0;
+int y_now = 0;
 float angle_now;
 
 //************************ Function declarations *********************//
@@ -495,8 +488,8 @@ void loop() {
       Serial.println("current_angle = "+ String(toDegrees(current_angle)));
     }
     else if (last_mov == 'L' || last_mov == 'R') {
-      O_to_coord_measured = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-      alpha = asin(O_to_coord_measured/(2*r)) * 4 ; 
+      float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+      float alpha = asin(measuredDistance/(2*r)) * 2 ; 
       current_angle += alpha;
       Serial.println("current_x = "+ String(current_x));
       Serial.println("current_y = "+ String(current_y));
@@ -518,28 +511,60 @@ void loop() {
   // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
 
   if(mode == 'C'){
-  
-    stop_Rover();
-    //Serial.println("new_coordinates = " + String(new_coordinates));
-  
-    //delay (1000);
-    Serial.println("destinationX = " + String(destinationX));
-    Serial.println("destinationY = " + String(destinationY));
-    // Coordinates are provided by the ESP32 from Command
-    // here they are just manually set - for now
-    
-    //int destinationY = 100;
-    //int destinationX = 200;
-
-    if(destinationY == 0 && destinationX == 0){
+    int distance_travelled; // Used to track forwards motion
+    if (destinationX > 1000 || destinationY > 1000 ) {
+      distance_travelled = 0;
+      halted = false;
       stop_Rover();
     }
+    else {
+      Serial.println("destinationX = " + String(destinationX));
+      Serial.println("destinationY = " + String(destinationY));
 
-    O_to_coord = sqrt(pow(destinationY,2) + pow(destinationX,2));
-    Distance = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2));
-    measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-    alpha2 = toDegrees(asin(measuredDistance/(2*r))) * 4 ; 
-    alphaSummed = (alphaSummed + alpha2);
+      O_to_coord = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2)); // Diagonal to destination
+      float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2)); // Used for angle calculation
+      float alpha = asin(measuredDistance/(2*r)) * 2 ; // Angle change this iteration
+      float angle = (dx_mm < 0) ? (angle - alpha) : (angle + alpha); // Keeps track of our current angle (maybe change to current_angle)
+
+      int x_diff = abs(destinationX - x_now);
+      int y_diff = abs(destinationY - y_now);
+
+      int distance_diff = O_to_coord - distance_travelled;
+      // Q1
+      if (destinationY > y_now && destinationX > x_now) {
+        float desired_angle = atan(x_diff/y_diff);
+        float angle_diff = desired_angle - current_angle;
+        // Rotate to face angle
+        if (abs(angle_diff) > 2) { 
+          if (angle_diff < 0) { // Turn left
+            DIRRstate = LOW;
+            DIRLstate = LOW;   
+            digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+            digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+          }
+          else { // Turn right
+            DIRRstate = HIGH;
+            DIRLstate = HIGH;   
+            digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
+            digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+          }
+        }
+        // Go forwards
+        else {
+          go_forwards(O_to_coord, distance_travelled);
+          distance_travelled += dy_mm;
+        }
+        if (halted) {
+          // We have reached our destination
+          destinationX = 9999; // Give invalid destination
+        }
+      }
+    }
+    /*
+    // Distance = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2));
+    
+    
+    alphaSummed = (alphaSummed + alpha);
     angle = alphaSummed;
 
     if(x_now == 0 && y_now == 0){
@@ -689,6 +714,7 @@ void loop() {
       Serial.println("total_y - coord_after_rotation = " + String(total_y - coord_after_rotation));
       Serial.println("(total_y - coord_after_rotation) - (Distance) = " + String((total_y - coord_after_rotation) - (Distance)));
     }
+    */
   }
 }
 
@@ -1002,20 +1028,19 @@ void TurnLeft_PIcontroller(float desired_angle){
 
 void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
   int distance_error = sensor_forwards_distance - command_forwards_des_dist;
-  halted = 0;
   if(abs(distance_error) < 5){
-     // stop rover
-     //pwm_modulate(0);
-     stop_Rover();
-     halted = 1;
-     haltTime = millis();
-     Serial.print("\n");
-     Serial.print("\n");
-     Serial.println("Reached Distance with go_forwards");
-     Serial.print("Halting at ");
-     Serial.println(haltTime);
-     return;
-     }
+    // stop rover
+    //pwm_modulate(0);
+    stop_Rover();
+    halted = 1;
+    haltTime = millis();
+    Serial.print("\n");
+    Serial.print("\n");
+    Serial.println("Reached Distance with go_forwards");
+    Serial.print("Halting at ");
+    Serial.println(haltTime);
+    return;
+  }
   if(distance_error <= -15){
     // goes forwards
     goForwards();
@@ -1034,8 +1059,8 @@ void go_forwards(int command_forwards_des_dist, int sensor_forwards_distance){
     //goes backwards
     goBackwards();
     return;
-   }  
- }
+  }  
+}
 
 void turn_90left(unsigned long haltTime){
     unsigned long now = millis();
