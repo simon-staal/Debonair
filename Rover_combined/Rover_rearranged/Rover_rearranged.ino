@@ -517,21 +517,28 @@ void loop() {
   // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
 
   if(mode == 'C'){
+    digitalWrite(pwmr, HIGH);
+    digitalWrite(pwml, HIGH); 
     int distance_travelled; // Used to track forwards motion
     if (destinationX > 1000 || destinationY > 1000 ) {
       distance_travelled = 0;
       halted = false;
       stop_Rover();
+      //pwm_modulate(0);
     }
     else {
       Serial.println("destinationX = " + String(destinationX));
       Serial.println("destinationY = " + String(destinationY));
-
+      x_now = x_now + dy_mm*sin(angle);
+      y_now = y_now + dy_mm*cos(angle);
+      Serial.println("x_now" + String(x_now));
+      Serial.println("y_now" + String(y_now));
+      
       O_to_coord = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2)); // Diagonal to destination
       float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2)); // Used for angle calculation
       float alpha = asin(measuredDistance/(2*r)) * 2 ; // Angle change this iteration
-      float angle = (dx_mm < 0) ? (angle - alpha) : (angle + alpha); // Keeps track of our current angle (maybe change to current_angle)
-
+      float angle = (dx_mm < 0) ? (angle + alpha) : (angle - alpha); // Keeps track of our current angle (maybe change to current_angle)
+      Serial.println("" + String(toDegrees(angle)));
       int x_diff = abs(destinationX - x_now);
       int y_diff = abs(destinationY - y_now);
 
@@ -539,35 +546,41 @@ void loop() {
       // Q1
       if (destinationY > y_now && destinationX > x_now) {
         float desired_angle = atan(x_diff/y_diff);
-        float angle_diff = desired_angle - current_angle;
-        Serial.println("Angle_diff = " + String(angle_diff));
+        float angle_diff = desired_angle - angle;
+        Serial.println("Angle_diff = " + String(toDegrees(angle_diff)));
         // Rotate to face angle
-        if (abs(toDegrees(angle_diff)) > 2) { 
+        if (abs(toDegrees(angle_diff)) > 5) {
+          Serial.println("adjusting angle"); 
           if (angle_diff < 0) { // Turn left
+            Serial.println("Rotating left");
             DIRRstate = LOW;
-            DIRLstate = LOW;   
-            digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
-            digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+            DIRLstate = LOW;
+            Serial.println(); 
           }
           else { // Turn right
+            Serial.println("Rotating right");
             DIRRstate = HIGH;
-            DIRLstate = HIGH;   
-            digitalWrite(pwmr, HIGH);       //setting right motor speed at maximum
-            digitalWrite(pwml, HIGH);       //setting left motor speed at maximum
+            DIRLstate = HIGH;
           }
+           
         }
         // Go forwards
         else {
-          Serial.print("Distance travelled: " + String(distance_travelled)
-          go_forwards(O_to_coord, distance_travelled);
+          Serial.print("Distance travelled: " + String(distance_travelled));
+          DIRRstate = LOW;   //goes forwards
+          DIRLstate = HIGH;
           distance_travelled += dy_mm;
         }
+        digitalWrite(DIRR, DIRRstate);
+        digitalWrite(DIRL, DIRLstate);
         if (halted) {
           // We have reached our destination
           destinationX = 9999; // Give invalid destination
+          
         }
       }
     }
+    
     /*
     // Distance = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2));
     
@@ -616,7 +629,7 @@ void loop() {
       Serial.println("Rover has reached the Destination coordinates YAY!");
       Serial.println("x_now = " + String(x_now));
       Serial.println("y_now = " + String(y_now));
-      Serial.println("angle_now = " + String(angle_now));
+      Serial.println("angle_now = " + String(angle_now));\
     }
     else if(((-alphaSummed + beta) <= 2)&& (angle_flag == false)){
       coord_after_rotation = total_y;
@@ -723,6 +736,8 @@ void loop() {
       Serial.println("(total_y - coord_after_rotation) - (Distance) = " + String((total_y - coord_after_rotation) - (Distance)));
     }
     */
+
+    
   }
 }
 
@@ -844,7 +859,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  sensorValue2 = analogRead(A2); //sample Vref
+  //sensorValue2 = analogRead(A2); //sample Vref
  // sensorValue2 = vref *(1023.0/ 4.096);  
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -853,7 +868,7 @@ void sampling(){
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
-  //sensorValue2 = 500;
+  sensorValue2 = 500;
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code
