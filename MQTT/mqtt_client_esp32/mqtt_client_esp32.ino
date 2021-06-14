@@ -348,7 +348,7 @@ void loop() {
 
   // Updates server with rover coords
   long now = millis();
-  if (now - lastMsg > 2000) {
+  if (now - lastMsg > 200) {
     lastMsg = now;
     genCoordMsg(buffer);
     client.publish("fromESP32/rover_coords", buffer, false);
