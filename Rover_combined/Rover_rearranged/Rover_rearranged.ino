@@ -298,6 +298,11 @@ void loop() {
     }
     // If in coordinate mode, updates destination
     if (mode == 'C' && received_char == '<') {
+      String x = Serial1.readStringUntil(',');
+      String y = Serial1.readStringUntil('>');
+      destinationX = x.toInt();
+      destinationY = y.toInt();
+      /*
       while (Serial1.available() && received_char != '>') {
         received_char = Serial1.read();
         char bufX[6];
@@ -322,6 +327,7 @@ void loop() {
         destinationY = y.toInt();
         alphaSummed = 0;
       }
+      */
     }
   }
 
@@ -534,8 +540,9 @@ void loop() {
       if (destinationY > y_now && destinationX > x_now) {
         float desired_angle = atan(x_diff/y_diff);
         float angle_diff = desired_angle - current_angle;
+        Serial.println("Angle_diff = " + String(angle_diff));
         // Rotate to face angle
-        if (abs(angle_diff) > 2) { 
+        if (abs(toDegrees(angle_diff)) > 2) { 
           if (angle_diff < 0) { // Turn left
             DIRRstate = LOW;
             DIRLstate = LOW;   
@@ -551,6 +558,7 @@ void loop() {
         }
         // Go forwards
         else {
+          Serial.print("Distance travelled: " + String(distance_travelled)
           go_forwards(O_to_coord, distance_travelled);
           distance_travelled += dy_mm;
         }

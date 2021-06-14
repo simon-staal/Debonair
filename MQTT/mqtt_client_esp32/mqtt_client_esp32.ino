@@ -29,11 +29,14 @@ void calcDistance(int col);
 void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "AndroidAP8029"; //"The Circus";
-const char* password = "hirk8481"; //"Hail_Pietr0";
+//const char* ssid = "AndroidAP8029"; //"The Circus";
+//const char* password = "hirk8481"; //"Hail_Pietr0";
 
 //const char* ssid = "iPhonedeYuna";
 //const char* password = "yuna1612"; 
+
+const char* ssid = "VM6446132";
+const char* password = "ty5VxqxnW3yr";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -349,11 +352,11 @@ void loop() {
     lastMsg = now;
     genCoordMsg(buffer);
     client.publish("fromESP32/rover_coords", buffer, false);
-    Serial.print("Sending " + String(buffer));
+    Serial.println("Sending " + String(buffer));
   }
 
   // Sends test message every 2 seconds
-  
+ /*
   long now = millis();
   if (now - lastMsg > 10000) {
     lastMsg = now;
@@ -369,10 +372,9 @@ void loop() {
     obstacle.coords.first = (obstacle.coords.first +100)%1000;
     obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
     newObstacle = 1;
-    */
+    
   }
-  
-
+  */
 }
 
 void genCoordMsg(char *buf) 
