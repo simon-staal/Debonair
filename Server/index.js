@@ -61,7 +61,7 @@ const rover = {
 	"y":null,
 	"angle":null,
 	"lastUpdate": time.getTime(),
-	"status":"offline",
+	"SOH":null,
 	"battery":null
 };
 
@@ -199,7 +199,11 @@ const pubOptions={
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/status") {
-		rover.status = message.toString();
+		// JSON object with following fields {b=100, h=100} corresponding to batter% and state of health%
+		let msg = JSON.parse(message.toString());
+		rover.battery = msg.b;
+		rover.SOH = msg.h;
+		console.log(JSON.stringify(msg));
 	}
 	if (topic === "fromESP32/obstacle") {
 		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
@@ -290,6 +294,15 @@ app.get("/reset", (req,res) => {
 		console.log("Reset "+response.result.nModified+" elements");
 		res.send("Success");
 	})
+})
+
+// Requests for rover power details
+app.get("/battery", (req,res) => {
+	let response = {
+		'battery': rover.battery,
+		'SOH': rover.SOH
+	};
+	res.send(response);
 })
 
 // Sends desired coordinates to rover
