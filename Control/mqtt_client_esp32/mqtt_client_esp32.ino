@@ -78,7 +78,7 @@ const char* ca_cert = \
 
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
-long lastMsg = 0;
+long lastMsg = 0; // Timer for sending coords
 char buffer[30]; // buffer for messages sent by ESP32
 
 // LED Pin
@@ -186,11 +186,11 @@ void callback(char* topic, byte* message, unsigned int length) {
     char bufX[6];
     int i = 1;
     while((char)message[i] != ',') {
-      bufX[i] = message[i];
+      bufX[i-1] = message[i];
       toDrive += (char)message[i++];
     }
     toDrive += (char)message[i]; // Adds ','
-    bufX[i++] = '\0';
+    bufX[(i++)-1] = '\0';
     String x(bufX);
     dest.first = x.toInt();
     char bufY[6];
@@ -246,6 +246,21 @@ void reconnect() {
 }
 
 void loop() {
+
+  // ************** UART STUFF *****************
+  // Receiving stuff from drive
+  if (Serial2.available()) {
+    char received_char = Serial2.read();
+    if (received_char == '<') {
+      String x = Serial2.readStringUntil(',');
+      rover.coords.first = x.toInt();
+      String y = Serial2.readStringUntil(',');
+      rover.coords.second = y.toInt();
+      String a = Serial2.readStringUntil('>');
+      rover.angle = a.toInt();
+      // Serial.println("Received: x = "+x+", y = "+y+", a = "+a);
+    }
+  }
 
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
@@ -330,15 +345,20 @@ void loop() {
 
   // Updates server with rover coords
   /*
-  genCoordMsg(buffer);
-  client.publish("fromESP32/rover_coords", buffer, false);
+  long now = millis();
+  if (now - lastMsg > 200) {
+    lastMsg = now;
+    genCoordMsg(buffer);
+    client.publish("fromESP32/rover_coords", buffer, false);
+  }
   */
+
   // Sends test message every 2 seconds
-  /*
+  
   long now = millis();
   if (now - lastMsg > 10000) {
     lastMsg = now;
-    
+    /*
     genCoordMsg(buffer);
     Serial.print("Sending message: ");
     Serial.println(buffer);
@@ -350,8 +370,9 @@ void loop() {
     obstacle.coords.first = (obstacle.coords.first +100)%1000;
     obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
     newObstacle = 1;
+    */
   }
-  */
+  
 
 }
 
