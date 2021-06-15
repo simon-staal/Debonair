@@ -496,7 +496,8 @@ void loop() {
     else if (last_mov == 'L' || last_mov == 'R') {
       float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
       float alpha = asin(measuredDistance/(2*r)) * 2 ; 
-      current_angle += alpha;
+      current_angle = (dx_mm < 0) ? (current_angle + alpha) : (current_angle - alpha); // Keeps track of our current angle (maybe change to current_angle)
+      current_angle = (current_angle > 360) ? (current_angle - 360) : current_angle;
       Serial.println("current_x = "+ String(current_x));
       Serial.println("current_y = "+ String(current_y));
       Serial.println("alpha in rotation"+ String(alpha));
@@ -859,7 +860,7 @@ void sampling(){
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  //sensorValue2 = analogRead(A2); //sample Vref
+  sensorValue2 = analogRead(A2); //sample Vref
  // sensorValue2 = vref *(1023.0/ 4.096);  
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -868,7 +869,7 @@ void sampling(){
      The analogRead process gives a value between 0 and 1023 
      representing a voltage between 0 and the analogue reference which is 4.096V
   */
-  sensorValue2 = 500;
+  //sensorValue2 = 500;
   vb = sensorValue0 * (4.096 / 1023.0); // Convert the Vb sensor reading to volts
   vref = sensorValue2 * (4.096 / 1023.0); // Convert the Vref sensor reading to volts
   // now vref is set at the top of the code

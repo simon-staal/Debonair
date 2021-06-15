@@ -29,14 +29,14 @@ void calcDistance(int col);
 void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
-//const char* ssid = "AndroidAP8029"; //"The Circus";
-//const char* password = "hirk8481"; //"Hail_Pietr0";
+const char* ssid = "AndroidAP8029"; //"The Circus";
+const char* password = "hirk8481"; //"Hail_Pietr0";
 
 //const char* ssid = "iPhonedeYuna";
 //const char* password = "yuna1612"; 
 
-const char* ssid = "VM6446132";
-const char* password = "ty5VxqxnW3yr";
+//const char* ssid = "VM6446132";
+//const char* password = "ty5VxqxnW3yr";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -319,6 +319,7 @@ void loop() {
         case 2:
           Serial.print("We have a green ball \n");
           calcDistance(2);
+          Serial.print("We sent the green ball \n");
           break;
         case 3:
           //Serial.print("We have a blue ball \n");
@@ -348,7 +349,7 @@ void loop() {
 
   // Updates server with rover coords
   long now = millis();
-  if (now - lastMsg > 2000) {
+  if (now - lastMsg > 200) {
     lastMsg = now;
     genCoordMsg(buffer);
     client.publish("fromESP32/rover_coords", buffer, false);
@@ -467,7 +468,7 @@ void calcDistance(int col)
         obstacle.coords.first = rover.coords.first + x_diff;
         obstacle.coords.second = rover.coords.second + y_diff;
         newObstacle = 1;
-        spi_returnval = 32768+i;
+        spi_returnval = 32768+col;
         resetCounter();
       }
     }
