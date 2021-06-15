@@ -12,10 +12,21 @@
 #define VSPI_SCLK   SCK
 #define VSPI_SS     SS
 
+// Used for Drive UART
 #define RXD2 16
 #define TXD2 17
 
+// Used for Power UART
+#define RXD1 3
+#define TXD1 1
+
 //***************COMMUNICATION SETUP*************
+
+// Dual core handler for power comms
+TaskHandle_t PowerComms;
+int battery = 100;
+int SOH = 100;
+unsigned long lastPowerUpdate = 0;
 
 // Parameters for SPI
 SPISettings settings(100000, MSBFIRST, SPI_MODE0);
@@ -132,6 +143,7 @@ void setup_wifi() {
 void setup() {
   Serial.begin(115200); // Debugging
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); // Communicate with drive
+  Serial1.begin(9600, SERIAL_8N1, RXD1, TXD1); // Communicate with power
 
   // Set up wireless comms
   setup_wifi();
@@ -146,6 +158,45 @@ void setup() {
   SPI.begin();
   resetCounter();
   spi_returnval = 0;
+
+  // Setup Dual core comms
+  xTaskCreatePinnedToCore(
+      PowerCommsCode, /* Function to implement the task */
+      "PowerComms", /* Name of the task */
+      10000,  /* Stack size in words */
+      NULL,  /* Task input parameter */
+      0,  /* Priority of the task */
+      &PowerComms,  /* Task handle. */
+      0); /* Core where the task should run (void loop uses core 1)*/
+}
+
+// Handling power comms in seperate core
+void PowerCommsCode(void * pvParameters) {
+  Serial.print("PowerComms running on core ");
+  Serial.println(xPortGetCoreID());
+
+  for(;;){ // Equivalent to void loop()
+      // Receiving stuff from drive
+    if (Serial1.available()) {
+      char received_char = Serial1.read();
+      if (received_char == '<') {
+        String b = Serial1.readStringUntil(',');
+        battery = b.toInt();
+        String s = Serial1.readStringUntil('>');
+        SOH = s.toInt();
+        // Serial.println("Received: battery = "+b+", SOH = "+s+);
+      }
+    }
+
+    unsigned long now = millis();
+    if(now - lastPowerUpdate > 60000) { // Update every 60 seconds
+      char buffer[19];
+      genPowMsg(buffer);
+      lastMsg = now;
+      client.publish("fromESP32/status", buffer, false);
+    }
+
+  } 
 }
 
 // This function is called whenever we receive a message to a topic we are subscribed to
@@ -442,6 +493,34 @@ void genObsMsg(char *buf)
     }
     buf[cur++] = '}';
     while(cur < 30){
+      buf[cur++] = '\0';
+    }
+}
+
+void genPowMsg(char *buf)
+{
+    int cur = 0;
+    char b[6] = "{\"b\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = b[i];
+    }
+    char num[4];
+    sprintf(num, "%d", battery);
+    int cnt = 0;
+    while(num[cnt]) {
+      buf[cur++] = num[cnt++];
+    }
+    char s[6] = ",\"s\":";
+    for(int i = 0; i < 5; i++){
+        buf[cur++] = s[i];
+    }
+    sprintf(num, "%d", SOH);
+    cnt = 0;
+    while(num[cnt]){
+      buf[cur++] = num[cnt++];
+    }
+    buf[cur++] = '}';
+    while(cur < 18){
       buf[cur++] = '\0';
     }
 }
