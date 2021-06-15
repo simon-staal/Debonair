@@ -10,9 +10,9 @@ const fs = require('fs')
 const MongoClient = require('mongodb').MongoClient
 // Pathfinding
 // TO USE: Pathfinder.genPath("rover_posX,rover_posY","dest_posX,dest_posY","{obstacle1_posx,obstacle1_posY}{obstacle2_posX,obstacle2_posY}{etc}")
-const Pathfinder = require('./pathfinding/pathfinding'); 
+const Pathfinder = require('./pathfinding/pathfinding');
 
-// Testing 
+// Testing
 /*
 let i = 0;
 let total = 0;
@@ -61,7 +61,7 @@ const rover = {
 	"y":null,
 	"angle":null,
 	"lastUpdate": time.getTime(),
-	"status":"offline",
+	"SOH":null,
 	"battery":null
 };
 
@@ -165,7 +165,7 @@ const clientOptions = {
 	clientId:"mqttjs01",
 	username:"webapp",
 	password:"=ZCJ=4uzfZZZ#36f",
-	rejectUnauthorized : false // I need to do this for it to work (bad but idgaf)
+	rejectUnauthorized : false // Required for using self-signed certificate
 }
 const client  = mqtt.connect("mqtts://debonair.duckdns.org", clientOptions);
 
@@ -199,7 +199,11 @@ const pubOptions={
 // Callback function for when messages are received
 client.on('message', (topic, message, packet) => {
 	if (topic === "fromESP32/status") {
-		rover.status = message.toString();
+		// JSON object with following fields {b=100, h=100} corresponding to batter% and state of health%
+		let msg = JSON.parse(message.toString());
+		rover.battery = msg.b;
+		rover.SOH = msg.h;
+		console.log(JSON.stringify(msg));
 	}
 	if (topic === "fromESP32/obstacle") {
 		// JSON object with following fields {c:1, x:0, y:0} corresponding to colour_code, x and y values
@@ -218,7 +222,7 @@ client.on('message', (topic, message, packet) => {
 			console.log("Updated " + obsColour + " to x: " + msg.x + " y: " + msg.y);
 			getObstacles(); // Updates local obstacles
 		})
-		
+
 	}
 	if (topic === "fromESP32/rover_coords") {
 		// JSON object with following fields {x:0, y:0, a:0} corresponding to x, y and angle values
@@ -292,10 +296,19 @@ app.get("/reset", (req,res) => {
 	})
 })
 
-// Sends desired coordinates to rover 
+// Requests for rover power details
+app.get("/battery", (req,res) => {
+	let response = {
+		'battery': rover.battery,
+		'SOH': rover.SOH
+	};
+	res.send(response);
+})
+
+// Sends desired coordinates to rover
 app.post("/coords", (req,res) => {
     console.log("Request received: " + JSON.stringify(req.body));
-    
+
     let receivedCoord = {
         'coordinateX': req.body.coordinateX,
         'coordinateY': req.body.coordinateY
@@ -328,7 +341,7 @@ app.post("/coords", (req,res) => {
 		}
 		res.send(path)
 	}
-	
+
 });
 
 // Sends directions to rover

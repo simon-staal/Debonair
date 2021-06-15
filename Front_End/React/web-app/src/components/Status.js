@@ -11,12 +11,21 @@ import Battery50Icon from '@material-ui/icons/Battery50';
 import Battery30Icon from '@material-ui/icons/Battery30';
 import Battery20Icon from '@material-ui/icons/Battery20';
 import BatteryAlertIcon from '@material-ui/icons/BatteryAlert';
-
-
+import Button from '@material-ui/core/Button';
+import {makeStyles } from '@material-ui/core/styles';
 import './Status.css';
+
+const useStyles = makeStyles((theme)=>({
+   button:{
+       margin: theme.spacing(2),   
+   },
+   
+}));
 
 function Status(){
     
+   const classes = useStyles();
+
     if(useLocation().pathname==="/status"){
         document.getElementById('pinkball').style.display="block";
         document.getElementById('blueball').style.display="block";
@@ -27,6 +36,7 @@ function Status(){
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
         document.getElementById('msg').style.display="block";
+        document.getElementById('info').style.display="block";
         document.getElementById('pinkballcoord').style.display="block";
         document.getElementById('greenballcoord').style.display="block";
         document.getElementById('orangeballcoord').style.display="block";
@@ -35,17 +45,6 @@ function Status(){
      }
       
     var battery;
-    
-    function reset(){
-        document.getElementById("Full").style.display = "none";
-        document.getElementById("90").style.display = "none";
-        document.getElementById("80").style.display = "none";
-        document.getElementById("60").style.display = "none";
-        document.getElementById("50").style.display = "none";
-        document.getElementById("30").style.display = "none";
-        document.getElementById("20").style.display = "none";
-        document.getElementById("Alert").style.display = "none";
-    }
 
     function getBattery(){
 
@@ -55,46 +54,109 @@ function Status(){
     .then(()=>{
     
         if(battery===100||(100>battery && battery>90)){
-            document.getElementById("Full").style.display = "block";            
+            document.getElementById("Full").style.display = "block";  
+            document.getElementById("90").style.display = "none";
+            document.getElementById("80").style.display = "none";
+            document.getElementById("60").style.display = "none";
+            document.getElementById("50").style.display = "none";
+            document.getElementById("30").style.display = "none";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "none";          
         }
         if(battery===90||(90>battery && battery>80)){
+         document.getElementById("Full").style.display = "none"; 
             document.getElementById("90").style.display = "block";
+            document.getElementById("80").style.display = "none";
+            document.getElementById("60").style.display = "none";
+            document.getElementById("50").style.display = "none";
+            document.getElementById("30").style.display = "none";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "none";   
+            
          }
          if(battery===80||(80>battery && battery>60)){
+            document.getElementById("Full").style.display = "none";
+            document.getElementById("90").style.display = "none";
             document.getElementById("80").style.display = "block";
+            document.getElementById("60").style.display = "none";
+            document.getElementById("50").style.display = "none";
+            document.getElementById("30").style.display = "none";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "none";    
          }
          if(battery===60||(60>battery && battery>50)){
+            document.getElementById("Full").style.display = "none";
+            document.getElementById("90").style.display = "none";
+            document.getElementById("80").style.display = "none";
             document.getElementById("60").style.display = "block";
+            document.getElementById("50").style.display = "none";
+            document.getElementById("30").style.display = "none";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "none";    
          }
          if(battery===50||(50>battery && battery>30)){
+            document.getElementById("Full").style.display = "none";
+            document.getElementById("90").style.display = "none";
+            document.getElementById("80").style.display = "none";
+            document.getElementById("60").style.display = "none";
             document.getElementById("50").style.display = "block";
+            document.getElementById("30").style.display = "none";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "none";    
          }
          if(battery===30||(30>battery && battery>20)){
+            document.getElementById("Full").style.display = "none";
+            document.getElementById("90").style.display = "none";
+            document.getElementById("80").style.display = "none";
+            document.getElementById("60").style.display = "none";
+            document.getElementById("50").style.display = "none";
             document.getElementById("30").style.display = "block";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "none";    
          }
          if(battery===20||(20>battery && battery>10)){
+            document.getElementById("Full").style.display = "none";
+            document.getElementById("90").style.display = "none";
+            document.getElementById("80").style.display = "none";
+            document.getElementById("60").style.display = "none";
+            document.getElementById("50").style.display = "none";
+            document.getElementById("30").style.display = "none";
             document.getElementById("20").style.display = "block";
+            document.getElementById("Alert").style.display = "none";    
          }
          if(10>=battery){
-            document.getElementById("Alert").style.display = "block";
+            document.getElementById("Full").style.display = "none";
+            document.getElementById("90").style.display = "none";
+            document.getElementById("80").style.display = "none";
+            document.getElementById("60").style.display = "none";
+            document.getElementById("50").style.display = "none";
+            document.getElementById("30").style.display = "none";
+            document.getElementById("20").style.display = "none";
+            document.getElementById("Alert").style.display = "block";    
          }
  
     })
     }
     
+    var my_time1
     function timer(){
-        reset();
         getBattery();
-        var my_time1=setTimeout('timer()',100);
+        my_time1=setTimeout('timer()',1000);
         }
     
     
     return(
-        <div id="batteryshow" >
+        <div id="batteryshow" style={{marginBottom:"229px"}}>
         <img src={grid} alt="map" className="grid"/>
         <img src={ground} alt="ground" className="ground"/>
         <h1 className="header">Rover's Health</h1>
-        <button className="button" onClick={timer}>Battery Level</button>
+        <Button className={classes.button}
+                 variant="contained" 
+                 color="primary" 
+                 type="submit"
+                 onClick={timer}>
+                Battery Level
+                </Button>
         
         <BatteryFullIcon id="Full" style={{width:"200px", height:"300px", marginLeft:"20px", display:"none"}}> </BatteryFullIcon>
         <Battery90Icon id="90" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></Battery90Icon>

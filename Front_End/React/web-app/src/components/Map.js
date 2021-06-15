@@ -69,6 +69,7 @@ function Map(){
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
         document.getElementById('msg').style.display="block";
+        document.getElementById('info').style.display="block";
         document.getElementById('pinkballcoord').style.display="block";
         document.getElementById('greenballcoord').style.display="block";
         document.getElementById('orangeballcoord').style.display="block";
@@ -251,13 +252,13 @@ function Map(){
            <RotateRightIcon/>
             </button>
             <img src={circle} alt="circle" style={{marginLeft:"163px", marginTop:"31px", width:"175px", height:"175px"}}/>
-            <h6 style={{marginLeft: "10px", marginTop: "100px", position:"absolute"}}>
+            <h4 style={{marginLeft: "10px", marginTop: "100px", position:"absolute"}}>
                 Click on position
-            </h6>
-            <div style={{marginLeft: "10px", marginTop: "130px", position: "absolute"}} > 
-            {x_real}:{y_real};
+            </h4>
+            <div style={{marginLeft: "10px", marginTop: "140px", position: "absolute"}} > 
+            [{x_real}:{y_real}]
             </div>
-            <div id="PAF" style={{marginLeft: "10px", marginTop: "155px", position: "absolute"}}></div>
+            <div id="PAF" style={{marginLeft: "10px", marginTop: "170px", position: "absolute"}}></div>
             </div>
          </nav>
     );
