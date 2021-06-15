@@ -249,54 +249,18 @@ void loop() {
 
   // ************** UART STUFF *****************
   // Receiving stuff from drive
-  if (Serial1.available()) {
-  char received_char = Serial1.read();
-  // Receives packet from drive
-  if (received_char == '<') {
-    while (Serial1.available() && received_char != '>') {
-      received_char = Serial1.read();
-      char bufX[6];
-      char bufY[6];
-      char bufA[4];
-      int i = 0;
-      while (Serial1.available() && received_char != ',') {
-        bufX[i++] = received_char;
-        received_char = Serial1.read();
-      }
-      bufX[i] = '\0';
-      String x(bufX);
+  if (Serial2.available()) {
+    char received_char = Serial2.read();
+    if (received_char == '<') {
+      String x = Serial2.readStringUntil(',');
       rover.coords.first = x.toInt();
-      
-      if (Serial1.available()) received_char = Serial1.read(); // Consume ','
-      i = 0;
-      while (Serial1.available() && received_char != ',') {
-        bufY[i++] = received_char;
-        received_char = Serial1.read();
-      }
-      bufY[i] = '\0';
-      String y(bufY);
+      String y = Serial2.readStringUntil(',');
       rover.coords.second = y.toInt();
-
-      if (Serial1.available()) received_char = Serial1.read(); // Consume ','
-      i = 0;
-      while (Serial1.available() && received_char != '>') {
-        bufA[i++] = received_char;
-        received_char = Serial1.read();
-      }
-      bufA[i] = '\0';
-      String a(bufA);
+      String a = Serial2.readStringUntil('>');
       rover.angle = a.toInt();
-
-      // Debugging
-      Serial.print("Received from drive: x=");
-      Serial.print(x);
-      Serial.print(", y=");
-      Serial.print(y);
-      Serial.print(", angle=");
-      Serial.println(a);
+      // Serial.println("Received: x = "+x+", y = "+y+", a = "+a);
     }
   }
-}
 
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
