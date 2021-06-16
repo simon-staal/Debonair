@@ -152,7 +152,7 @@ const getBattery=()=>{
     
    const batterylevel=()=>{
          getBattery();
-         setTimeout(batterylevel,1000)
+         setTimeout(batterylevel,3000)
         }
     
     
