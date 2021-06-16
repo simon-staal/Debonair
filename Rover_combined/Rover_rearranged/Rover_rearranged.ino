@@ -219,6 +219,7 @@ void F_B_PIcontroller(int sensor_total_y, int target);
 void Turn_PIcontroller(float desired_angle, float measuring_angle);
 void sendcoords(int x_coord_send, int y_coord_send, float angle_send);
 void sendflag();
+void TurnLeft_PIcontroller(float desired_angle);
 
 //*************************** Setup ****************************//
 
@@ -482,6 +483,7 @@ void loop() {
     digitalWrite(DIRR, DIRRstate);
     digitalWrite(DIRL, DIRLstate);
 
+  /*
     // Sending coordinates (remote control)
     last_mov = (dir == 'S') ? last_mov : dir;    // keeps track of the current command
     if (last_mov == 'F' || last_mov == 'B'){
@@ -493,16 +495,37 @@ void loop() {
       Serial.println("current_y = "+ String(current_y));
       Serial.println("current_angle = "+ String(toDegrees(current_angle)));
     }
+    */
+    /*
     else if (last_mov == 'L' || last_mov == 'R') {
       float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
       float alpha = asin(measuredDistance/(2*r)) * 2 ; 
       current_angle = (dx_mm < 0) ? (current_angle + alpha) : (current_angle - alpha); // Keeps track of our current angle (maybe change to current_angle)
       current_angle = (current_angle > 360) ? (current_angle - 360) : current_angle;
+      current_angle = (cirrent_angle < -360) ? (current_angle + 360 : current_angle;
       Serial.println("current_x = "+ String(current_x));
       Serial.println("current_y = "+ String(current_y));
       Serial.println("alpha in rotation"+ String(alpha));
       Serial.println("current_angle in rotation"+ String(toDegrees(current_angle)));
     }
+    */
+    ////////////////////////////////////////////////////////////////////////////////
+
+    Serial.println("dy_mm is " + String(dy_mm));
+    Serial.println("dx_mm is " + String(dx_mm));
+    if(dy_mm > 4*dx_mm){
+      current_y = current_y + measuredDistance * cos(current_angle);
+      current_x = current_x + measuredDistance * sin(current_angle);
+    }
+    else{
+      float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+      float alpha = asin(measuredDistance/(2*r)) * 2 ; 
+      current_angle = (dx_mm < 0) ? (current_angle + alpha) : (current_angle - alpha); // calculate angle rotated by the small incremental change first
+      current_angle = (current_angle > 3.14159265359) ? (current_angle - 3.14159265359) : current_angle;    
+      current_angle = (cirrent_angle < -3.14159265359) ? (current_angle + 3.14159265359 : current_angle;  //used to change angle if it goes above 180 degrees / below -180 degrees  
+    }
+
+     ///////////////////////////////////////////////////////////////////////////////
     // Sends info back to ESP
     unsigned long now = millis();
     if (now - lastMsg > 200) { // Sends info every 200 ms
@@ -741,6 +764,12 @@ void loop() {
     
   }
 }
+
+
+
+
+
+
 
 //*************************** Loop end ***********************
 
@@ -998,6 +1027,67 @@ void F_B_PIcontroller(int sensor_total_y, int target){
 //    reached_destination = true;
     }
   }
+
+
+void Turn_PIcontroller(float desired_angle){
+  float error_angle = desired_angle - toDegrees(current_angle);
+  float cDistance = pidDistance(error_angle);
+  if(error_angle < -15 || error_angle > 15){
+    pwm_modulate(abs(cDistance)*0.01+0.38);
+  }
+  else if(error_angle < -10 || error_angle > 10){
+    pwm_modulate(0.3);
+  }
+  if (abs(error_angle) >= 1 && error_angle <= -1){
+    DIRRstate = LOW;   // turns left - rotates anticlockwise
+    DIRLstate = LOW;
+  }
+  else if (abs(error_angle) >= 1 && error_angle >= 1){
+    DIRRstate = HIGH;   // turns right - rotates clockwise
+    DIRLstate = HIGH;
+  }
+  else{
+    pwm_modulate(0);
+  }
+  digitalWrite(DIRR, DIRRstate);
+  digitalWrite(DIRL, DIRLstate);
+
+  float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+  float alpha = asin(measuredDistance/(2*r)) * 2 ; 
+  current_angle = (dx_mm < 0) ? (current_angle + alpha) : (current_angle - alpha); // calculate angle rotated by the small incremental change first
+  current_angle = (current_angle > 3.14159265359) ? (current_angle - 3.14159265359) : current_angle;    
+  current_angle = (cirrent_angle < -3.14159265359) ? (current_angle + 3.14159265359 : current_angle;  //used to change angle if it goes above 180 degrees / below -180 degrees  
+
+}
+
+void move_PIcontroller(int desired_x, int desired_y){
+  float error_distance = sqrt(pow((current_x-desired_x),2) + pow((current_y-desired_y),2)
+  bool forward = ((current_y + error_distance * cos(current_angle)) == desired_y) ? true : false;
+  float cDistance = pidDistance(error_distance);
+  if(error_distance > 100){
+    pwm_modulate(abs(cDistance)*0.01+0.38);
+  }
+  else if(error_distance > 30){
+    pwm_modulate(0.3);
+  }
+  if(error_distance < 10 && forward){
+      DIRRstate = LOW;   //goes forwards
+      DIRLstate = HIGH;
+  }
+  else if(error_distance > 10 &backward){
+        DIRRstate = HIGH;   //goes backwards
+        DIRLstate = LOW; 
+  }
+  else{
+    pwm_modulate(0);
+  }
+  digitalWrite(DIRR, DIRRstate);
+  digitalWrite(DIRL, DIRLstate);
+
+  current_y = current_y + measuredDistance * cos(current_angle);
+  current_x = current_x + measuredDistance * sin(current_angle);
+}
+ 
 /* THIS CANNOT BE USED IN CURRENT STATE (ANGLECHANGED IS DEAD)
 void TurnLeft_PIcontroller(float desired_angle){
   error_angle = desired_angle - anglechanged;
