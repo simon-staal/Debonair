@@ -93,6 +93,8 @@ char mode = 'M';
 char dir = 'S';
 int destinationX = 9999;
 int destinationY = 9999;
+int destinationX_prev;
+int destinationY_prev;
 long lastMsg = 0;
 
 //************************** Rover Constants / Variables ************************//
@@ -176,6 +178,7 @@ bool reached_angle = 0;
 int x_now = 0;
 int y_now = 0;
 float angle_now;
+bool destinationreached = false;
 
 //************************ Function declarations *********************//
 int convTwosComp(int b);
@@ -195,7 +198,7 @@ struct MD
 
 void mousecam_read_motion(struct MD *p);
 int mousecam_frame_capture(byte *pdata);
-void sampling();
+void sampling(int value);
 float saturation( float sat_input, float uplim, float lowlim);
 void pwm_modulate(float pwm_input);
 float pidv( float pid_input);
@@ -216,7 +219,8 @@ void goBackwards();
 void goForwards();
 float pidDistance(float pidDistance_input);
 void F_B_PIcontroller(int sensor_total_y, int target);
-void Turn_PIcontroller(float desired_angle, float measuring_angle);
+bool Turn_PIcontroller(float desired_angle, float dy_val, float dx_val, float *current_ang);
+bool move_PIcontroller(int desired_x, int desired_y);
 void sendcoords(int x_coord_send, int y_coord_send, float angle_send);
 void sendflag();
 void TurnLeft_PIcontroller(float desired_angle);
@@ -279,6 +283,7 @@ void setup() {
   Wire.begin(); // We need this for the i2c comms for the current sensor
   ina219.init(); // this initiates the current sensor
   Wire.setClock(700000); // set the comms speed for i2c
+  sampling(1000);
 }
 
 //***************************** Loop **************************//
@@ -301,6 +306,8 @@ void loop() {
     if (mode == 'C' && received_char == '<') {
       String x = Serial1.readStringUntil(',');
       String y = Serial1.readStringUntil('>');
+      destinationX_prev = destinationX;
+      destinationY_prev = destinationY;
       destinationX = x.toInt();
       destinationY = y.toInt();
       /*
@@ -395,7 +402,7 @@ void loop() {
     dy_mm = (float)(distance_y/157.0) * 10;
 
     Serial.print('\n');
-    Serial.println("dx = "+String(distance_x));
+      Serial.println("dx = "+String(distance_x));
     Serial.println("dy = "+String(distance_y));
 
     Serial.println("Distance_x = " + String(total_x));
@@ -412,7 +419,7 @@ void loop() {
     digitalWrite(13, HIGH);   // set pin 13. Pin13 shows the time consumed by each control cycle. It's used for debugging.
 
     // Sample all of the measurements and check which control mode we are in
-    sampling();
+    sampling(1000);
     CL_mode = digitalRead(3); // input from the OL_CL switch
     Boost_mode = digitalRead(2); // input from the Buck_Boost switch
       
@@ -513,16 +520,18 @@ void loop() {
 
     Serial.println("dy_mm is " + String(dy_mm));
     Serial.println("dx_mm is " + String(dx_mm));
-    if(dy_mm > 4*dx_mm){
-      current_y = current_y + measuredDistance * cos(current_angle);
-      current_x = current_x + measuredDistance * sin(current_angle);
+    if(abs(dy_mm) > abs(4*dx_mm)){
+      float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
+      int ispositive = (dy_mm > 0) ? 1 : -1;
+      current_y = current_y + (measuredDistance * ispositive) * cos(current_angle);
+      current_x = current_x + (measuredDistance * ispositive) * sin(current_angle);
     }
     else{
       float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
       float alpha = asin(measuredDistance/(2*r)) * 2 ; 
       current_angle = (dx_mm < 0) ? (current_angle + alpha) : (current_angle - alpha); // calculate angle rotated by the small incremental change first
       current_angle = (current_angle > 3.14159265359) ? (current_angle - 3.14159265359) : current_angle;    
-      current_angle = (cirrent_angle < -3.14159265359) ? (current_angle + 3.14159265359 : current_angle;  //used to change angle if it goes above 180 degrees / below -180 degrees  
+      current_angle = (current_angle < -3.14159265359) ? (current_angle + 3.14159265359): current_angle;  //used to change angle if it goes above 180 degrees / below -180 degrees  
     }
 
      ///////////////////////////////////////////////////////////////////////////////
@@ -541,6 +550,64 @@ void loop() {
   // COORDINATE MODE: REACHING SET OF COORDINATES SET BY THE USER
 
   if(mode == 'C'){
+    destinationreached = (destinationX != destinationX_prev || destinationY != destinationY_prev) ? false : destinationreached;
+    Serial.println("We are in coordinate mode"); 
+    if (destinationX > 1000 || destinationY > 1000 ) {
+        Serial.println("We are not moving");
+        stop_Rover();
+      //pwm_modulate(0);
+    }
+    else{
+        digitalWrite(pwmr, HIGH);
+        digitalWrite(pwml, HIGH);
+        float changeinx = destinationX - current_x;
+        float changeiny = destinationY - current_y;
+        //first we rotate
+        Serial.println("dy_mm before the loop is " + String(dy_mm) + "dx_mm before the loop is " + String(dx_mm));
+        Serial.println("more debugging, x and y are " + String(distance_x) + "," + String(distance_y));
+        bool not_turning;
+        if(changeinx > 0 && changeiny > 0){ 
+            not_turning = Turn_PIcontroller(toDegrees(atan(changeinx/changeiny)), dy_mm, dx_mm, &current_angle);            //top right quadrant
+        }
+        else if (changeinx > 0 && changeiny < 0){
+            not_turning = Turn_PIcontroller(toDegrees(atan(-changeiny/changeinx)) + 90, dy_mm, dx_mm, &current_angle);      //bottom right quadrant
+        }
+        else if (changeinx < 0 && changeiny > 0){
+            not_turning = Turn_PIcontroller(toDegrees(-changeinx/changeiny), dy_mm, dx_mm, &current_angle);                 //top left quadrant
+        }
+        else if(changeinx < 0 && changeiny < 0){
+            not_turning = Turn_PIcontroller(toDegrees(atan(-changeiny/-changeinx)) - 90, dy_mm, dx_mm, &current_angle);     //bottom left quadrant
+        }
+
+        //end of rotation functions
+
+        //start of movement forward/backwards functions
+        if(not_turning && !destinationreached){
+            destinationreached = move_PIcontroller(destinationX, destinationY);     //bottom left quadrant
+            if(destinationreached){
+                destinationX = 9999;
+                destinationY = 9999;
+            }
+        }
+
+       unsigned long now = millis();
+       if (now - lastMsg > 200) { // Sends info every 200 ms
+          Serial.println("Last message: " + String(lastMsg));
+          Serial.println("Current time: " + String(now));
+          lastMsg = now;
+          sendcoords(current_x, current_y, toDegrees(current_angle)); // Sends info to ESP
+       }
+
+        //end of movement forward/backward functions
+        
+    }
+
+
+    
+    //destinationX and destinationY are received coord mode coords++++++
+
+      /*
+      
     digitalWrite(pwmr, HIGH);
     digitalWrite(pwml, HIGH); 
     int distance_travelled; // Used to track forwards motion
@@ -604,6 +671,7 @@ void loop() {
         }
       }
     }
+    */
     
     /*
     // Distance = sqrt(pow(destinationY-y_now,2) + pow(destinationX-x_now,2));
@@ -884,12 +952,12 @@ int mousecam_frame_capture(byte *pdata){            // pdata must point to an ar
   return ret;
 }
 
-void sampling(){
+void sampling(int value){
 
   // Make the initial sampling operations for the circuit measurements
   
   sensorValue0 = analogRead(A0); //sample Vb
-  sensorValue2 = analogRead(A2); //sample Vref
+  sensorValue2 = value; //sample Vref
  // sensorValue2 = vref *(1023.0/ 4.096);  
   sensorValue3 = analogRead(A3); //sample Vpd
   current_mA = ina219.getCurrent_mA(); // sample the inductor current (via the sensor chip)
@@ -1029,63 +1097,82 @@ void F_B_PIcontroller(int sensor_total_y, int target){
   }
 
 
-void Turn_PIcontroller(float desired_angle){
-  float error_angle = desired_angle - toDegrees(current_angle);
-  float cDistance = pidDistance(error_angle);
-  if(error_angle < -15 || error_angle > 15){
-    pwm_modulate(abs(cDistance)*0.01+0.38);
-  }
-  else if(error_angle < -10 || error_angle > 10){
-    pwm_modulate(0.3);
-  }
-  if (abs(error_angle) >= 1 && error_angle <= -1){
-    DIRRstate = LOW;   // turns left - rotates anticlockwise
-    DIRLstate = LOW;
-  }
-  else if (abs(error_angle) >= 1 && error_angle >= 1){
-    DIRRstate = HIGH;   // turns right - rotates clockwise
-    DIRLstate = HIGH;
-  }
-  else{
-    pwm_modulate(0);
-  }
-  digitalWrite(DIRR, DIRRstate);
-  digitalWrite(DIRL, DIRLstate);
+bool Turn_PIcontroller(float desired_angle, float dy_val, float dx_val, float *current_ang){
+    Serial.println("Desiredangle should have been 45 but is " + String(desired_angle));
+    Serial.println("dy_val is " + String(dy_val) + "dx_val is " + String(dx_val));
+    float error_angle = desired_angle - toDegrees(current_angle);
+    float cDistance = pidDistance(error_angle);
+    if(error_angle < -10 || error_angle > 10){
+        pwm_modulate(abs(cDistance)*0.01+0.3);
+    }
+    else if(error_angle < -5 || error_angle > 5){
+        pwm_modulate(0.3);
+    }
+    else{
+        pwm_modulate(0.25);
+    }
+    if (abs(error_angle) >= 1 && error_angle <= -1){
+        DIRRstate = LOW;   // turns left - rotates anticlockwise
+        DIRLstate = LOW;
+    }
+    else if (abs(error_angle) >= 1 && error_angle >= 1){
+        DIRRstate = HIGH;   // turns right - rotates clockwise
+        DIRLstate = HIGH;
+    }
+    else{
+        return true;
+    }
+    digitalWrite(DIRR, DIRRstate);
+    digitalWrite(DIRL, DIRLstate);
 
-  float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2));
-  float alpha = asin(measuredDistance/(2*r)) * 2 ; 
-  current_angle = (dx_mm < 0) ? (current_angle + alpha) : (current_angle - alpha); // calculate angle rotated by the small incremental change first
-  current_angle = (current_angle > 3.14159265359) ? (current_angle - 3.14159265359) : current_angle;    
-  current_angle = (cirrent_angle < -3.14159265359) ? (current_angle + 3.14159265359 : current_angle;  //used to change angle if it goes above 180 degrees / below -180 degrees  
-
+    float measuredDistance = sqrt(pow(dy_val,2) + pow(dx_val,2));
+    float alpha = asin(measuredDistance/(2*r)) * 2 ; 
+    float angleval = *current_ang;
+    angleval = (dx_val < 0) ? (angleval + alpha) : (angleval - alpha); // calculate angle rotated by the small incremental change first
+    angleval = (angleval > 3.14159265359) ? (angleval - 3.14159265359) : angleval;
+    angleval = (angleval < -3.14159265359) ? (angleval + 3.14159265359) : angleval;  //used to change angle if it goes above 180 degrees / below -180 degrees 
+    Serial.println("current angle is " + String(toDegrees(angleval))); 
+    *current_ang = angleval;
+    return false;
 }
 
-void move_PIcontroller(int desired_x, int desired_y){
-  float error_distance = sqrt(pow((current_x-desired_x),2) + pow((current_y-desired_y),2)
-  bool forward = ((current_y + error_distance * cos(current_angle)) == desired_y) ? true : false;
+bool move_PIcontroller(int desired_x, int desired_y){
+  Serial.print("ENTERING DISTANCE MOVEMENT FORWARD");
+  float error_distance = sqrt(pow((current_x-desired_x),2) + pow((current_y-desired_y),2));
+  bool forward = (((current_y + error_distance * cos(current_angle) < desired_y + 5) && (current_y + error_distance * cos(current_angle) > desired_y - 5))) ? true : false;
   float cDistance = pidDistance(error_distance);
-  if(error_distance > 100){
-    pwm_modulate(abs(cDistance)*0.01+0.38);
+  Serial.println("error distance is " + String(error_distance));
+  if(error_distance > 30){
+    pwm_modulate(abs(cDistance)*0.01+0.6);
+    Serial.print("Modulating it to 0.6");
+  } 
+  else if(error_distance > 10){
+    pwm_modulate(0.45);
+    Serial.print("Modulating it to 0.45");
   }
-  else if(error_distance > 30){
-    pwm_modulate(0.3);
+  else{
+    pwm_modulate(0.35);
+    Serial.print("Modulating it to 0.35");
   }
-  if(error_distance < 10 && forward){
+  if(error_distance > 5 && forward){
       DIRRstate = LOW;   //goes forwards
       DIRLstate = HIGH;
   }
-  else if(error_distance > 10 &backward){
+  else if(error_distance > 5 && !forward){
         DIRRstate = HIGH;   //goes backwards
         DIRLstate = LOW; 
   }
   else{
-    pwm_modulate(0);
+    stop_Rover();
+    return true;
   }
   digitalWrite(DIRR, DIRRstate);
   digitalWrite(DIRL, DIRLstate);
 
+  float measuredDistance = sqrt(pow(dy_mm,2) + pow(dx_mm,2)); 
   current_y = current_y + measuredDistance * cos(current_angle);
   current_x = current_x + measuredDistance * sin(current_angle);
+  return false;
 }
  
 /* THIS CANNOT BE USED IN CURRENT STATE (ANGLECHANGED IS DEAD)
@@ -1218,9 +1305,6 @@ void stop_Rover(){
   digitalWrite(pwmr, LOW);
   digitalWrite(pwml, LOW);
   //pwm_modulate(0);
-  
-  digitalWrite(DIRR, DIRRstate);
-  digitalWrite(DIRL, DIRLstate);
   Serial.println("Stop function activated");
 }
 
