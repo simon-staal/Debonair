@@ -298,7 +298,11 @@ app.get("/reset", (req,res) => {
 
 // Requests for rover power details
 app.get("/battery", (req,res) => {
-	if(!battery) {
+	if(!rover.battery) {
+		rover.battery = 100;
+		rover.SOH = 100;
+	}
+	if(rover.battery === 0) {
 		rover.battery = 100;
 		rover.SOH = 100;
 	}
