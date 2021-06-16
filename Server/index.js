@@ -298,11 +298,17 @@ app.get("/reset", (req,res) => {
 
 // Requests for rover power details
 app.get("/battery", (req,res) => {
+	if(!battery) {
+		rover.battery = 100;
+		rover.SOH = 100;
+	}
 	let response = {
 		'battery': rover.battery,
 		'SOH': rover.SOH
 	};
 	res.send(response);
+	rover.battery -= 10;
+	rover.SOH -= 10;
 })
 
 // Sends desired coordinates to rover
