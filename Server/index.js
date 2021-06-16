@@ -231,7 +231,7 @@ client.on('message', (topic, message, packet) => {
 		rover.y = msg.y;
 		rover.angle = msg.a;
 		rover.lastUpdate = time.getTime();
-		//console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
+		console.log("x: "+rover.x+" y: "+rover.y+" angle: "+rover.angle);
 	}
 	if (topic === "fromESP32/nextpoint") {
 		if (path.points) {
