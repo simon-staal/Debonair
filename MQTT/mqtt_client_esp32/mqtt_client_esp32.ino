@@ -29,8 +29,12 @@ void calcDistance(int col);
 void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "AndroidAP8029"; //"The Circus";
-const char* password = "hirk8481"; //"Hail_Pietr0";
+
+const char* ssid = "Khayle"; //"The Circus";
+const char* password = "pass1234"; //"Hail_Pietr0";
+
+//const char* ssid = "AndroidAP8029"; //"The Circus";
+//const char* password = "hirk8481"; //"Hail_Pietr0";
 
 //const char* ssid = "iPhonedeYuna";
 //const char* password = "yuna1612"; 
@@ -179,7 +183,12 @@ void callback(char* topic, byte* message, unsigned int length) {
     rover.mode = (char)message[0];
     Serial.print("Sending mode ");
     Serial.println(rover.mode);
-    Serial2.print(rover.mode);
+    if (rover.mode == 'E') {
+      Serial2.print('M');
+    }
+    else {
+      Serial2.print(rover.mode);
+    }
   }
   // Receives messages of the form "<x_coord,y_coord>"
   // Also not sure if storing the destination coords is necessary, doing it for now
