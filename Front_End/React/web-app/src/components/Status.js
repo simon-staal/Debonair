@@ -2,6 +2,7 @@ import React from 'react';
 import grid from "./grid.png";
 import ground from "./background.jpg";
 import axios from 'axios';
+import Button from '@material-ui/core/Button';
 import { useLocation } from 'react-router-dom';
 import BatteryFullIcon from '@material-ui/icons/BatteryFull';
 import Battery90Icon from '@material-ui/icons/Battery90';
@@ -11,8 +12,7 @@ import Battery50Icon from '@material-ui/icons/Battery50';
 import Battery30Icon from '@material-ui/icons/Battery30';
 import Battery20Icon from '@material-ui/icons/Battery20';
 import BatteryAlertIcon from '@material-ui/icons/BatteryAlert';
-import Button from '@material-ui/core/Button';
-import {makeStyles } from '@material-ui/core/styles';
+import {makeStyles} from '@material-ui/core/styles';
 import './Status.css';
 
 const useStyles = makeStyles((theme)=>({
@@ -23,10 +23,12 @@ const useStyles = makeStyles((theme)=>({
 }));
 
 function Status(){
+   var battery;
+   var health; 
     
    const classes = useStyles();
 
-    if(useLocation().pathname==="/status"){
+   if(useLocation().pathname==="/status"){
         document.getElementById('pinkball').style.display="block";
         document.getElementById('blueball').style.display="block";
         document.getElementById('greenball').style.display="block";
@@ -43,16 +45,26 @@ function Status(){
         document.getElementById('blueballcoord').style.display="block";
         document.getElementById('blackballcoord').style.display="block";
      }
-      
-    var battery;
 
-    function getBattery(){
+const getBattery=()=>{
 
     axios.get('https://debonair.duckdns.org:8443/battery')
     .then(response=>{
-      battery=response.data.battery;})
+      battery=response.data.battery;
+      health=response.data.SOH;
+      })
+      
     .then(()=>{
-    
+      document.getElementById("level").innerHTML=battery+ "%"; 
+      if(100>=health && health>=50){
+         document.getElementById("SOH").innerHTML="Debonair is healthy! State of health: " + health +"%"; 
+      }
+      else if(50>health && health>20){
+         document.getElementById("SOH").innerHTML="Debonair's state of health is moderate: " + health +"%";
+      }
+      else if(health>=20){
+         document.getElementById("SOH").innerHTML="Debonair needs servicing. State of health: " + health +"%";
+      }
         if(battery===100||(100>battery && battery>90)){
             document.getElementById("Full").style.display = "block";  
             document.getElementById("90").style.display = "none";
@@ -134,14 +146,13 @@ function Status(){
             document.getElementById("20").style.display = "none";
             document.getElementById("Alert").style.display = "block";    
          }
- 
-    })
-    }
+        
+      })
+   }   
     
-    var my_time1
-    function timer(){
-        getBattery();
-        my_time1=setTimeout('timer()',1000);
+   const batterylevel=()=>{
+         getBattery();
+         setTimeout(batterylevel,3000)
         }
     
     
@@ -153,20 +164,23 @@ function Status(){
         <Button className={classes.button}
                  variant="contained" 
                  color="primary" 
-                 type="submit"
-                 onClick={timer}>
+                 type="button"
+                 onClick={batterylevel}>
                 Battery Level
                 </Button>
+         <div id="level" style={{ position:"absolute", marginLeft:"200px", marginTop:"75px", fontSize:"50px", fontWeight:"bold"}}> </div>
+         <div id="SOH" style={{position:"absolute", marginTop:"250px", marginLeft:"20px", fontSize:"20px"}}></div>
         
-        <BatteryFullIcon id="Full" style={{width:"200px", height:"300px", marginLeft:"20px", display:"none"}}> </BatteryFullIcon>
-        <Battery90Icon id="90" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></Battery90Icon>
-        <Battery80Icon id="80" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></Battery80Icon>
-        <Battery60Icon id="60" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></Battery60Icon>
-        <Battery50Icon id="50" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></Battery50Icon>
-        <Battery30Icon id="30" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}}></Battery30Icon>
-        <Battery20Icon id="20" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></Battery20Icon>
-        <BatteryAlertIcon id="Alert" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none"}} ></BatteryAlertIcon>
-        
+        <div style={{position:"absolute", marginTop:"-25px"}}>
+        <BatteryFullIcon id="Full" style={{ width:"200px", height:"300px", marginLeft:"20px", display:"none", color:"#30b455"}}> </BatteryFullIcon>
+        <Battery90Icon id="90" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none",color:"#30b455"}} ></Battery90Icon>
+        <Battery80Icon id="80" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none",color:"#30b455"}} ></Battery80Icon>
+        <Battery60Icon id="60" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none",color:"#30b455"}} ></Battery60Icon>
+        <Battery50Icon id="50" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none", color:"#EFAF13"}} ></Battery50Icon>
+        <Battery30Icon id="30" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none", color:"#EFAF13"}}></Battery30Icon>
+        <Battery20Icon id="20" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none", color:"#EFAF13"}} ></Battery20Icon>
+        <BatteryAlertIcon id="Alert" style={{width:"200px", height:"300px",marginLeft:"20px", display:"none", color:"#e81309"}} ></BatteryAlertIcon>
+        </div>
         </div>
     );
 }
