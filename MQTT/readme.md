@@ -1,6 +1,6 @@
 MQTT
 ====
-This is <del>probably</del> almost definitely the prototcol I'll be using to send / receive data to the ESP32 device. The port typically used for MQTT is 1883, and for websockets port 9001.
+This is <del>probably</del> definitely the prototcol I'll be using to send / receive data to the ESP32 device. The port typically used for MQTT is 1883, and for websockets port 9001.
 
 The broker has been tested locally, as well as its ability to communicate with the ESP32 via the [*ESP32 client*](../Control/mqtt_client_esp32/mqtt_client_esp32.ino). The [**pubsubclient**](https://github.com/knolleary/pubsubclient) library was used for this.
 
