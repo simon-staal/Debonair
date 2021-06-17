@@ -1,16 +1,21 @@
-MARS ROVER PROJECT
+Debonair - Mars Rover Project
 ==================
-This repository will contain the files developed as part of the End of Year project for Y2 (EEE/EIE).
+This repository will contains all the files developed as part of ELEC50008 - Engineering Design Project II (End of Year project for Y2 EEE/EIE).
+
+**IMPORTANT:**
+Please note that there are still multiple branches that are up on this repository:
+- Drive_* branches have varying implementations of Drive code due to issues with running original version in master
+- Power_Integration contains dual-core ESP32 code meant to be run when the Power module was integrated into the overall system
+- performance_testing is a branch that was used to run a variety of benchmarking tests, was left up for posterity / if needed to be used again.
 
 Find the guide to the different folders below:
 
-express_test
-------------
-This folder was made to test a simple server using express framework on top of node.js
+Control
+--------
 
-HTML
-----
-A folder containing all the HTML stuff for the front-end of our webapp. Also contains the [**React**](HTML/React) subdirectory which contains a simple basic React project, which we will most likely use for the server front-end.
+Front_End
+---------
+A folder containing the React app used for the front-end of our webapp. 
 
 MQTT
 ----

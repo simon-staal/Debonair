@@ -30,8 +30,33 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Audiowide|Sofia|Trirong">
     <title> Debonair </title>
   
+    <style>
+.button {
+  padding: 5px 15px;
+  font-size: 15px;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: rgb(21, 21, 148);
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
+}
+
+.button:hover {background-color: rgb(21, 21, 148);}
+
+.button:active {
+  background-color: rgb(21, 21, 148);
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+    </style>
     
   </head>
+
 
   <body id="body" >
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -114,6 +139,7 @@ function disprover(){
     angle= response.data.angle;})
 
 //request the data with axios get
+//dont want rover to be exiting the map
 if (stepx>1000 | stepy>1000){
   document.getElementById("msg").innerHTML="Invalid Coordinate"
   return
@@ -123,12 +149,12 @@ if(flag==1){
   dispball();
 }
 //If coordinates are outside of the map, notify user that they are invalid coordinates
-
 var x=820+stepx*300/1000;
 var y=410-stepy*300/1000;
 document.getElementById('i1').style.left= x + "px"; //x axis update
 document.getElementById('i1').style.top= y + "px";    //y axis update
 document.getElementById("msg").innerHTML="{Rover} X: " + stepx + " Y : " + stepy + " Angle: " + angle;
+
 }
 
 //////////////////////
@@ -195,29 +221,34 @@ function dispball(){
  
 }
 
-
 function timer(){
 disprover();
-my_time=setTimeout('timer()',100);
+my_time=setTimeout('timer()',200);
 }
+
     </script>
 
   
     <img src=./images/rover.png id='i1' 
-     style="position:absolute; width:60px; height:60px; left: 820px; top: 410px; z-index:1;">
+     style="position:absolute; width:60px; height:60px; left: 820px; top: 408px; z-index:1;">
     
      <br>
+    
+     <form>
+    <input type=button class="button" id="start" style="position:absolute; margin-left: 1260px; margin-top:-330px" onClick="timer()" value='Start'>
+    <input type=button class="button" id="reset" style="position:absolute;  margin-left: 1380px; margin-top:-330px;" onClick="reset1()" value='Reset'>
+  </form>
+    <div id="info" style="margin-left: 1235px; margin-top:-280px; font-style: italic;"><p> [Press Start when Debonair is ready to move !]</p>
+    </div>
+    <div id="info" style="margin-left: 1235px; margin-top:-10px;font-style: italic;"> <p> [Press Reset to reset the whole map] </p> </div>
 
-    <input type=button id="start" style="position:absolute; margin-left:20px;" onClick="timer()" value='Start'>
-    <input type=button id="reset" style="position:absolute; margin-left:100px;" onClick="reset1()" value='Reset'>
-    
-    <div id='msg' style="position:absolute; margin-left:20px;margin-top:50px;"></div>
-    <div id='pinkballcoord' style="position:absolute; margin-left:20px; margin-top:80px;"></div>
-    <div id='greenballcoord' style="position:absolute; margin-left:20px;margin-top:110px;"></div>
-    <div id='blueballcoord' style="position:absolute; margin-left:20px;margin-top:140px;"></div>
-    <div id='orangeballcoord' style="position:absolute; margin-left:20px;margin-top:170px;"></div>
-    <div id='blackballcoord' style="position:absolute; margin-left:20px;margin-top:200px;"></div>
-    
+    <div id='msg' style="position:absolute; margin-left:1235px;margin-top:10px;"></div>
+    <div id='pinkballcoord' style="position:absolute; margin-left:1235px; margin-top:40px;"></div>
+    <div id='greenballcoord' style="position:absolute; margin-left:1235px;margin-top:70px;"></div>
+    <div id='blueballcoord' style="position:absolute; margin-left:1235px;margin-top:110px;"></div>
+    <div id='orangeballcoord' style="position:absolute; margin-left:1235px;margin-top:140px;"></div>
+    <div id='blackballcoord' style="position:absolute; margin-left:1235px;margin-top:170px;"></div>
+  
    
     <img src=./images/pinkball.png  id=pinkball style="position: absolute; width:20px;height:20px; top:200px; left:1175px; z-index: 1;">
     <img src=./images/greenball.png  id=greenball style="position: absolute; width:20px;height:20px; top:250px; left:1175px; z-index: 1;">
