@@ -61,10 +61,12 @@ const useStyles = makeStyles((theme)=>({
     },
     typography1:{
         marginLeft:17,
-        marginTop:10,
+        marginTop:20,
+        
     },
     typography2:{
         marginLeft:17,
+        marginTop:20,
     }
 }));
 
@@ -80,6 +82,7 @@ function Home(){
         document.getElementById('reset').style.display="block";
         document.getElementById('i1').style.display="block";
         document.getElementById('msg').style.display="block";
+        document.getElementById('info').style.display="block";
         document.getElementById('pinkballcoord').style.display="block";
         document.getElementById('greenballcoord').style.display="block";
         document.getElementById('orangeballcoord').style.display="block";
@@ -129,7 +132,8 @@ function Home(){
             .catch(err => {
                 console.log("Received error: " + err);
             })
-    }
+    
+}
 
     const [checked, setChecked] = useState(true);
 
@@ -170,13 +174,13 @@ function Home(){
         }
     }
     return(
-        <div id="surface">
+        <div id="surface" style={{marginBottom:"-104px"}}>
             <img src={grid} alt="map" className="map"/>
             <img src={ground} alt="mars" className="mars"/>
             
             
             <h1 className="header"> Ground Discovery </h1>
-            <h6 className="h6"> Reach Coordinate </h6>
+            <h4 className="head"> Reach Coordinate </h4>
             <Typography component="div" className={classes.typography2}>
             <Grid component="label" container alignItems="center" spacing={1}>
              <Grid item>Off</Grid>
@@ -217,9 +221,9 @@ function Home(){
                 Submit
                 </Button>
             </form>
-            <div id="PAF" style={{marginLeft: "10px"}}></div>
+            <div id="PAF" style={{position:"absolute",marginLeft: "10px"}}></div>
             
-            <h6 className="h62"> Rover Explore </h6>
+            <h4 className="h62"> Rover Explore </h4>
             <Typography component="div" className={classes.typography1}>
             <Grid component="label" container alignItems="center" spacing={1}>
              <Grid item>Off</Grid>

@@ -261,7 +261,6 @@ void loop() {
 
   // ************** UART STUFF *****************
   // Receiving stuff from drive
-  int extract = 0;
   if (Serial2.available()) {
     char received_char = Serial2.read();
     if (received_char == '<') {

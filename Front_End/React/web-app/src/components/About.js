@@ -15,6 +15,7 @@ function About(){
         document.getElementById('reset').style.display="none";
         document.getElementById('i1').style.display="none";
         document.getElementById('msg').style.display="none";
+        document.getElementById('info').style.display="none";
         document.getElementById('pinkballcoord').style.display="none";
         document.getElementById('greenballcoord').style.display="none";
         document.getElementById('orangeballcoord').style.display="none";
@@ -41,7 +42,7 @@ function About(){
             <h1 className="title">Our Mission</h1>
             <p className="text">
                 <br/>
-                Our teams goal was to design and develop <span className="font">Debonair</span>: an autonomous Rover capable of remotely discovering <br/> its environment 
+                Our team's goal was to design and develop <span className="font">Debonair</span>: an autonomous Rover capable of remotely discovering <br/> its environment 
                 without any direct supervision. As it discovers its surroundings, <br/> it can detect
                 and avoid obstacles, mapping along the way its environment <br/> and recording it on the website.
                 Debonair exchanges data with the web-server, providing information such as the position <br/>of its encountered

@@ -694,6 +694,8 @@ void loop() {
     Serial.println("Distance = " + String(Distance));
     Serial.println("beta = " + String(beta));
     Serial.println("alphaSummed = " + String(alphaSummed));
+    Serial.println("HIIII x_now = " + String(x_now));
+    Serial.println("HIIII y_now = " + String(y_now));
 
     if(angle_flag == true && halted){    // if both the right angle and right distance have been achieved 
       stop_Rover();

@@ -40,10 +40,12 @@ ssh -A -i ${KEY} ubuntu@${IP} << EOF
   echo "Connection successful"
   echo "$SEP"
 
-  echo "Halting MQTT broker"
-  screen -X -S "mqtt" quit
-  echo "$SEP"
-
+  if screen -list | grep -q "mosquitto"; then
+    echo "Halting MQTT broker"
+    screen -X -S "mqtt" quit
+    echo "$SEP"
+  fi
+  
   echo "$SEP"
   echo "Attempting graceful shutdown of REST web service"
   sudo kill $(ps h --ppid $(screen -ls | grep rest | cut -d. -f1) -o pid)
