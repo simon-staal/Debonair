@@ -1,6 +1,6 @@
 Debonair - Mars Rover Project
 ==================
-This repository will contains all the files developed as part of ELEC50008 - Engineering Design Project II (End of Year project for Y2 EEE/EIE).
+This repository will contains all the files developed as part of ELEC50008 - Engineering Design Project II (End of Year project for Y2 EEE/EIE). Check [**here**](https://youtu.be/QJuqwNQwGvM) for a demo video of the system in action.
 
 **IMPORTANT:**
 Please note that there are still multiple branches that are up on this repository:
