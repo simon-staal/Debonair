@@ -152,6 +152,17 @@ const getBattery=()=>{
          }
         
       })
+      .catch(err => {
+         console.log(err);
+         document.getElementById("Full").style.display = "none";
+         document.getElementById("90").style.display = "none";
+         document.getElementById("80").style.display = "none";
+         document.getElementById("60").style.display = "none";
+         document.getElementById("50").style.display = "none";
+         document.getElementById("30").style.display = "none";
+         document.getElementById("20").style.display = "none";
+         document.getElementById("Alert").style.display = "block";  
+      })
    }   
     
    const batterylevel=()=>{
