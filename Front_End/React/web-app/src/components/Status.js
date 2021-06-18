@@ -159,6 +159,11 @@ const getBattery=()=>{
       })
    }   
    
+   const run=()=>{
+      enable();
+      batterylevel();
+   }
+
    const enable=()=>{
       stop = 0;
    }
@@ -180,7 +185,7 @@ const getBattery=()=>{
                  variant="contained" 
                  color="primary" 
                  type="button"
-                 onClick="enable();batterylevel();">
+                 onClick={run}>
                 Battery Level
                 </Button>
          <div id="level" style={{ position:"absolute", marginLeft:"200px", marginTop:"75px", fontSize:"50px", fontWeight:"bold"}}> </div>
