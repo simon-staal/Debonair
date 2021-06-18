@@ -15,6 +15,8 @@ import BatteryAlertIcon from '@material-ui/icons/BatteryAlert';
 import {makeStyles} from '@material-ui/core/styles';
 import './Status.css';
 
+let stop = 0;
+
 const useStyles = makeStyles((theme)=>({
    button:{
        margin: theme.spacing(2),   
@@ -55,8 +57,7 @@ const getBattery=()=>{
       })
    .catch(err => {
       console.log(err);
-      battery = 0;
-      health = 0;
+      stop = 1;
    })
     .then(()=>{
       document.getElementById("level").innerHTML=battery+ "%"; 
@@ -154,19 +155,18 @@ const getBattery=()=>{
       })
       .catch(err => {
          console.log(err);
-         document.getElementById("Full").style.display = "none";
-         document.getElementById("90").style.display = "none";
-         document.getElementById("80").style.display = "none";
-         document.getElementById("60").style.display = "none";
-         document.getElementById("50").style.display = "none";
-         document.getElementById("30").style.display = "none";
-         document.getElementById("20").style.display = "none";
-         document.getElementById("Alert").style.display = "block";  
+         stop = 1;
       })
    }   
-    
+   
+   const enable=()=>{
+      stop = 0;
+   }
+   
    const batterylevel=()=>{
-         getBattery();
+         if(!stop){
+            getBattery();
+         }
          setTimeout(batterylevel,3000)
         }
     
@@ -180,7 +180,7 @@ const getBattery=()=>{
                  variant="contained" 
                  color="primary" 
                  type="button"
-                 onClick={batterylevel}>
+                 onClick="enable();batterylevel();">
                 Battery Level
                 </Button>
          <div id="level" style={{ position:"absolute", marginLeft:"200px", marginTop:"75px", fontSize:"50px", fontWeight:"bold"}}> </div>
