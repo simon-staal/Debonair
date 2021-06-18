@@ -169,10 +169,13 @@ const getBattery=()=>{
    }
    
    const batterylevel=()=>{
-         if(!stop){
-            getBattery();
-         }
-         setTimeout(batterylevel,3000)
+         if(stop){
+            if (timer) {
+               clearTimeout(timer);
+               timer = 0;
+            }
+         getBattery();
+         timer = setTimeout(batterylevel,3000)
         }
     
     
