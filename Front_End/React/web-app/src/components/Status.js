@@ -15,7 +15,7 @@ import BatteryAlertIcon from '@material-ui/icons/BatteryAlert';
 import {makeStyles} from '@material-ui/core/styles';
 import './Status.css';
 
-let stop = 0;
+let timer = 0;
 
 const useStyles = makeStyles((theme)=>({
    button:{
@@ -57,7 +57,10 @@ const getBattery=()=>{
       })
    .catch(err => {
       console.log(err);
-      stop = 1;
+      if (timer) {
+               clearTimeout(timer);
+               timer = 0;
+         } 
    })
     .then(()=>{
       document.getElementById("level").innerHTML=battery+ "%"; 
@@ -155,25 +158,15 @@ const getBattery=()=>{
       })
       .catch(err => {
          console.log(err);
-         stop = 1;
+         if (timer) {
+               clearTimeout(timer);
+               timer = 0;
+         } 
       })
    }   
    
-   const run=()=>{
-      enable();
-      batterylevel();
-   }
 
-   const enable=()=>{
-      stop = 0;
-   }
-   
    const batterylevel=()=>{
-         if(stop){
-            if (timer) {
-               clearTimeout(timer);
-               timer = 0;
-            }
          getBattery();
          timer = setTimeout(batterylevel,3000)
         }
@@ -188,7 +181,7 @@ const getBattery=()=>{
                  variant="contained" 
                  color="primary" 
                  type="button"
-                 onClick={run}>
+                 onClick={batterylevel}>
                 Battery Level
                 </Button>
          <div id="level" style={{ position:"absolute", marginLeft:"200px", marginTop:"75px", fontSize:"50px", fontWeight:"bold"}}> </div>
