@@ -53,7 +53,11 @@ const getBattery=()=>{
       battery=response.data.battery;
       health=response.data.SOH;
       })
-      
+   .catch(err => {
+      console.log(err);
+      battery = 0;
+      health = 0;
+   })
     .then(()=>{
       document.getElementById("level").innerHTML=battery+ "%"; 
       if(100>=health && health>=50){
