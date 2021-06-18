@@ -29,11 +29,18 @@ void calcDistance(int col);
 void resetCounter();
 
 // Parameters for the wifi connection (will need to change depending on location)
-const char* ssid = "AndroidAP8029"; //"The Circus";
-const char* password = "hirk8481"; //"Hail_Pietr0";
+
+const char* ssid = "Khayle"; //"The Circus";
+const char* password = "pass1234"; //"Hail_Pietr0";
+
+//const char* ssid = "AndroidAP8029"; //"The Circus";
+//const char* password = "hirk8481"; //"Hail_Pietr0";
 
 //const char* ssid = "iPhonedeYuna";
 //const char* password = "yuna1612"; 
+
+//const char* ssid = "VM6446132";
+//const char* password = "ty5VxqxnW3yr";
 
 // Parameters for the mqtt connection
 const char* mqtt_server = "3.8.182.14";
@@ -176,7 +183,12 @@ void callback(char* topic, byte* message, unsigned int length) {
     rover.mode = (char)message[0];
     Serial.print("Sending mode ");
     Serial.println(rover.mode);
-    Serial2.print(rover.mode);
+    if (rover.mode == 'E') {
+      Serial2.print('M');
+    }
+    else {
+      Serial2.print(rover.mode);
+    }
   }
   // Receives messages of the form "<x_coord,y_coord>"
   // Also not sure if storing the destination coords is necessary, doing it for now
@@ -261,7 +273,6 @@ void loop() {
       // Serial.println("Received: x = "+x+", y = "+y+", a = "+a);
     }
   }
-
   // ************** SPI STUFF ******************
   // Only care about vision if we are in exploration mode
   if (rover.mode == 'E') { 
@@ -316,6 +327,7 @@ void loop() {
         case 2:
           Serial.print("We have a green ball \n");
           calcDistance(2);
+          Serial.print("We sent the green ball \n");
           break;
         case 3:
           //Serial.print("We have a blue ball \n");
@@ -344,17 +356,16 @@ void loop() {
   }
 
   // Updates server with rover coords
-  /*
   long now = millis();
   if (now - lastMsg > 200) {
     lastMsg = now;
     genCoordMsg(buffer);
     client.publish("fromESP32/rover_coords", buffer, false);
+    Serial.println("Sending " + String(buffer));
   }
-  */
 
   // Sends test message every 2 seconds
-  
+ /*
   long now = millis();
   if (now - lastMsg > 10000) {
     lastMsg = now;
@@ -370,10 +381,9 @@ void loop() {
     obstacle.coords.first = (obstacle.coords.first +100)%1000;
     obstacle.coords.second  = (obstacle.coords.second + 100)%1000;
     newObstacle = 1;
-    */
+    
   }
-  
-
+  */
 }
 
 void genCoordMsg(char *buf) 
@@ -466,7 +476,7 @@ void calcDistance(int col)
         obstacle.coords.first = rover.coords.first + x_diff;
         obstacle.coords.second = rover.coords.second + y_diff;
         newObstacle = 1;
-        spi_returnval = 32768+i;
+        spi_returnval = 32768+col;
         resetCounter();
       }
     }

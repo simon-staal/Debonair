@@ -107,13 +107,13 @@ always @(posedge clk)begin
 	if(value_spi == 4 && data_received)begin
 		yellow_f = 1;
 	end
-	if(value_spi == 1 && data_received)begin
+	if(value_spi == 2 && data_received)begin
 		green_f = 1;
 	end
-	if(value_spi == 1 && data_received)begin
+	if(value_spi == 3 && data_received)begin
 		blue_f = 1;
 	end
-	if(value_spi == 1 && data_received)begin
+	if(value_spi == 5 && data_received)begin
 		grey_f = 1;
 	end
 end
@@ -133,7 +133,7 @@ assign saturation = (value - min)* 255 / value;
 assign hue = (red == green && red == blue) ? 0 :((value != red)? (value != green) ? (((240*((value - min))+ (60* (red - green)))/(value-min))>>1):
                 ((120*(value-min)+60*(blue - red))/(value - min)>>1): 
                 (blue < green) ? ((60*(green - blue)/(value - min))>>1): (((360*(value-min) +(60*(green - blue)))/(value - min))>>1));
-					 
+
 ///Detect Ping Pong balls
 reg prev_detect_high_r, prev_high_r, prev_high_r2;
 reg prev_detect_high_y, prev_high_y, prev_high_y2;
@@ -145,28 +145,38 @@ wire pink_ball_detect, green_ball_detect, orange_ball_detect, grey_ball_detect, 
 assign pink_ball_detect = ((((hue >= 150 && hue <= 180)||(hue <= 6 && hue >= 0)) && (saturation > 84 && value > 245))||
 (hue <= 6 && hue >= 0 && ((value > 229 && saturation > 17 && saturation < 155)||(value > 210 && saturation > 130)))
 || ((hue >= 160 && hue <= 180) && ((saturation >= 76 && value >= 249) || (saturation >= 102 && value >= 140)))
-|| (((hue >= 160 && hue <= 180)||(hue >= 0 && hue <= 4)) && (saturation > 140 && saturation <= 179 && value >= 61 && value <= 89)) 
-||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 6)) && ((value >  86 && saturation > 102) || (saturation > 82 && value > 168)))); //sat > 102
+|| (((hue >= 160 && hue <= 180)||(hue >= 0 && hue <= 4)) && (saturation > 140 && saturation <= 179 && value >= 89 && value <= 106)) 
+||(((hue >= 172 && hue <= 180)||(hue >= 0 && hue <= 6)) && ((value >  105 && saturation > 102) || (saturation > 82 && value > 168)))); //sat > 102
 
-assign orange_ball_detect = (((hue >= 16 && hue <=25) && (saturation > 133 && value > 78)) || ((hue >= 23 && hue <= 30) && ((value > 155 && saturation > 127)||(saturation >= 153 && value > 252)||(value > 42 && saturation > 247))));
+assign orange_ball_detect = (((hue >= 16 && hue <=25) && (saturation > 133 && value > 124)) || ((hue >= 23 && hue <= 30) && ((value > 155 && saturation > 127)||(saturation >= 153 && value > 252)||(value > 100 && saturation > 247))));
 assign green_ball_detect = (((hue >= 50 && hue <= 75) && (saturation > 105 && value >= 75)) || ((hue >= 50 && hue <= 75) && ((saturation > 127 && value > 173))));
+//test orange
+//assign orange_ball_detect = (((hue >= 14 && hue <=25) && (saturation > 160 && value > 128)) || ((hue >= 23 && hue <= 30) && ((value > 155 && saturation > 135)||(saturation >= 153 && value > 252)||(value > 109 && saturation > 247))));
+
 /*
 assign blue_ball_detect = (hue >= 75 && hue <= 95 && ((saturation >= 63 && saturation <= 112 && value >= 130)||(saturation >= 63 && saturation <= 140 && value >= 58 && value <= 125)))
 || ((hue >= 87 && hue <= 104) && ((saturation >= 90 && saturation <= 146 && value >= 91 && value <= 170) || (saturation >= 127 && saturation <= 178 && value >= 63 && value <= 89)))
 || ((hue >= 62 && hue <= 75 && saturation >= 40 && saturation <= 89 && value <= 102 && value >= 114));
 */
+
+/*
 assign blue_ball_detect = (hue >= 75 && hue <= 95 && ((saturation >= 63 && saturation <= 112 && value >= 130)||(saturation >= 63 && saturation <= 140 && value >= 58 && value <= 135)))
 || ((hue >= 84 && hue <= 104) && ((saturation >= 43 && saturation <= 94 && value >= 105 && value <=127) || (saturation >= 90 && saturation <= 146 && value >= 91 && value <= 170) || (saturation >= 127 && saturation <= 178 && value >= 63 && value <= 89)))
-|| ((hue >= 62 && hue <= 75 && saturation >= 40 && saturation <= 89 && value <= 102 && value >= 114));
+|| ((hue >= 62 && hue <= 86 && saturation >= 35 && saturation <= 100 && value <= 104 && value >= 112));
+*/
 
-assign grey_ball_detect = (value <= 38 && x > 10 && x < IMAGE_W-10 && y > 10 && y < IMAGE_H - 10);
+//blue ball in the dark environment
+assign blue_ball_detect = (hue >= 55 && hue <= 85 && saturation >= 51 && saturation <= 89 && value >= 76 && value <= 240);
+
+
+assign grey_ball_detect = (value <= 37 && x > 10 && x < IMAGE_W-10 && y > 10 && y < IMAGE_H - 10);
 //(hue >= 75 && hue <= 102 && ((saturation >= 71 && value >= 90 && value <=210 && saturation <= 178)));
 
 
 
 //assign pink_ball_detect = (((hue >= 0 && hue <= 7)||(hue >= 170 && hue <= 180)) && value > 111 && saturation > 102); //sat > 102
 //assign green_ball_detect = (hue >= 45 && hue <= 80 && value > 90 && saturation > 116);
-//assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && saturation > 112);
+//assign orange_ball_detect = (hue >= 15 && hue <= 32 && value > 130 && satura tion > 112);
 
 
 
@@ -295,9 +305,14 @@ always@(posedge clk)begin
 		drive_instr <= {16'b0000100000000000}; //rotate the drone right 
 	end
 	else begin
-		if ((distance_r != 0) && ((distance_r < distance_y) || (distance_y == 0)) && ((distance_r < distance_g)|| (distance_g == 0)) && ((distance_r < distance_b) || (distance_b == 0)) && msg_state == 3) begin //red ball nearest
-			if(x_min_r > 320)begin //case: if x_min is greater than the middle pixel
+		if ((distance_r != 0) && ((distance_r < distance_y) || (distance_y == 0)) && ((distance_r < distance_g)|| (distance_g == 0)) && ((distance_r < distance_b) || (distance_b == 0)) && ((distance_b < distance_grey) || (distance_grey == 0)) && msg_state == 3) begin //red ball nearest
+			if(x_min_r >  600)begin //case: if x_min is greater than the middle pixel
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				
+				data_drive_mux <= 0;
+			end
+			else if(x_max_r < 40) begin//case if x_max is smaller than the middle pixel
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
 				data_drive_mux <= 0;
 			end
 			else if (distance_r > 30) begin //if the red ping pong ball is too far
@@ -308,30 +323,29 @@ always@(posedge clk)begin
 				drive_instr <= {16'b0010000000000000}; //move the drone backward
 				data_drive_mux <= 0;
 			end
-			else if(x_max_r < 320) begin//case if x_max is smaller than the middle pixel
-				drive_instr <= {16'b0001000000000000}; //rotate the drone left
-				data_drive_mux <= 0;
-			end
-			else if (((320-x_min_r) > (x_max_r - 320)) && (((320-x_min_r) - (x_max_r - 320)) > 100))begin //if the image is more to the left 
-				drive_instr <= {16'b0001000000000000}; //rotate the drone left
-				data_drive_mux <= 0;
-			end
-			else if (((x_max_r - 320) > (320 - x_min_r)) && (((x_max_r - 320) - (320-x_min_r)) > 100))begin //if the image is more to the right
+			/*
+			else if (((320-x_min_r) > (x_max_r - 320)) && (((320-x_min_r) - (x_max_r - 320)) > 130))begin //if the image is more to the left 
+				
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
 				data_drive_mux <= 0;
 			end
+			else if (((x_max_r - 320) > (320 - x_min_r)) && (((x_max_r - 320) - (320-x_min_r)) > 130))begin //if the image is more to the right
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			*/
 			else begin //send distance measurement as long as it's within 20cm to 25cm
 				data_value <= {1'b1,distance_r[4:0],3'b000,7'h0}; //send the distance + ball colour
 				data_drive_mux <= 1;
 			end
 		end
-		
-		else if ((distance_y != 0) &&((distance_y < distance_r) || (distance_r == 0)) && ((distance_y < distance_g) || (distance_g == 0)) && ((distance_y < distance_b) || (distance_b == 0)) && msg_state == 3) begin //yellow ball nearest
-			if(x_min_y > 320)begin //case: if x_min is greater than the middle pixel
+		else if ((distance_y != 0) &&((distance_y < distance_r) || (distance_r == 0)) && ((distance_y < distance_g) || (distance_g == 0)) && ((distance_y < distance_b) || (distance_b == 0)) && ((distance_y < distance_grey) || (distance_grey == 0)) && msg_state == 3) begin //yellow ball nearest
+			if(x_min_y > 600)begin //case: if x_min is greater than the middle pixel
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				
 				data_drive_mux <= 0;
 			end
-			else if(x_max_y < 320) begin//case if x_max is smaller than the middle pixel
+			else if(x_max_y < 40) begin//case if x_max is smaller than the middle pixel
 				drive_instr <= {16'b0001000000000000}; //rotate the drone left
 				data_drive_mux <= 0;
 			end
@@ -343,14 +357,16 @@ always@(posedge clk)begin
 				drive_instr <= {16'b0010000000000000}; //move the drone backward
 				data_drive_mux <= 0;
 			end
-			else if (((320-x_min_y) > (x_max_y - 320)) && (((320-x_min_y) - (x_max_y - 320)) > 100))begin //if the image is more to the left 
-				drive_instr <= {16'b0001000000000000}; //rotate the drone left
-				data_drive_mux <= 0;
-			end
-			else if (((x_max_y - 320) > (320 - x_min_y)) && (((x_max_y - 320) - (320-x_min_y)) > 100))begin //if the image is more to the right
+			/*
+			else if (((320-x_min_y) > (x_max_y)) && (((320-x_min_y) - (x_max_y - 320)) > 130))begin //if the image is more to the right
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
 				data_drive_mux <= 0;
 			end
+			else if (((x_max_y - 320) > (320 - x_min_y)) && (((x_max_y - 320) - (320-x_min_y)) > 130))begin //if the image is more to the left
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			*/
 			else begin //send distance measurement as long as it's within 20cm to 25cm
 				data_value <= {1'b1,distance_y[4:0],3'b001,7'h0}; //send the distance + ball colour
 				data_drive_mux <= 1;
@@ -358,12 +374,14 @@ always@(posedge clk)begin
 			
 		end
 		
-		else if ((distance_g != 0) &&((distance_g < distance_r) || (distance_r == 0)) && ((distance_g < distance_y) || (distance_y == 0)) && ((distance_g < distance_b) || (distance_b == 0)) && msg_state == 3)begin //green ball nearests
-			if(x_min_g > 320)begin //case: if x_min is greater than the middle pixel
+		else if ((distance_g != 0) &&((distance_g < distance_r) || (distance_r == 0)) && ((distance_g < distance_y) || (distance_y == 0)) && ((distance_g < distance_b) || (distance_b == 0)) && ((distance_g < distance_grey) || (distance_grey == 0)) && msg_state == 3)begin //green ball nearests
+			if(x_min_g > 600)begin //case: if x_min is greater than the pixel on the far right
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				
+				
 				data_drive_mux <= 0;
 			end
-			else if(x_max_g < 320) begin//case if x_max is smaller than the middle pixel
+			else if(x_max_g < 40) begin//case if x_max is smaller than the middle pixel
 				drive_instr <= {16'b0001000000000000}; //rotate the drone left
 				data_drive_mux <= 0;
 			end
@@ -375,25 +393,29 @@ always@(posedge clk)begin
 				drive_instr <= {16'b0010000000000000}; //move the drone backward
 				data_drive_mux <= 0;
 			end
-			else if (((320-x_min_g) > (x_max_g - 320)) && (((320-x_min_g) - (x_max_g - 320)) > 100))begin //if the image is more to the left 
-				drive_instr <= {16'b0001000000000000}; //rotate the drone left
-				data_drive_mux <= 0;
-			end
-			else if (((x_max_g - 320) > (320 - x_min_g)) && (((x_max_g - 320) - (320-x_min_g)) > 100))begin //if the image is more to the right
+			/*
+			else if (((320-x_min_g) > (x_max_g - 320)) && (((320-x_min_g) - (x_max_g - 320)) > 130))begin //if the image is more to the left 
+				
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
 				data_drive_mux <= 0;
 			end
+			else if (((x_max_g - 320) > (320 - x_min_g)) && (((x_max_g - 320) - (320-x_min_g)) > 130))begin //if the image is more to the right
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			*/
 			else begin //send distance measurement as long as it's within 20cm to 25cm
 				data_value <= {1'b1,distance_g[4:0],3'b010,7'h0}; //send the distance + ball colour
 				data_drive_mux <= 1;
 			end
 		end
-		else if ((distance_b != 0) &&((distance_b < distance_r) || (distance_r == 0)) && ((distance_b < distance_y) || (distance_y == 0)) && ((distance_b < distance_g) || (distance_g == 0)) && msg_state == 3)begin //green ball nearests
-			if(x_min_b > 320)begin //case: if x_min is greater than the middle pixel
+		else if ((distance_b != 0) &&((distance_b < distance_r) || (distance_r == 0)) && ((distance_b < distance_y) || (distance_y == 0)) && ((distance_b < distance_g) || (distance_g == 0)) && ((distance_b < distance_grey) || (distance_grey == 0)) && msg_state == 3)begin //green ball nearests
+			if(x_min_b > 600)begin //case: if x_min is greater than the middle pixel
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
 				data_drive_mux <= 0;
 			end
-			else if(x_max_b < 320) begin//case if x_max is smaller than the middle pixel
+			else if(x_max_b < 40) begin//case if x_max is smaller than the middle pixel
+				
 				drive_instr <= {16'b0001000000000000}; //rotate the drone left
 				data_drive_mux <= 0;
 			end
@@ -405,16 +427,51 @@ always@(posedge clk)begin
 				drive_instr <= {16'b0010000000000000}; //move the drone backward
 				data_drive_mux <= 0;
 			end
-			else if (((320-x_min_b) > (x_max_b - 320)) && (((320-x_min_b) - (x_max_b - 320)) > 100))begin //if the image is more to the left 
-				drive_instr <= {16'b0001000000000000}; //rotate the drone left
-				data_drive_mux <= 0;
-			end
-			else if (((x_max_b - 320) > (320 - x_min_b)) && (((x_max_b - 320) - (320-x_min_b)) > 100))begin //if the image is more to the right
+			/*
+			else if (((320-x_min_b) > (x_max_b - 320)) && (((320-x_min_b) - (x_max_b - 320)) > 130))begin //if the image is more to the left 
 				drive_instr <= {16'b0000100000000000}; //rotate the drone right
 				data_drive_mux <= 0;
 			end
+			else if (((x_max_b - 320) > (320 - x_min_b)) && (((x_max_b - 320) - (320-x_min_b)) > 130))begin //if the image is more to the right
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			*/
 			else begin //send distance measurement as long as it's within 20cm to 25cm
 				data_value <= {1'b1,distance_b[4:0],3'b011,7'h0}; //send the distance + ball colour
+				data_drive_mux <= 1;
+			end
+		end
+		else if ((distance_grey != 0) &&((distance_grey < distance_r) || (distance_r == 0)) && ((distance_grey < distance_y) || (distance_y == 0)) && ((distance_grey < distance_g) || (distance_g == 0)) && ((distance_grey < distance_b) || (distance_b == 0)) && msg_state == 3)begin //green ball nearests
+			if(x_min_grey > 600)begin //case: if x_min is greater than the middle pixel
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if(x_max_grey < 40) begin//case if x_max is smaller than the middle pixel
+				
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			else if (distance_grey > 30) begin //if the red ping pong ball is too far
+				drive_instr <= {16'b0100000000000000}; //move the drone forward
+				data_drive_mux <= 0;
+			end
+			else if (distance_grey < 26) begin //if the red ping pong ball is too near
+				drive_instr <= {16'b0010000000000000}; //move the drone backward
+				data_drive_mux <= 0;
+			end
+			/*
+			else if (((320-x_min_b) > (x_max_b - 320)) && (((320-x_min_b) - (x_max_b - 320)) > 130))begin //if the image is more to the left 
+				drive_instr <= {16'b0000100000000000}; //rotate the drone right
+				data_drive_mux <= 0;
+			end
+			else if (((x_max_b - 320) > (320 - x_min_b)) && (((x_max_b - 320) - (320-x_min_b)) > 130))begin //if the image is more to the right
+				drive_instr <= {16'b0001000000000000}; //rotate the drone left
+				data_drive_mux <= 0;
+			end
+			*/
+			else begin //send distance measurement as long as it's within 20cm to 25cm
+				data_value <= {1'b1,distance_b[4:0],3'b100,7'h0}; //send the distance + ball colour
 				data_drive_mux <= 1;
 			end
 		end
@@ -433,6 +490,7 @@ assign x_dist_r = (x_min_r > x_max_r) ? 0 : (x_max_r-x_min_r);
 assign x_dist_y = (x_min_y > x_max_y) ? 0 : (x_max_y-x_min_y);
 assign x_dist_g = (x_min_g > x_max_g) ? 0 : (x_max_g-x_min_g);
 assign x_dist_b = (x_min_b > x_max_b) ? 0 : (x_max_b-x_min_b);
+assign x_dist_grey = (x_min_grey > x_max_grey) ? 0 : (x_max_grey-x_min_grey);
 
 initial begin
 	x_min_r <= 0;
@@ -443,6 +501,8 @@ initial begin
 	x_max_g <= 0;
 	x_min_b <= 0;
 	x_max_b <= 0;
+	x_min_grey <= 0;
+	x_max_grey <= 0;
 end
 
 always@(posedge clk) begin
@@ -565,6 +625,7 @@ always @(posedge clk)begin
 	else begin
 		distance_grey = 0;
 	end
+
 
 end
 //((732 * (79/20))/147) =19.66 ish 19

@@ -54,7 +54,7 @@ function About(){
             </div>
 
             <div className="content2" >
-            <h1 className="title2">Rover's Feature</h1>
+            <h1 className="title2">Rover Features</h1>
             <br/>
             <p className="text1">
                 Over the past month, multiple features have been worked on and improved including: <br/>
