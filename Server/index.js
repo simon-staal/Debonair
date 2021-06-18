@@ -334,7 +334,7 @@ app.post("/coords", (req,res) => {
 	//console.log(`${rover.x},${rover.y}`);
 	//console.log(`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`)
 	//obstacles_string = "{1000,1450}{2230,3100}{2700,3600}{3000,4450}{3350,4550}";
-	//console.log("Obstacles: "+obstacles_string);
+	console.log("Obstacles: "+obstacles_string);
 	path_res = Pathfinder.genPath(`${rover.x},${rover.y}`,`${parseInt(req.body.coordinateX, 10)},${parseInt(req.body.coordinateY,10)}`,obstacles_string);
     if (path_res) {
 		path = JSON.parse(path_res);
