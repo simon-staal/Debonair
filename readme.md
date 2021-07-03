@@ -1,6 +1,15 @@
 Debonair - Mars Rover Project
 ==================
-This repository will contains all the files developed as part of ELEC50008 - Engineering Design Project II (End of Year project for Y2 EEE/EIE). Check [**here**](https://youtu.be/QJuqwNQwGvM) for a demo video of the system in action.
+This repository contains all the files developed as part of ELEC50008 - Engineering Design Project II (End of Year project for Y2 EEE/EIE).
+
+For this project, a fully integrated rover system was designed with the following operational modes:
+- **Exploration- **The rover autonomously explores the target environment, identifying and reporting obstacle positions.
+- **Coordinate- **Given a set of destination coordinates, the rover will autonomously navigate through the environment to reach the destination while avoiding obstacles.
+- **Remote control- **The rover drive is fully controlled by the user, allowing them to explore the environment as they see fit.
+
+A web application available [**here**](https://debonair.duckdns.org) was designed as the control hub for the rover, where the different operational modes can be selected between and information from the rover is received.
+
+Check [**here**](https://youtu.be/QJuqwNQwGvM) for a demo video of the system in action.
 
 **IMPORTANT:**
 Please note that there are still multiple branches that are up on this repository:
